@@ -1,0 +1,28 @@
+{
+  "name": "design-extractor-mcp",
+  "version": "0.1.0",
+  "description": "Local MCP server + HTTP bridge for the Keys_Osi_Design.md-extractor Chrome extension. Receives extractions from the browser and exposes them to Claude Code, Cursor, and any MCP client.",
+  "type": "module",
+  "bin": {
+    "design-extractor-mcp": "./server.mjs"
+  },
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "keywords": [
+    "mcp",
+    "design-tokens",
+    "design-system",
+    "chrome-extension",
+    "claude"
+  ],
+  "license": "MIT"
+}

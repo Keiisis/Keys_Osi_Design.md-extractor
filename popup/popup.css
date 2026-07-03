@@ -9,6 +9,19 @@
   --white: #ffffff;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --panel: #1e1e1e;
+    --text: #e0e0e0;
+    --muted: #a0a0a0;
+    --line: #2d2d2d;
+    --line-strong: #444444;
+    --black: #ffffff;
+    --white: #121212;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -250,7 +263,8 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 10px 74px 10px 10px;
-  background: #fff;
+  background: var(--panel);
+  color: var(--text);
   font-family: "Geist Mono", "SFMono-Regular", Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;
@@ -333,7 +347,7 @@ textarea {
 .help-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--panel);
   padding: 10px;
 }
 
@@ -348,13 +362,14 @@ textarea {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: #111;
+  color: var(--text);
 }
 
 .help-close {
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--panel);
+  color: var(--text);
   box-shadow: none;
   padding: 4px 8px;
   font-size: 11px;
@@ -363,7 +378,7 @@ textarea {
 }
 
 .help-close:hover {
-  background: #f8f8f8;
+  background: var(--line);
   border-color: var(--line-strong);
 }
 
@@ -372,7 +387,7 @@ textarea {
   overflow: auto;
   font-size: 12px;
   line-height: 1.45;
-  color: #222;
+  color: var(--text);
 }
 
 .help-content p {
@@ -389,13 +404,13 @@ textarea {
 }
 
 .help-content a {
-  color: #111;
+  color: var(--text);
   text-decoration: none;
   border-bottom: 1px solid var(--line-strong);
 }
 
 .help-content a:hover {
-  border-bottom-color: #111;
+  border-bottom-color: var(--text);
 }
 
 .footnote {
@@ -405,11 +420,124 @@ textarea {
 }
 
 .footnote a {
-  color: #111;
+  color: var(--text);
   text-decoration: none;
   border-bottom: 1px solid var(--line-strong);
 }
 
 .footnote a:hover {
-  border-bottom-color: #111;
+  border-bottom-color: var(--text);
+}
+
+/* Progress steps styles */
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  transition: color 0.3s ease;
+}
+
+.progress-step.active {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.progress-step.active .step-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  animation: pulse 1.5s infinite;
+}
+
+.progress-step.completed {
+  color: #10b981;
+}
+
+.progress-step.completed .step-dot {
+  background: #10b981;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.copy-site-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.copy-site-option input[type="checkbox"] {
+  margin: 0;
+  accent-color: var(--black);
+}
+
+.copy-site-select {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.exports-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.export-btn {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.export-btn:hover:not(:disabled) {
+  border-color: var(--line-strong);
+}
+
+.export-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }

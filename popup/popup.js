@@ -22,9 +22,15 @@ const QUICK_INSTALL_PROVIDERS = {
 };
 
 const modeButtons = Array.from(document.querySelectorAll("[data-mode]"));
+const exportTailwindBtn = document.getElementById("exportTailwindBtn");
+const exportW3cBtn = document.getElementById("exportW3cBtn");
+const diffBtn = document.getElementById("diffBtn");
+const mcpBtn = document.getElementById("mcpBtn");
 const refreshBtn = document.getElementById("refreshBtn");
 const downloadBtn = document.getElementById("downloadBtn");
+const downloadJsonBtn = document.getElementById("downloadJsonBtn");
 const copyBtn = document.getElementById("copyBtn");
+const copySiteBtn = document.getElementById("copySiteBtn");
 const quickInstallButtons = Array.from(document.querySelectorAll(".quick-install-btn"));
 const quickInstallResultEl = document.getElementById("quickInstallResult");
 const helpBtn = document.getElementById("helpBtn");
@@ -64,6 +70,12 @@ downloadBtn.addEventListener("click", () => {
   downloadCurrent().catch((error) => setStatus(toErrorText(error), true));
 });
 
+if (downloadJsonBtn) {
+  downloadJsonBtn.addEventListener("click", () => {
+    downloadTokensJson().catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
 helpBtn.addEventListener("click", () => {
   const shouldOpen = helpPanel.hidden;
   helpPanel.hidden = !shouldOpen;
@@ -101,6 +113,36 @@ copyBtn.addEventListener("click", async () => {
   }
 });
 
+if (copySiteBtn) {
+  copySiteBtn.addEventListener("click", () => {
+    runCopySite().catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
+if (exportTailwindBtn) {
+  exportTailwindBtn.addEventListener("click", () => {
+    exportGeneratedTokens("tailwind").catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
+if (exportW3cBtn) {
+  exportW3cBtn.addEventListener("click", () => {
+    exportGeneratedTokens("w3c").catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
+if (diffBtn) {
+  diffBtn.addEventListener("click", () => {
+    downloadDiffWithPrevious().catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
+if (mcpBtn) {
+  mcpBtn.addEventListener("click", () => {
+    sendToMcp().catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
 init().catch((error) => setStatus(`Init failed: ${toErrorText(error)}`, true));
 
 async function init() {
@@ -119,11 +161,50 @@ async function runExtraction() {
   clearStatus();
   issuesEl.innerHTML = "";
 
+  const progressEl = document.getElementById("extractionProgress");
+  const stepConnect = document.getElementById("step-connect");
+  const stepExtract = document.getElementById("step-extract");
+  const stepNormalize = document.getElementById("step-normalize");
+  const stepAssemble = document.getElementById("step-assemble");
+
+  const setStep = (el, status) => {
+    if (!el) return;
+    el.classList.remove("active", "completed");
+    if (status === "active") el.classList.add("active");
+    if (status === "completed") el.classList.add("completed");
+  };
+
+  if (progressEl) {
+    progressEl.hidden = false;
+    setStep(stepConnect, "active");
+    setStep(stepExtract, "");
+    setStep(stepNormalize, "");
+    setStep(stepAssemble, "");
+  }
+
   try {
-    const response = await chrome.runtime.sendMessage({
+    await new Promise((r) => setTimeout(r, 200));
+    setStep(stepConnect, "completed");
+    setStep(stepExtract, "active");
+
+    const responsePromise = chrome.runtime.sendMessage({
       type: "RUN_EXTRACTION",
       mode: state.mode
     });
+
+    await new Promise((r) => setTimeout(r, 350));
+    setStep(stepExtract, "completed");
+    setStep(stepNormalize, "active");
+
+    const response = await responsePromise;
+
+    await new Promise((r) => setTimeout(r, 300));
+    setStep(stepNormalize, "completed");
+    setStep(stepAssemble, "active");
+
+    await new Promise((r) => setTimeout(r, 250));
+    setStep(stepAssemble, "completed");
+    await new Promise((r) => setTimeout(r, 150));
 
     if (!response || !response.ok) {
       throw new Error(response?.error || "Extraction request failed.");
@@ -135,7 +216,9 @@ async function runExtraction() {
 
     previewEl.value = response.markdown;
     downloadBtn.disabled = false;
+    downloadJsonBtn.disabled = false;
     copyBtn.disabled = false;
+    setExportButtonsEnabled(true);
 
     renderValidationIssues(response.validation);
     clearStatus();
@@ -144,8 +227,18 @@ async function runExtraction() {
     if (!helpPanel.hidden) {
       renderGenerationExplanation();
     }
+  } catch (error) {
+    if (progressEl) {
+      progressEl.hidden = true;
+    }
+    throw error;
   } finally {
     setBusy(false);
+    if (progressEl) {
+      setTimeout(() => {
+        progressEl.hidden = true;
+      }, 1000);
+    }
   }
 }
 
@@ -171,10 +264,106 @@ async function downloadCurrent() {
 function setBusy(isBusy) {
   state.busy = isBusy;
   refreshBtn.disabled = isBusy;
+  if (copySiteBtn) {
+    copySiteBtn.disabled = isBusy;
+  }
+  if (downloadJsonBtn) {
+    downloadJsonBtn.disabled = isBusy || !state.lastResult;
+  }
+  setExportButtonsEnabled(!isBusy && Boolean(state.lastResult));
   for (const button of modeButtons) {
     button.disabled = isBusy;
   }
   updateQuickInstallUi();
+}
+
+function setExportButtonsEnabled(enabled) {
+  for (const button of [exportTailwindBtn, exportW3cBtn, diffBtn, mcpBtn]) {
+    if (button) {
+      button.disabled = !enabled;
+    }
+  }
+}
+
+async function exportGeneratedTokens(kind) {
+  if (!state.lastResult || !state.lastResult.normalized) {
+    setStatus("Nothing to export yet.", true);
+    return;
+  }
+  const response = await chrome.runtime.sendMessage({
+    type: "EXPORT_TOKENS",
+    normalized: state.lastResult.normalized
+  });
+  if (!response || !response.ok) {
+    throw new Error(response?.error || "Token export failed.");
+  }
+
+  const siteName = String(state.lastResult.normalized.source?.title || "design")
+    .replace(/[^a-z0-9]+/gi, "_")
+    .toLowerCase()
+    .slice(0, 30);
+
+  const download =
+    kind === "tailwind"
+      ? { filename: "tailwind.config.js", text: response.tailwindConfig, mime: "text/javascript" }
+      : { filename: `${siteName}.tokens.json`, text: response.w3cTokens, mime: "application/json" };
+
+  const result = await chrome.runtime.sendMessage({ type: "DOWNLOAD_TEXT", ...download });
+  if (!result || !result.ok) {
+    throw new Error(result?.error || "Download failed.");
+  }
+  setStatus(`${download.filename} exporté.`, false);
+}
+
+async function downloadDiffWithPrevious() {
+  if (!state.lastResult || !state.lastResult.normalized) {
+    setStatus("Nothing to compare yet.", true);
+    return;
+  }
+  const response = await chrome.runtime.sendMessage({
+    type: "DIFF_WITH_PREVIOUS",
+    normalized: state.lastResult.normalized
+  });
+  if (!response || !response.ok) {
+    throw new Error(response?.error || "Diff failed.");
+  }
+  const result = await chrome.runtime.sendMessage({
+    type: "DOWNLOAD_TEXT",
+    filename: "DIFF.md",
+    text: response.markdown,
+    mime: "text/markdown"
+  });
+  if (!result || !result.ok) {
+    throw new Error(result?.error || "Download failed.");
+  }
+  setStatus(`DIFF.md généré (comparé à l'extraction du ${response.beforeDate}).`, false);
+}
+
+async function sendToMcp() {
+  if (!state.lastResult || !state.lastResult.normalized) {
+    setStatus("Nothing to send yet.", true);
+    return;
+  }
+  setStatus("Envoi vers le bridge MCP local (127.0.0.1:8765)...", false);
+
+  const skillResponse = await chrome.runtime.sendMessage({
+    type: "RUN_EXTRACTION",
+    mode: state.mode === "skill" ? "design" : "skill",
+    persistOutputMode: false
+  });
+  const designMarkdown = state.mode === "design" ? state.markdown : skillResponse?.markdown || "";
+  const skillMarkdown = state.mode === "skill" ? state.markdown : skillResponse?.markdown || "";
+
+  const response = await chrome.runtime.sendMessage({
+    type: "SEND_TO_MCP",
+    normalized: state.lastResult.normalized,
+    designMarkdown,
+    skillMarkdown
+  });
+  if (!response || !response.ok) {
+    throw new Error(response?.error || "MCP send failed.");
+  }
+  setStatus("Extraction envoyée au serveur MCP — accessible depuis Claude Code / Cursor.", false);
 }
 
 function renderValidationIssues(validation) {
@@ -436,4 +625,94 @@ function clearQuickInstallResult() {
 
 function isAbortError(error) {
   return error && typeof error === "object" && error.name === "AbortError";
+}
+
+async function runCopySite() {
+  if (state.busy) {
+    return;
+  }
+  setBusy(true);
+  clearStatus();
+  setStatus("Clonage et téléchargement du site en cours (HTML + Médias + Scripts)...", false);
+
+  try {
+    const staticSnapshotChk = document.getElementById("staticSnapshotChk");
+    const screenshotsChk = document.getElementById("screenshotsChk");
+    const safeInteractChk = document.getElementById("safeInteractChk");
+    const advancedAuditChk = document.getElementById("advancedAuditChk");
+    const crawlPagesSelect = document.getElementById("crawlPagesSelect");
+    const crawlPages = crawlPagesSelect ? Number(crawlPagesSelect.value) || 0 : 0;
+
+    // The debugger permission is optional and only requested here, from a
+    // user gesture, when the advanced audit is explicitly enabled.
+    let advancedAudit = Boolean(advancedAuditChk && advancedAuditChk.checked);
+    if (advancedAudit) {
+      try {
+        const granted = await chrome.permissions.request({ permissions: ["debugger"] });
+        if (!granted) {
+          advancedAudit = false;
+          setStatus("Permission refusée — clonage sans audit multi-viewport/dark mode.", false);
+        }
+      } catch (permError) {
+        advancedAudit = false;
+      }
+    }
+
+    if (crawlPages > 0 || advancedAudit) {
+      setStatus("Clonage en cours (pages, screenshots, CSS, polices, audits)... Cela peut prendre une minute.", false);
+    }
+
+    const response = await chrome.runtime.sendMessage({
+      type: "COPY_SITE",
+      staticSnapshot: Boolean(staticSnapshotChk && staticSnapshotChk.checked),
+      screenshots: Boolean(screenshotsChk && screenshotsChk.checked),
+      safeInteractions: Boolean(safeInteractChk && safeInteractChk.checked),
+      advancedAudit,
+      crawlPages
+    });
+
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "Site copy request failed.");
+    }
+
+    const details = [
+      `${response.fileCount} fichiers`,
+      response.pageCount > 1 ? `${response.pageCount} pages` : null,
+      response.screenshotCount > 0 ? `${response.screenshotCount} screenshots` : null,
+      response.skipped > 0 ? `${response.skipped} assets ignorés` : null
+    ].filter(Boolean).join(", ");
+
+    if (response.packaging === "zip") {
+      setStatus(`Site cloné : ${response.path} (${details})`, false);
+    } else {
+      setStatus(`Site cloné dans /Downloads/${response.path}/ (${details})`, false);
+    }
+  } catch (error) {
+    setStatus(`Erreur de clonage : ${toErrorText(error)}`, true);
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function downloadTokensJson() {
+  if (!state.lastResult || !state.lastResult.normalized) {
+    setStatus("Nothing to download yet.", true);
+    return;
+  }
+
+  const siteName = String(state.lastResult.normalized.source?.title || "design")
+    .replace(/[^a-z0-9]+/gi, "_")
+    .toLowerCase()
+    .slice(0, 30);
+
+  const response = await chrome.runtime.sendMessage({
+    type: "DOWNLOAD_JSON",
+    filename: `design_tokens_${siteName}.json`,
+    data: state.lastResult.normalized
+  });
+
+  if (!response || !response.ok) {
+    throw new Error(response?.error || "Download failed.");
+  }
+  clearStatus();
 }

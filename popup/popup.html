@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DESIGN.md style extractor by TypeUI</title>
+  <title>Keys_Osi_Design.md-extractor</title>
   <link rel="stylesheet" href="./popup.css" />
 </head>
 
@@ -14,13 +14,13 @@
       <div class="brand">
         <img src="../assets/icons/icon32.png" width="24" height="24" alt="App logo" />
         <div>
-          <h1>DESIGN.md extractor by TypeUI</h1>
+          <h1>Keys_Osi_Design.md-extractor</h1>
           <p>Auto-generates from the active tab based on <a target="_blank"
               href="https://www.typeui.sh/design-md">DESIGN.md</a>
             specifications.</p>
         </div>
       </div>
-      <a href="https://github.com/bergside/design-md-extractor-chrome" target="_blank" rel="noopener noreferrer"
+      <a href="https://github.com/Keiisis/Keys_Osi_Design.md-extractor" target="_blank" rel="noopener noreferrer"
         class="badge">
         <svg fill="currentColor" width="12" height="12" viewBox="0 -0.5 25 25" xmlns="http://www.w3.org/2000/svg">
           <path
@@ -39,6 +39,13 @@
       </button>
     </section>
 
+
+    <div id="extractionProgress" class="progress-container" hidden>
+      <div class="progress-step" id="step-connect"><span class="step-dot"></span> Établissement de la connexion...</div>
+      <div class="progress-step" id="step-extract"><span class="step-dot"></span> Analyse des éléments du DOM...</div>
+      <div class="progress-step" id="step-normalize"><span class="step-dot"></span> Normalisation des variables CSS...</div>
+      <div class="progress-step" id="step-assemble"><span class="step-dot"></span> Génération du rapport de design...</div>
+    </div>
 
     <p id="status" class="status" hidden></p>
     <ul id="issues" class="issues" hidden></ul>
@@ -67,12 +74,22 @@
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </button>
-          <button id="downloadBtn" type="button" class="icon-btn" disabled aria-label="Download">
+          <button id="downloadBtn" type="button" class="icon-btn" disabled aria-label="Download Markdown">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+          <button id="downloadJsonBtn" type="button" class="icon-btn" disabled aria-label="Download JSON Tokens">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
             </svg>
           </button>
           <button id="refreshBtn" type="button" class="icon-btn" aria-label="Refresh">
@@ -92,6 +109,49 @@
           </button>
         </div>
       </div>
+    </section>
+
+    <section class="copy-site-wrap" style="margin: 4px 0 6px 0;">
+      <button id="copySiteBtn" type="button" class="primary-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--black); background: var(--black); color: var(--white); border-radius: 7px; padding: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Cloner le Site Complet (HTML + CSS + Médias + Polices)
+      </button>
+      <label class="copy-site-option">
+        <input type="checkbox" id="staticSnapshotChk" checked />
+        Snapshot statique — retire les scripts (recommandé pour React/Next/Vue)
+      </label>
+      <label class="copy-site-option">
+        <input type="checkbox" id="screenshotsChk" checked />
+        Screenshots section par section (références visuelles pour l'IA)
+      </label>
+      <label class="copy-site-option">
+        Pages internes à cloner :
+        <select id="crawlPagesSelect" class="copy-site-select">
+          <option value="0" selected>Page active uniquement</option>
+          <option value="3">+ 3 pages</option>
+          <option value="5">+ 5 pages</option>
+          <option value="10">+ 10 pages</option>
+        </select>
+      </label>
+      <label class="copy-site-option">
+        <input type="checkbox" id="safeInteractChk" />
+        Ouvrir menus/accordéons avant capture (sans navigation ni formulaire)
+      </label>
+      <label class="copy-site-option">
+        <input type="checkbox" id="advancedAuditChk" />
+        Audit avancé : viewports réels 375/768/1440 + dark mode (permission « debugger » demandée au clic)
+      </label>
+    </section>
+
+    <section class="exports-row" aria-label="Advanced exports">
+      <button id="exportTailwindBtn" type="button" class="export-btn" disabled>tailwind.config.js</button>
+      <button id="exportW3cBtn" type="button" class="export-btn" disabled>Tokens W3C</button>
+      <button id="diffBtn" type="button" class="export-btn" disabled>DIFF.md</button>
+      <button id="mcpBtn" type="button" class="export-btn" disabled>→ MCP</button>
     </section>
 
     <section class="quick-install" aria-label="Quick install providers">
@@ -114,7 +174,7 @@
     </section>
 
     <footer class="footnote">
-      Find more curated design skills at <a href="https://www.typeui.sh/design-skills" target="_blank">TypeUI</a> and
+      Find more curated design skills at <a href="https://www.typeui.sh/design-skills" target="_blank" rel="noopener noreferrer">TypeUI</a> and
       improve UI generation with AI.
     </footer>
   </main>
