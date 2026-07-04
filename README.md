@@ -22,8 +22,10 @@ Check out curated design systems at [typeui.sh/design-skills](https://www.typeui
 | Action | Description |
 | --- | --- |
 | Auto-extract | Reads styles from the active tab (typography, colors, gradients, spacing, radius, shadows, motion, `@keyframes`, hover/focus states, responsive breakpoints, runtime animations via the Web Animations API, detected tech stack, and a measured WCAG contrast + target-size audit). Traverses open shadow roots. |
-| Generate `DESIGN.md` | Produces design-system documentation markdown from extracted signals. |
-| Generate `SKILL.md` | Produces agent-ready skill markdown from extracted signals. |
+| Generate `DESIGN.md` | Expert design-system blueprint: token tables with CSS-variable mapping, measured contrast of the core text/surface pair, estimated type-scale ratio, inferred spacing base grid, **measured h1–h6 hierarchy**, **button variants clustered into copy-paste CSS specs**, form-control and link specs, **layout system** (container width, flex/grid architecture, section rhythm, z-index scale), motion specs (keyframes + Web Animations API + GSAP), responsive breakpoint table, measured interaction states, a **Design Health Score (0–100)** with breakdown, and stack-aware implementation notes. |
+| Generate `SKILL.md` | The same measured sections packaged as an agent-ready skill (frontmatter + managed markers). |
+| Generate JSON | Third output mode: a complete machine-readable `design-system.json` — every token with raw value + CSS variable, colors in **hex + RGB + HSL**, component specs (headings, button variants, form control, links), layout system, design score, fonts with file URLs, stylesheets/scripts inventory, animations, breakpoints, interactions, a11y audit, detected stack, and an embedded W3C tokens document. |
+| Fonts + CSS + JS + Colors (ZIP) | One-click assets ZIP: every stylesheet (rewritten to local paths), scripts, font files referenced by the CSS, plus `colors.json` and `fonts.json`. |
 | Clone site (ZIP) | Packages the page — HTML, rewritten CSS (fonts/background images/`@import` chains resolved to local paths), images, fonts, media, inline SVG icons, PWA manifest/favicons, and optional section-by-section screenshots — into a single ZIP. Can crawl up to 10 internal pages with working local navigation. Optional static snapshot strips scripts so SPA clones render offline. |
 | Export tokens | `tailwind.config.js` and W3C Design Tokens JSON (Style Dictionary / Figma Tokens compatible). |
 | Advanced audit (opt-in) | Real device emulation at 375/768/1440px with per-viewport tokens + screenshots, and a `prefers-color-scheme: dark` capture with its own palette (only kept when the site actually implements a dark theme). Uses the `debugger` permission, requested on demand — never at install. |
@@ -56,7 +58,18 @@ site.zip
 The [mcp-server/](mcp-server/) package runs a local MCP server with an HTTP
 bridge: click **→ MCP** in the popup, then query `get_design_md`,
 `get_design_tokens`, `get_extraction_summary`, etc. from Claude Code or Cursor.
-See [mcp-server/README.md](mcp-server/README.md).
+It also exposes the curated [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)
+library (60+ brand design systems) via `list_curated_brands` and
+`get_curated_design` — perfect for comparing an extraction against Stripe,
+Linear, Vercel, Apple... See [mcp-server/README.md](mcp-server/README.md).
+
+## Format lineage & credits
+
+The generated `DESIGN.md` fuses three formats:
+
+- [TypeUI DESIGN.md](https://www.typeui.sh/design-md) — base section structure and SKILL.md conventions.
+- [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) — YAML frontmatter with machine-readable `colors:` and `typography:` token blocks.
+- [adityarajdigital/designmd](https://github.com/adityarajdigital/designmd) — narrative sections: Visual Theme & Atmosphere, Do's and Don'ts, Responsive Behavior (touch targets, collapsing strategy), and the Agent Prompt Guide.
 
 ## Generated file structure
 

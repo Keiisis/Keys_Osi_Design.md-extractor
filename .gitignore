@@ -2,3 +2,4 @@
 node_modules/
 mcp-server/node_modules/
 mcp-server/package-lock.json
+package-lock.json

@@ -165,6 +165,12 @@
       runtimeAnimations: collectRuntimeAnimations(),
       a11y: collectAccessibilityMetrics(sampledElements),
       stack: detectStack(mainWorldFrameworks),
+      resources: collectResourceInventory(),
+      headings: collectHeadingStyles(),
+      buttonVariants: collectButtonVariants(),
+      formControl: collectFormControlSpec(),
+      linkSpec: collectLinkSpec(),
+      layout: collectLayoutSignals(),
       components: collectComponentCounts(),
       siteSignals: collectSiteSignals(),
       cssVariables: collectCssVariables(),
@@ -990,6 +996,242 @@
       hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
     }
     return Math.abs(hash).toString(36).slice(0, 7);
+  }
+
+  // Inventory of external resources: stylesheets, scripts and every
+  // @font-face the page declares (family, weight, style, file URLs).
+  function collectResourceInventory() {
+    const stylesheets = [];
+    for (const link of document.querySelectorAll("link[rel='stylesheet']")) {
+      const href = link.getAttribute("href");
+      if (!href) continue;
+      try {
+        stylesheets.push(new URL(href, window.location.href).href);
+      } catch (e) {}
+      if (stylesheets.length >= 30) break;
+    }
+
+    const scripts = [];
+    for (const script of document.querySelectorAll("script[src]")) {
+      const src = script.getAttribute("src");
+      if (!src) continue;
+      try {
+        scripts.push(new URL(src, window.location.href).href);
+      } catch (e) {}
+      if (scripts.length >= 30) break;
+    }
+
+    const fontFaces = [];
+    forEachAccessibleRule((rule) => {
+      if (rule.type !== CSSRule.FONT_FACE_RULE || fontFaces.length >= 20) {
+        return;
+      }
+      try {
+        const family = normalizeWhitespace(rule.style.getPropertyValue("font-family")).replace(/^['"]|['"]$/g, "");
+        const weight = normalizeWhitespace(rule.style.getPropertyValue("font-weight")) || "400";
+        const fontStyle = normalizeWhitespace(rule.style.getPropertyValue("font-style")) || "normal";
+        const src = rule.style.getPropertyValue("src") || "";
+        const urls = [];
+        const matches = src.matchAll(/url\((['"]?)([^'")]+)\1\)/g);
+        for (const match of matches) {
+          const ref = match[2].trim();
+          if (ref.startsWith("data:")) continue;
+          try {
+            const baseHref = rule.parentStyleSheet?.href || window.location.href;
+            urls.push(new URL(ref, baseHref).href);
+          } catch (e) {}
+        }
+        if (family) {
+          fontFaces.push({ family, weight, style: fontStyle, urls: urls.slice(0, 4) });
+        }
+      } catch (e) {}
+    });
+
+    return {
+      stylesheets,
+      scripts,
+      fontFaces,
+      inlineStyleBlocks: document.querySelectorAll("style").length
+    };
+  }
+
+  // Measured heading hierarchy: the exact computed style of the first
+  // visible instance of each heading level.
+  function collectHeadingStyles() {
+    const out = [];
+    for (const level of ["h1", "h2", "h3", "h4", "h5", "h6"]) {
+      const el = Array.from(document.querySelectorAll(level)).find(
+        (node) => node instanceof HTMLElement && isVisible(node)
+      );
+      if (!el) continue;
+      const style = window.getComputedStyle(el);
+      out.push({
+        level,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+        fontWeight: style.fontWeight,
+        letterSpacing: style.letterSpacing,
+        textTransform: style.textTransform,
+        color: style.color,
+        marginTop: style.marginTop,
+        marginBottom: style.marginBottom,
+        fontFamily: normalizeWhitespace(style.fontFamily).split(",")[0].replace(/^['"]|['"]$/g, "")
+      });
+    }
+    return out;
+  }
+
+  // Buttons clustered by visual signature → variant specs with exact,
+  // copy-paste-ready declarations.
+  function collectButtonVariants() {
+    const nodes = document.querySelectorAll(
+      "button, [role='button'], a[class*='btn'], a[class*='button'], input[type='submit']"
+    );
+    const clusters = new Map();
+    let scanned = 0;
+    for (const el of nodes) {
+      if (scanned >= 60) break;
+      if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
+      scanned += 1;
+      const style = window.getComputedStyle(el);
+      const spec = {
+        background:
+          style.backgroundImage && style.backgroundImage !== "none"
+            ? style.backgroundImage
+            : style.backgroundColor,
+        color: style.color,
+        border:
+          Number.parseFloat(style.borderTopWidth) > 0
+            ? `${style.borderTopWidth} ${style.borderTopStyle} ${style.borderTopColor}`
+            : "none",
+        borderRadius: style.borderRadius,
+        padding: `${style.paddingTop} ${style.paddingRight} ${style.paddingBottom} ${style.paddingLeft}`,
+        fontSize: style.fontSize,
+        fontWeight: style.fontWeight,
+        boxShadow: style.boxShadow !== "none" ? style.boxShadow : "",
+        textTransform: style.textTransform !== "none" ? style.textTransform : ""
+      };
+      const key = JSON.stringify(spec);
+      const entry = clusters.get(key) || { spec, count: 0, example: "" };
+      entry.count += 1;
+      if (!entry.example) {
+        entry.example = normalizeWhitespace(el.textContent || el.getAttribute("value") || "").slice(0, 30);
+      }
+      clusters.set(key, entry);
+    }
+    return Array.from(clusters.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+  }
+
+  function collectFormControlSpec() {
+    const el = Array.from(document.querySelectorAll("input:not([type='hidden']), textarea, select")).find(
+      (node) => node instanceof HTMLElement && isVisible(node)
+    );
+    if (!el) return null;
+    const style = window.getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    return {
+      tag: el.tagName.toLowerCase(),
+      height: `${Math.round(rect.height)}px`,
+      padding: `${style.paddingTop} ${style.paddingRight} ${style.paddingBottom} ${style.paddingLeft}`,
+      border: `${style.borderTopWidth} ${style.borderTopStyle} ${style.borderTopColor}`,
+      borderRadius: style.borderRadius,
+      background: style.backgroundColor,
+      color: style.color,
+      fontSize: style.fontSize
+    };
+  }
+
+  function collectLinkSpec() {
+    const counts = new Map();
+    let scanned = 0;
+    for (const el of document.querySelectorAll("a[href]")) {
+      if (scanned >= 40) break;
+      if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
+      scanned += 1;
+      const style = window.getComputedStyle(el);
+      const key = JSON.stringify({
+        color: style.color,
+        textDecoration: style.textDecorationLine,
+        fontWeight: style.fontWeight
+      });
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
+    if (!top) return null;
+    return { ...JSON.parse(top[0]), usage: top[1] };
+  }
+
+  // Layout system: container width, layout method usage, vertical
+  // rhythm of top-level sections, z-index scale, border widths.
+  function collectLayoutSignals() {
+    const maxWidthCounts = new Map();
+    const containers = document.querySelectorAll(
+      "main, section, [class*='container'], [class*='wrapper'], header > div, footer > div"
+    );
+    let scanned = 0;
+    for (const el of containers) {
+      if (scanned >= 200) break;
+      if (!(el instanceof HTMLElement)) continue;
+      scanned += 1;
+      const maxWidth = window.getComputedStyle(el).maxWidth;
+      if (maxWidth && maxWidth !== "none" && maxWidth.endsWith("px")) {
+        maxWidthCounts.set(maxWidth, (maxWidthCounts.get(maxWidth) || 0) + 1);
+      }
+    }
+    const containerMaxWidth =
+      Array.from(maxWidthCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+    let flexCount = 0;
+    let gridCount = 0;
+    const zIndexes = new Set();
+    const borderWidthCounts = new Map();
+    const elements = getAllElementsDeep(2500);
+    for (const el of elements) {
+      if (!(el instanceof HTMLElement)) continue;
+      let style;
+      try {
+        style = window.getComputedStyle(el);
+      } catch (e) {
+        continue;
+      }
+      if (style.display === "flex" || style.display === "inline-flex") flexCount += 1;
+      else if (style.display === "grid" || style.display === "inline-grid") gridCount += 1;
+      if (style.zIndex !== "auto") {
+        const z = Number.parseInt(style.zIndex, 10);
+        if (Number.isFinite(z) && zIndexes.size < 12) zIndexes.add(z);
+      }
+      const bw = Number.parseFloat(style.borderTopWidth);
+      if (bw > 0) {
+        borderWidthCounts.set(style.borderTopWidth, (borderWidthCounts.get(style.borderTopWidth) || 0) + 1);
+      }
+    }
+
+    const sectionPaddingCounts = new Map();
+    for (const el of document.querySelectorAll("body > section, main > section, main > div, body > main > *")) {
+      if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
+      const pt = window.getComputedStyle(el).paddingTop;
+      const px = Number.parseFloat(pt);
+      if (Number.isFinite(px) && px >= 16) {
+        sectionPaddingCounts.set(pt, (sectionPaddingCounts.get(pt) || 0) + 1);
+      }
+    }
+
+    return {
+      containerMaxWidth,
+      flexCount,
+      gridCount,
+      zIndexScale: Array.from(zIndexes).sort((a, b) => a - b),
+      borderWidths: Array.from(borderWidthCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([value, count]) => ({ value, count })),
+      sectionPaddings: Array.from(sectionPaddingCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([value, count]) => ({ value, count }))
+    };
   }
 
   function collectRuntimeAnimations() {

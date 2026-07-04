@@ -13,6 +13,7 @@ import {
 import { createZip, crc32 } from "../lib/zip.mjs";
 import { generateTailwindConfig, generateW3cTokens } from "../lib/export-tokens.mjs";
 import { diffNormalized, generateDiffMarkdown } from "../lib/diff-tokens.mjs";
+import { generateDesignJson } from "../lib/generate-json-export.mjs";
 
 const mockPayload = {
   source: {
@@ -112,6 +113,95 @@ const mockPayload = {
     targetsChecked: 40,
     smallTargets: 5
   },
+  resources: {
+    stylesheets: ["https://example.com/css/app.css"],
+    scripts: ["https://example.com/js/app.js"],
+    fontFaces: [
+      { family: "Inter", weight: "400", style: "normal", urls: ["https://example.com/fonts/inter-400.woff2"] },
+      { family: "Inter", weight: "700", style: "normal", urls: ["https://example.com/fonts/inter-700.woff2"] }
+    ],
+    inlineStyleBlocks: 2
+  },
+  headings: [
+    {
+      level: "h1",
+      fontSize: "48px",
+      lineHeight: "56px",
+      fontWeight: "700",
+      letterSpacing: "-0.02em",
+      textTransform: "none",
+      color: "rgb(17, 24, 39)",
+      marginTop: "0px",
+      marginBottom: "24px",
+      fontFamily: "Inter"
+    },
+    {
+      level: "h2",
+      fontSize: "32px",
+      lineHeight: "40px",
+      fontWeight: "600",
+      letterSpacing: "normal",
+      textTransform: "none",
+      color: "rgb(17, 24, 39)",
+      marginTop: "48px",
+      marginBottom: "16px",
+      fontFamily: "Inter"
+    }
+  ],
+  buttonVariants: [
+    {
+      count: 8,
+      example: "Get started",
+      spec: {
+        background: "rgb(37, 99, 235)",
+        color: "rgb(255, 255, 255)",
+        border: "none",
+        borderRadius: "8px",
+        padding: "12px 24px 12px 24px",
+        fontSize: "16px",
+        fontWeight: "600",
+        boxShadow: "",
+        textTransform: ""
+      }
+    },
+    {
+      count: 4,
+      example: "Learn more",
+      spec: {
+        background: "rgba(0, 0, 0, 0)",
+        color: "rgb(37, 99, 235)",
+        border: "1px solid rgb(37, 99, 235)",
+        borderRadius: "8px",
+        padding: "12px 24px 12px 24px",
+        fontSize: "16px",
+        fontWeight: "600",
+        boxShadow: "",
+        textTransform: ""
+      }
+    }
+  ],
+  formControl: {
+    tag: "input",
+    height: "40px",
+    padding: "8px 12px 8px 12px",
+    border: "1px solid rgb(209, 213, 219)",
+    borderRadius: "6px",
+    background: "rgb(255, 255, 255)",
+    color: "rgb(17, 24, 39)",
+    fontSize: "14px"
+  },
+  linkSpec: { color: "rgb(37, 99, 235)", textDecoration: "none", fontWeight: "500", usage: 18 },
+  layout: {
+    containerMaxWidth: "1280px",
+    flexCount: 120,
+    gridCount: 14,
+    zIndexScale: [10, 50, 100],
+    borderWidths: [{ value: "1px", count: 60 }],
+    sectionPaddings: [
+      { value: "96px", count: 4 },
+      { value: "64px", count: 2 }
+    ]
+  },
   components: [
     { type: "buttons", count: 12 },
     { type: "inputs", count: 9 },
@@ -193,9 +283,9 @@ assert.ok(skillValidation.isValid, `SKILL.md should be valid: ${skillValidation.
 assert.ok(skillMd.includes("TYPEUI_SH_MANAGED_START"), "SKILL.md should include managed markers");
 assert.ok(designMd.includes("WCAG 2.2 AA"), "DESIGN.md should include accessibility target");
 assert.ok(designMd.includes("- URL: https://example.com/dashboard"), "DESIGN.md should include extraction URL");
-assert.ok(designMd.includes("- Main font style: `font.family.primary=Inter`"), "DESIGN.md should include inferred main font style");
+assert.ok(designMd.includes("- Primary font: `Inter` — stack: `Inter, Helvetica Neue, Arial, sans-serif`"), "DESIGN.md should include inferred main font style");
 assert.ok(skillMd.includes("- URL: https://example.com/dashboard"), "SKILL.md should include extraction URL");
-assert.ok(skillMd.includes("- Main font style: `font.family.primary=Inter`"), "SKILL.md should include inferred main font style");
+assert.ok(skillMd.includes("- Primary font: `Inter` — stack: `Inter, Helvetica Neue, Arial, sans-serif`"), "SKILL.md should include inferred main font style");
 assert.ok(designMd.includes("- Audience: authenticated users and operators"), "DESIGN.md should infer audience from site signals");
 assert.ok(designMd.includes("- Product surface: dashboard web app"), "DESIGN.md should infer product surface from site signals");
 assert.ok(skillMd.includes("- Product surface: dashboard web app"), "SKILL.md should infer product surface from site signals");
@@ -211,8 +301,8 @@ assert.ok(normalized.spacingScale.some(s => s.value.includes("var(--spacing-marg
 assert.ok(!normalized.colorPalette.some(c => c.value.includes("#fefefe")), "visually similar color #fefefe should be merged into #ffffff");
 
 // GSAP animations assertions
-assert.ok(designMd.includes("Animations: GSAP v3.12.2 detected"), "DESIGN.md should include GSAP details");
-assert.ok(skillMd.includes("Animations: GSAP v3.12.2 detected"), "SKILL.md should include GSAP details");
+assert.ok(designMd.includes("- GSAP v3.12.2 detected: 1 active timelines"), "DESIGN.md should include GSAP details");
+assert.ok(skillMd.includes("- GSAP v3.12.2 detected: 1 active timelines"), "SKILL.md should include GSAP details");
 
 // Design platform assertions
 assert.ok(designMd.includes("- Design platform: FIGMA (Figma workspace detected. File Key: AbCdEfGh1234, Active Node ID: 1:23.)"), "DESIGN.md should include Figma platform details");
@@ -224,12 +314,14 @@ assert.equal(normalized.gradientTokens[0].usage, 2, "gradient usage should be co
 assert.deepEqual(normalized.breakpoints.map((b) => b.px), [640, 768, 1024], "breakpoints should be sorted ascending");
 assert.equal(normalized.keyframes.length, 2, "keyframes should be preserved");
 assert.equal(normalized.interactionStyles.length, 2, "interaction styles should be preserved");
-assert.ok(designMd.includes("- Gradients: `color.gradient.1=linear-gradient(135deg"), "DESIGN.md should include gradient tokens");
-assert.ok(designMd.includes("- Responsive breakpoints: 640px (12 rules), 768px (9 rules), 1024px (6 rules)"), "DESIGN.md should include breakpoints");
-assert.ok(designMd.includes("- Keyframe animations: `@keyframes fade-in` (2 steps), `@keyframes slide-up` (2 steps)"), "DESIGN.md should include keyframes");
-assert.ok(designMd.includes("- Interaction states: 2 hover/focus/active rules captured"), "DESIGN.md should include interaction states");
-assert.ok(skillMd.includes("- Responsive breakpoints: 640px (12 rules)"), "SKILL.md should include breakpoints");
-assert.ok(skillMd.includes("- Keyframe animations: `@keyframes fade-in` (2 steps)"), "SKILL.md should include keyframes");
+assert.ok(designMd.includes("- `color.gradient.1` = `linear-gradient(135deg"), "DESIGN.md should include gradient tokens");
+assert.ok(designMd.includes("### Responsive Breakpoints"), "DESIGN.md should include breakpoints section");
+assert.ok(designMd.includes("| sm | 640px | 12 |"), "DESIGN.md should include breakpoint table rows");
+assert.ok(designMd.includes("`@keyframes fade-in` (2 steps)"), "DESIGN.md should include keyframes");
+assert.ok(designMd.includes("### Interaction States (measured)"), "DESIGN.md should include interaction section");
+assert.ok(designMd.includes("- `.btn-primary:hover` → `background-color: rgb(37, 99, 235)`"), "DESIGN.md should include measured interaction rules");
+assert.ok(skillMd.includes("| sm | 640px | 12 |"), "SKILL.md should include breakpoints");
+assert.ok(skillMd.includes("`@keyframes fade-in` (2 steps)"), "SKILL.md should include keyframes");
 
 // css-assets: relative path computation
 assert.equal(relativePathBetween("css/main.css", "fonts/inter.woff2"), "../fonts/inter.woff2");
@@ -294,8 +386,8 @@ assert.deepEqual(folderForAssetUrl("https://x.com/a.svg#icon"), { folder: "img",
 assert.equal(normalized.runtimeAnimations.length, 1, "runtime animations should be preserved");
 assert.deepEqual(normalized.stack.map((s) => s.name), ["React", "Tailwind CSS"], "stack should be preserved");
 assert.equal(normalized.a11y.contrastFailures, 3, "a11y contrast failures should be preserved");
-assert.ok(designMd.includes("- Runtime animations (Web Animations API): `fade-in` (400ms ease-out)"), "DESIGN.md should include runtime animations");
-assert.ok(designMd.includes("- Detected tech stack: React, Tailwind CSS"), "DESIGN.md should include detected stack");
+assert.ok(designMd.includes("- Runtime (WAAPI): `fade-in` on `section.hero` — 400ms ease-out"), "DESIGN.md should include runtime animations");
+assert.ok(designMd.includes("- Detected tech stack: React (runtime global), Tailwind CSS"), "DESIGN.md should include detected stack");
 assert.ok(designMd.includes("- Measured contrast audit: 3/80 sampled text elements fail"), "DESIGN.md should include measured contrast audit");
 assert.ok(designMd.includes("- Target size audit: 5/40 interactive targets are below the 24x24px"), "DESIGN.md should include target size audit");
 assert.ok(skillMd.includes("- Measured contrast audit: 3/80"), "SKILL.md should include measured contrast audit");
@@ -372,6 +464,94 @@ assert.ok(designMd.includes("WCAG 2.2 AA"), "accessibility target must survive t
     const cView = new DataView(compressed.buffer);
     assert.equal(cView.getUint16(8, true), 8, "compressed entry should use method 8 (deflate)");
   }
+}
+
+// Expert-level generator assertions (tables, measured metrics, inventory)
+assert.ok(designMd.includes("### Color System"), "DESIGN.md should have a color system section");
+assert.ok(designMd.includes("| `color.text.primary` | `#111827` | — | 3 |"), "DESIGN.md color table should include text primary");
+assert.ok(designMd.includes("| `color.surface.base` | `#ffffff` | `var(--color-bg)` | 4 |"), "DESIGN.md color table should map CSS variables");
+assert.ok(/measured contrast \*\*\d+(\.\d+)?:1\*\*/.test(designMd), "DESIGN.md should compute the core contrast pair");
+assert.ok(designMd.includes("- Spacing base grid: **4px**"), "DESIGN.md should infer the spacing base grid");
+assert.ok(designMd.includes("- Estimated type scale ratio: ~1.2"), "DESIGN.md should estimate the type scale ratio");
+assert.ok(designMd.includes("| `font.size.xs` | `14px` | `var(--font-size-base)` |"), "DESIGN.md typography table should map CSS variables");
+assert.ok(designMd.includes("## Component Inventory"), "DESIGN.md should include the component inventory");
+assert.ok(designMd.includes("- **Buttons** (12 detected)"), "DESIGN.md should include a data-driven button spec");
+assert.ok(designMd.includes("## Implementation Notes"), "DESIGN.md should include implementation notes");
+assert.ok(designMd.includes("- Page loads 1 external stylesheet(s), 1 external script(s), 2 inline style block(s)."), "DESIGN.md should include resource counts");
+assert.ok(designMd.includes("- Self-hosted @font-face families: `Inter` (400, 700)"), "DESIGN.md should list @font-face families");
+assert.ok(designMd.includes("- Font files to self-host: `inter-400.woff2`, `inter-700.woff2`"), "DESIGN.md should list font files");
+assert.ok(designMd.includes("- Snap all spacing to the measured 4px base grid."), "DESIGN.md should include data-driven Do rules");
+assert.ok(designMd.includes("-color measured palette without a documented reason."), "DESIGN.md should include data-driven Don't rules");
+assert.ok(skillMd.includes("## Component Inventory"), "SKILL.md should include the component inventory");
+assert.ok(skillMd.includes("## Implementation Notes"), "SKILL.md should include implementation notes");
+
+// Frontmatter + atmosphere + agent guide (designmd / awesome-design-md fusion)
+assert.ok(designMd.startsWith("---\nversion: 1"), "DESIGN.md should start with YAML frontmatter");
+assert.ok(designMd.includes("name: example-ds-design-system"), "frontmatter should include a slugged name");
+assert.ok(designMd.includes("description: >-"), "frontmatter should include a folded description");
+assert.ok(designMd.includes('  text-primary: "#111827"'), "frontmatter colors block should map semantic names to hex");
+assert.ok(designMd.includes('  surface-base: "#ffffff"'), "frontmatter colors block should include surfaces");
+assert.ok(designMd.includes("  heading-h1:"), "frontmatter typography block should include measured headings");
+assert.ok(designMd.includes("    fontSize: 48px"), "frontmatter typography should carry measured sizes");
+assert.ok(designMd.includes('    fontFamily: "Inter, Helvetica Neue, Arial, sans-serif"'), "frontmatter body should carry the font stack");
+assert.ok(designMd.includes("Extracted design system: a light, airy canvas (#ffffff)"), "atmosphere should describe the canvas tone");
+assert.ok(designMd.includes("blue accent"), "atmosphere should name the accent hue");
+assert.ok(designMd.includes("## Agent Prompt Guide"), "DESIGN.md should include the agent prompt guide");
+assert.ok(designMd.includes("> Non-negotiables:"), "agent guide should include non-negotiables");
+assert.ok(designMd.includes("4px spacing grid"), "agent guide should include the measured grid");
+assert.ok(designMd.includes("- Touch targets: keep every interactive target at 24x24px minimum"), "responsive section should include touch targets");
+assert.ok(designMd.includes("- Collapsing strategy: below 640px"), "responsive section should include the collapsing strategy");
+assert.ok(skillMd.includes("## Agent Prompt Guide"), "SKILL.md should include the agent prompt guide");
+assert.ok(skillMd.includes("Extracted design system: a light, airy canvas"), "SKILL.md should include the atmosphere");
+assert.ok(skillMd.startsWith("---\nname: design-system-"), "SKILL.md must keep its own frontmatter format");
+
+// Element-precision assertions (heading hierarchy, button variants, layout, score)
+assert.ok(designMd.includes("Measured heading hierarchy:"), "DESIGN.md should include the heading hierarchy");
+assert.ok(designMd.includes("| `h1` | `48px/56px` | 700 | -0.02em | none | `#111827` | 0px/24px |"), "DESIGN.md heading table should include measured h1");
+assert.ok(designMd.includes("### Component Specs (measured)"), "DESIGN.md should include component specs");
+assert.ok(designMd.includes("/* button.primary — seen 8x, e.g. \"Get started\" */"), "DESIGN.md should include the primary button variant");
+assert.ok(designMd.includes("background: #2563eb;"), "DESIGN.md button spec should canonicalize colors to hex");
+assert.ok(designMd.includes("border: 1px solid rgb(37, 99, 235);"), "DESIGN.md should include the secondary button border");
+assert.ok(designMd.includes("- Form control (`input`): height 40px"), "DESIGN.md should include the form control spec");
+assert.ok(designMd.includes("- Links: color `#2563eb`") || designMd.includes("- Links: color `rgb(37, 99, 235)`"), "DESIGN.md should include the link spec");
+assert.ok(designMd.includes("### Layout System"), "DESIGN.md should include the layout system");
+assert.ok(designMd.includes("- Content container max-width: **1280px**"), "DESIGN.md should include the container width");
+assert.ok(designMd.includes("flexbox-first architecture"), "DESIGN.md should identify the layout method");
+assert.ok(designMd.includes("- Section vertical rhythm: 96px (4x), 64px (2x)"), "DESIGN.md should include section rhythm");
+assert.ok(designMd.includes("- Z-index scale: 10, 50, 100"), "DESIGN.md should include the z-index scale");
+assert.ok(designMd.includes("## Design Health Score"), "DESIGN.md should include the design score");
+assert.ok(/Measured design health: \*\*\d+\/100\*\*/.test(designMd), "DESIGN.md should include a numeric score");
+assert.ok(skillMd.includes("### Component Specs (measured)"), "SKILL.md should include component specs");
+assert.ok(skillMd.includes("## Design Health Score"), "SKILL.md should include the design score");
+
+// Complete JSON export
+{
+  const json = generateDesignJson(normalized, { version: "0.6.0" });
+  assert.equal(json.meta.generator, "Keys_Osi_Design.md-extractor v0.6.0", "JSON export should name the generator");
+  assert.equal(json.meta.sourceUrl, "https://example.com/dashboard", "JSON export should include the source URL");
+  assert.ok(json.tokens.colorCodes.includes("#111827"), "JSON export should include flat color codes");
+  assert.ok(json.tokens.colors.some((row) => row.cssVariable === "var(--color-bg)"), "JSON export should split CSS variables");
+  assert.equal(json.tokens.typography.estimatedScaleRatio, 1.2, "JSON export should include the scale ratio");
+  assert.equal(json.tokens.spacing.baseGrid, 4, "JSON export should include the spacing base grid");
+  assert.equal(json.resources.fontFaces.length, 2, "JSON export should include @font-face inventory");
+  assert.equal(json.resources.fontFaces[0].urls[0], "https://example.com/fonts/inter-400.woff2", "JSON export should include font file URLs");
+  assert.ok(json.w3cTokens && json.w3cTokens.color, "JSON export should embed W3C tokens");
+  assert.equal(json.animation.keyframes.length, 2, "JSON export should include keyframes");
+  assert.deepEqual(json.responsive.breakpoints.map((b) => b.px), [640, 768, 1024], "JSON export should include breakpoints");
+  assert.equal(json.accessibility.contrastFailures, 3, "JSON export should include the a11y audit");
+  assert.deepEqual(json.stack.map((s) => s.name), ["React", "Tailwind CSS"], "JSON export should include the stack");
+
+  const textPrimary = json.tokens.colors.find((row) => row.token === "color.text.primary");
+  assert.equal(textPrimary.formats.rgb, "rgb(17, 24, 39)", "JSON colors should include RGB format");
+  assert.ok(/^hsl\(\d+, \d+%, \d+%\)$/.test(textPrimary.formats.hsl), "JSON colors should include HSL format");
+  assert.equal(json.componentSpecs.headings.length, 2, "JSON should include the heading hierarchy");
+  assert.equal(json.componentSpecs.buttonVariants[0].name, "primary", "JSON should name button variants");
+  assert.equal(json.componentSpecs.buttonVariants[0].spec.background, "#2563eb", "JSON button colors should be canonical hex");
+  assert.equal(json.componentSpecs.buttonVariants[1].spec.background, "transparent", "transparent button backgrounds must stay transparent, not become black");
+  assert.equal(json.componentSpecs.formControl.tag, "input", "JSON should include the form control spec");
+  assert.equal(json.layout.containerMaxWidth, "1280px", "JSON should include the layout system");
+  assert.ok(json.designScore.score > 0 && json.designScore.score <= 100, "JSON should include the design score");
+  assert.ok(json.designScore.breakdown.length >= 6, "JSON design score should include its breakdown");
 }
 
 // Advanced audit sections (multi-viewport, dark mode, disclosures)

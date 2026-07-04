@@ -52,6 +52,8 @@ also run it standalone (`npm start`) if you only want the bridge.
 | `get_design_md` | The DESIGN.md blueprint (defaults to latest). |
 | `get_skill_md` | The agent-ready SKILL.md (defaults to latest). |
 | `get_design_tokens` | Tokens as `raw` (full normalized data), `w3c`, or `tailwind`. |
+| `list_curated_brands` | 60+ brand design systems from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md). |
+| `get_curated_design` | Fetches a curated brand DESIGN.md (Stripe, Linear, Vercel...) as a style reference. |
 
 ## Configuration
 

@@ -260,6 +260,79 @@ mcp.tool(
   }
 );
 
+/* ---------------------------------------------------------------- *
+ * Curated design library (VoltAgent/awesome-design-md)
+ * 60+ brand design systems, fetched on demand and cached in memory.
+ * ---------------------------------------------------------------- */
+
+const CURATED_REPO = "VoltAgent/awesome-design-md";
+const curatedCache = { brands: null, brandsAt: 0, files: new Map() };
+const CURATED_TTL_MS = 24 * 60 * 60 * 1000;
+
+async function fetchCuratedBrands() {
+  const now = Date.now();
+  if (curatedCache.brands && now - curatedCache.brandsAt < CURATED_TTL_MS) {
+    return curatedCache.brands;
+  }
+  const response = await fetch(
+    `https://api.github.com/repos/${CURATED_REPO}/contents/design-md`,
+    { headers: { "User-Agent": "design-extractor-mcp", Accept: "application/vnd.github+json" } }
+  );
+  if (!response.ok) {
+    throw new Error(`GitHub API responded ${response.status} — try again later.`);
+  }
+  const entries = await response.json();
+  const brands = entries
+    .filter((entry) => entry.type === "dir")
+    .map((entry) => entry.name)
+    .sort();
+  curatedCache.brands = brands;
+  curatedCache.brandsAt = now;
+  return brands;
+}
+
+async function fetchCuratedDesign(brand) {
+  const safeBrand = String(brand || "").toLowerCase().replace(/[^a-z0-9._-]/g, "");
+  if (!safeBrand) {
+    throw new Error("Provide a brand name from list_curated_brands.");
+  }
+  if (curatedCache.files.has(safeBrand)) {
+    return curatedCache.files.get(safeBrand);
+  }
+  const response = await fetch(
+    `https://raw.githubusercontent.com/${CURATED_REPO}/main/design-md/${safeBrand}/DESIGN.md`,
+    { headers: { "User-Agent": "design-extractor-mcp" } }
+  );
+  if (!response.ok) {
+    throw new Error(
+      `No curated DESIGN.md found for "${safeBrand}" (HTTP ${response.status}). Use list_curated_brands for valid names.`
+    );
+  }
+  const text = await response.text();
+  curatedCache.files.set(safeBrand, text);
+  return text;
+}
+
+mcp.tool(
+  "list_curated_brands",
+  "Lists the 60+ brand design systems available in the curated VoltAgent/awesome-design-md library (Stripe, Linear, Apple, Vercel...). Use get_curated_design to fetch one.",
+  {},
+  async () => {
+    const brands = await fetchCuratedBrands();
+    return textResult(JSON.stringify(brands, null, 2));
+  }
+);
+
+mcp.tool(
+  "get_curated_design",
+  "Fetches the curated DESIGN.md of a famous brand from VoltAgent/awesome-design-md (YAML tokens + full design-system analysis). Great as a style reference or to compare against an extraction.",
+  { brand: z.string().describe("Brand folder name, e.g. 'stripe', 'linear.app', 'vercel' — see list_curated_brands.") },
+  async ({ brand }) => {
+    const text = await fetchCuratedDesign(brand);
+    return textResult(text);
+  }
+);
+
 function textResult(text) {
   return { content: [{ type: "text", text }] };
 }

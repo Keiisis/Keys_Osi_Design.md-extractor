@@ -5,6 +5,7 @@ import { validateMarkdownOutput } from "./lib/validate.mjs";
 import { processCssAssets } from "./lib/css-assets.mjs";
 import { generateTailwindConfig, generateW3cTokens } from "./lib/export-tokens.mjs";
 import { generateDiffMarkdown } from "./lib/diff-tokens.mjs";
+import { generateDesignJson } from "./lib/generate-json-export.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
@@ -50,6 +51,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === "DOWNLOAD_ASSETS") {
+    handleDownloadAssets()
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
   if (message.type === "DOWNLOAD_TEXT") {
     handleDownloadText(message)
       .then((downloadId) => sendResponse({ ok: true, downloadId }))
@@ -90,7 +98,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function handleExtraction(message) {
-  const mode = message.mode === "skill" ? "skill" : "design";
+  const mode = ["skill", "json"].includes(message.mode) ? message.mode : "design";
   const tab = await getActiveTab();
   await injectExtractor(tab.id);
   await injectMainWorldInspector(tab.id);
@@ -101,13 +109,21 @@ async function handleExtraction(message) {
     normalized
   };
 
-  const markdown =
-    mode === "skill"
-      ? generateSkillMarkdown(context)
-      : generateDesignMarkdown(context);
-
-  const validation = validateMarkdownOutput(mode, markdown);
-  const filename = mode === "skill" ? "SKILL.md" : "DESIGN.md";
+  let markdown;
+  let validation = null;
+  let filename;
+  if (mode === "json") {
+    markdown = JSON.stringify(generateDesignJson(normalized, { version: chrome.runtime.getManifest().version }), null, 2);
+    filename = "design-system.json";
+  } else if (mode === "skill") {
+    markdown = generateSkillMarkdown(context);
+    validation = validateMarkdownOutput(mode, markdown);
+    filename = "SKILL.md";
+  } else {
+    markdown = generateDesignMarkdown(context);
+    validation = validateMarkdownOutput(mode, markdown);
+    filename = "DESIGN.md";
+  }
 
   if (message.persistOutputMode !== false) {
     await chrome.storage.local.set({
@@ -529,6 +545,75 @@ async function handleCopySite(message) {
       packaging: "files"
     };
   }
+}
+
+/**
+ * Downloads a focused assets ZIP: every stylesheet (rewritten to local
+ * paths), every script, every font file the CSS references, plus
+ * colors.json (palette, gradients, CSS variables) and fonts.json
+ * (@font-face inventory).
+ */
+async function handleDownloadAssets() {
+  const tab = await getActiveTab();
+  await injectExtractor(tab.id);
+  await injectMainWorldInspector(tab.id);
+
+  const payload = await sendTabMessage(tab.id, {
+    type: "TYPEUI_COPY_SITE",
+    options: { autoScroll: true, staticSnapshot: false, currentPagePath: "index.html" }
+  }).then((response) => response.payload);
+
+  // Pull fonts/@imports referenced inside the stylesheets too.
+  const { rewrittenCss, extraAssets } = await processCssAssets(payload.assets, fetchTextResource);
+  const rewrittenPaths = new Set(rewrittenCss.map((entry) => entry.path));
+  const allAssets = [...payload.assets, ...extraAssets];
+
+  const isWanted = (path) =>
+    path.startsWith("css/") || path.startsWith("js/") || path.startsWith("fonts/");
+
+  const extraction = await requestExtractionPayload(tab.id);
+  const normalized = normalizeExtractedStyles(extraction);
+
+  const colorsJson = {
+    palette: normalized.colorPalette,
+    colorCodes: (normalized.colorPalette || [])
+      .map((row) => String(row.value).split(" ")[0])
+      .filter((value) => value.startsWith("#")),
+    gradients: normalized.gradientTokens,
+    cssVariables: normalized.cssVariables
+  };
+
+  const siteName = String(tab.title || "site")
+    .replace(/[^a-z0-9]+/gi, "_")
+    .toLowerCase()
+    .slice(0, 30) || "site";
+
+  const zipFiles = [
+    ...rewrittenCss.map((entry) => ({ path: entry.path, content: entry.text })),
+    ...allAssets
+      .filter((asset) => isWanted(asset.path) && !rewrittenPaths.has(asset.path))
+      .map((asset) => ({ path: asset.path, url: asset.url })),
+    { path: "colors.json", content: JSON.stringify(colorsJson, null, 2) },
+    {
+      path: "fonts.json",
+      content: JSON.stringify(normalized.resources?.fontFaces || [], null, 2)
+    }
+  ];
+
+  const zipResult = await buildZipViaOffscreen(zipFiles);
+  const downloadId = await chrome.downloads.download({
+    url: zipResult.blobUrl,
+    filename: `${siteName}_assets.zip`,
+    saveAs: true,
+    conflictAction: "uniquify"
+  });
+  revokeBlobWhenDownloadSettles(downloadId, zipResult.blobUrl);
+
+  return {
+    fileCount: zipResult.fileCount,
+    skipped: zipResult.failures?.length || 0,
+    path: `${siteName}_assets.zip`
+  };
 }
 
 async function buildBlueprintFiles(tabId, screenshotCount, audit) {

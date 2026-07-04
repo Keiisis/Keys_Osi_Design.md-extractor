@@ -143,11 +143,38 @@ if (mcpBtn) {
   });
 }
 
+const assetsZipBtn = document.getElementById("assetsZipBtn");
+if (assetsZipBtn) {
+  assetsZipBtn.addEventListener("click", () => {
+    runDownloadAssets().catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
+async function runDownloadAssets() {
+  if (state.busy) {
+    return;
+  }
+  setBusy(true);
+  setStatus("Extraction des polices, CSS, JS et couleurs en cours...", false);
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "DOWNLOAD_ASSETS" });
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "Assets download failed.");
+    }
+    const skippedNote = response.skipped > 0 ? `, ${response.skipped} fichiers ignorés` : "";
+    setStatus(`Assets exportés : ${response.path} (${response.fileCount} fichiers${skippedNote})`, false);
+  } catch (error) {
+    setStatus(`Erreur d'export des assets : ${toErrorText(error)}`, true);
+  } finally {
+    setBusy(false);
+  }
+}
+
 init().catch((error) => setStatus(`Init failed: ${toErrorText(error)}`, true));
 
 async function init() {
   const data = await chrome.storage.local.get(["outputMode"]);
-  state.mode = data.outputMode === "skill" ? "skill" : "design";
+  state.mode = ["skill", "json"].includes(data.outputMode) ? data.outputMode : "design";
   syncModeUi();
   updateQuickInstallUi();
   await runExtraction();
@@ -248,12 +275,20 @@ async function downloadCurrent() {
     return;
   }
 
-  const response = await chrome.runtime.sendMessage({
-    type: "DOWNLOAD_MARKDOWN",
-    mode: state.mode,
-    filename: state.filename,
-    markdown: state.markdown
-  });
+  const response =
+    state.mode === "json"
+      ? await chrome.runtime.sendMessage({
+          type: "DOWNLOAD_TEXT",
+          filename: state.filename,
+          text: state.markdown,
+          mime: "application/json"
+        })
+      : await chrome.runtime.sendMessage({
+          type: "DOWNLOAD_MARKDOWN",
+          mode: state.mode,
+          filename: state.filename,
+          markdown: state.markdown
+        });
 
   if (!response || !response.ok) {
     throw new Error(response?.error || "Download failed.");
@@ -271,6 +306,10 @@ function setBusy(isBusy) {
     downloadJsonBtn.disabled = isBusy || !state.lastResult;
   }
   setExportButtonsEnabled(!isBusy && Boolean(state.lastResult));
+  const assetsBtn = document.getElementById("assetsZipBtn");
+  if (assetsBtn) {
+    assetsBtn.disabled = isBusy;
+  }
   for (const button of modeButtons) {
     button.disabled = isBusy;
   }
@@ -346,13 +385,24 @@ async function sendToMcp() {
   }
   setStatus("Envoi vers le bridge MCP local (127.0.0.1:8765)...", false);
 
-  const skillResponse = await chrome.runtime.sendMessage({
-    type: "RUN_EXTRACTION",
-    mode: state.mode === "skill" ? "design" : "skill",
-    persistOutputMode: false
-  });
-  const designMarkdown = state.mode === "design" ? state.markdown : skillResponse?.markdown || "";
-  const skillMarkdown = state.mode === "skill" ? state.markdown : skillResponse?.markdown || "";
+  let designMarkdown = state.mode === "design" ? state.markdown : "";
+  let skillMarkdown = state.mode === "skill" ? state.markdown : "";
+  if (!designMarkdown) {
+    const response = await chrome.runtime.sendMessage({
+      type: "RUN_EXTRACTION",
+      mode: "design",
+      persistOutputMode: false
+    });
+    designMarkdown = response?.markdown || "";
+  }
+  if (!skillMarkdown) {
+    const response = await chrome.runtime.sendMessage({
+      type: "RUN_EXTRACTION",
+      mode: "skill",
+      persistOutputMode: false
+    });
+    skillMarkdown = response?.markdown || "";
+  }
 
   const response = await chrome.runtime.sendMessage({
     type: "SEND_TO_MCP",
@@ -422,7 +472,8 @@ function syncModeUi() {
 }
 
 function renderGenerationExplanation() {
-  const modeLabel = state.mode === "skill" ? "SKILL.md" : "DESIGN.md";
+  const modeLabel =
+    state.mode === "skill" ? "SKILL.md" : state.mode === "json" ? "design-system.json" : "DESIGN.md";
   const result = state.lastResult;
 
   if (!result) {

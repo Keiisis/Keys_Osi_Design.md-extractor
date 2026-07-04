@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Keys_Osi_Design.md-extractor",
   "description": "Extract page styles and generate DESIGN.md or SKILL.md files and use it with Google Stitch, Claude, Codex, and Cursor.",
-  "version": "0.5.0",
+  "version": "0.8.0",
   "homepage_url": "https://www.typeui.sh",
   "permissions": [
     "activeTab",
