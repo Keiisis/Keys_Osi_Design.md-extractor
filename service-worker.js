@@ -1097,62 +1097,7 @@ async function injectMainWorldInspector(tabId) {
     await chrome.scripting.executeScript({
       target: { tabId },
       world: "MAIN",
-      func: () => {
-        const gsapInfo = {
-          detected: false,
-          version: null,
-          timelines: []
-        };
-
-        if (window.gsap) {
-          gsapInfo.detected = true;
-          gsapInfo.version = window.gsap.version || "unknown";
-
-          try {
-            const children = window.gsap.globalTimeline.getChildren(true, true, true);
-            gsapInfo.timelines = children.slice(0, 10).map(t => {
-              return {
-                type: t.constructor.name || "Tween",
-                duration: typeof t.duration === 'function' ? t.duration() : (t.duration || 0),
-                delay: typeof t.delay === 'function' ? t.delay() : (t.delay || 0),
-                vars: t.vars ? Object.keys(t.vars).filter(k => typeof t.vars[k] !== 'function') : []
-              };
-            });
-          } catch (e) {}
-        }
-
-        const frameworks = [];
-        const add = (name, evidence) => frameworks.push({ name, evidence });
-        try {
-          const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-          if ((hook && hook.renderers && hook.renderers.size > 0) || window.React) {
-            add("React", "runtime global");
-          }
-          if (window.next || window.__NEXT_DATA__) add("Next.js", "window.__NEXT_DATA__");
-          if (window.__VUE__ || window.__VUE_DEVTOOLS_GLOBAL_HOOK__) add("Vue", "runtime global");
-          if (window.__NUXT__ || window.useNuxtApp) add("Nuxt", "window.__NUXT__");
-          if (window.ng || window.getAllAngularRootElements) add("Angular", "runtime global");
-          if (window.__svelte) add("Svelte", "window.__svelte");
-          if (window.Shopify) add("Shopify", "window.Shopify");
-          if (window.Webflow) add("Webflow", "window.Webflow");
-          if (window.wixBiSession) add("Wix", "window.wixBiSession");
-          if (window.wp && window.wp.blocks) add("WordPress", "window.wp.blocks");
-          if (window.jQuery && window.jQuery.fn) {
-            add("jQuery", `v${window.jQuery.fn.jquery || "?"}`);
-          }
-          if (window.Alpine) add("Alpine.js", "window.Alpine");
-          if (window.htmx) add("htmx", "window.htmx");
-        } catch (e) {}
-
-        let meta = document.getElementById("__typeui_gsap_data");
-        if (!meta) {
-          meta = document.createElement("div");
-          meta.id = "__typeui_gsap_data";
-          meta.style.display = "none";
-          document.body.appendChild(meta);
-        }
-        meta.setAttribute("data-gsap", JSON.stringify({ gsap: gsapInfo, frameworks }));
-      }
+      files: ["inspector-main.js"]
     });
   } catch (e) {
     // ignore

@@ -192,6 +192,55 @@ const mockPayload = {
     fontSize: "14px"
   },
   linkSpec: { color: "rgb(37, 99, 235)", textDecoration: "none", fontWeight: "500", usage: 18 },
+  structure: [
+    {
+      role: "header/navigation",
+      tag: "header",
+      heading: "",
+      ctas: ["Sign in"],
+      layout: "flex row",
+      columns: 3,
+      imageCount: 1,
+      svgCount: 0,
+      linkCount: 6,
+      hasForm: false,
+      background: "#ffffff",
+      paddingY: "16px/16px",
+      height: 72
+    },
+    {
+      role: "hero",
+      tag: "section",
+      heading: "Manage your workspace",
+      ctas: ["Get started", "Book demo"],
+      layout: "grid (nested)",
+      columns: 2,
+      imageCount: 1,
+      svgCount: 2,
+      linkCount: 3,
+      hasForm: false,
+      background: "gradient",
+      paddingY: "96px/96px",
+      height: 640
+    }
+  ],
+  imageInventory: [
+    { src: "https://example.com/img/logo.svg", alt: "Example logo", role: "logo", width: 140, height: 40 },
+    { src: "https://example.com/img/hero.png", alt: "dashboard preview", role: "hero", width: 720, height: 480 },
+    { src: "https://example.com/img/icon-check.svg", alt: "", role: "icon", width: 24, height: 24 }
+  ],
+  forms: [
+    {
+      name: "newsletter",
+      method: "post",
+      fieldCount: 2,
+      fields: [
+        { tag: "input", type: "email", name: "email", placeholder: "you@company.com", required: true, label: "Email" },
+        { tag: "select", type: "select", name: "role", placeholder: "", required: false, label: "Role" }
+      ],
+      submitText: "Subscribe"
+    }
+  ],
   layout: {
     containerMaxWidth: "1280px",
     flexCount: 120,
@@ -242,8 +291,38 @@ const mockPayload = {
     detected: true,
     version: "3.12.2",
     timelines: [
-      { type: "Tween", duration: 1.5, delay: 0.2, vars: ["x", "opacity", "ease"] }
+      {
+        type: "Tween",
+        duration: 1.5,
+        delay: 0.2,
+        vars: ["x", "opacity", "ease"],
+        values: { x: 100, opacity: 1, ease: "power2.out" },
+        targets: ["section.hero"]
+      }
     ]
+  },
+  scrollTriggers: [
+    {
+      trigger: "section.hero",
+      start: "top top",
+      end: "+=100%",
+      scrub: true,
+      pin: true,
+      snap: false,
+      toggleActions: "",
+      animation: { y: -120, opacity: 0.4 }
+    }
+  ],
+  animationLibs: [
+    { name: "Three.js", evidence: "r160 (WebGL)" },
+    { name: "AOS", evidence: "data-aos attributes" }
+  ],
+  canvasInventory: [
+    { selector: "canvas#hero-gl", width: 1440, height: 800, context: "webgl2", inViewport: true }
+  ],
+  parallax: {
+    measured: [{ selector: "div.hero-bg", speedRatio: 0.42, kind: "scroll-linked transform" }],
+    fixedBackgroundCount: 1
   },
   platformInfo: {
     platform: "figma",
@@ -301,9 +380,23 @@ assert.ok(normalized.spacingScale.some(s => s.value.includes("var(--spacing-marg
 // Color clustering assertion
 assert.ok(!normalized.colorPalette.some(c => c.value.includes("#fefefe")), "visually similar color #fefefe should be merged into #ffffff");
 
-// GSAP animations assertions
-assert.ok(designMd.includes("- GSAP v3.12.2 detected: 1 active timelines"), "DESIGN.md should include GSAP details");
+// GSAP / ScrollTrigger / parallax / WebGL / animation-libs assertions
+assert.ok(designMd.includes("- GSAP v3.12.2 detected: 1 active timelines — Tween { x: 100, opacity: 1, ease: power2.out } on `section.hero` (1.5s)"), "DESIGN.md should include GSAP values and targets");
 assert.ok(skillMd.includes("- GSAP v3.12.2 detected: 1 active timelines"), "SKILL.md should include GSAP details");
+assert.ok(designMd.includes("- GSAP ScrollTrigger: 1 scroll-linked animations — `section.hero` (start top top, end +=100%, scrub, pinned) → { y: -120, opacity: 0.4 }"), "DESIGN.md should detail ScrollTrigger instances");
+assert.ok(designMd.includes("- Measured parallax (scroll-diff): `div.hero-bg` at 0.42x scroll speed"), "DESIGN.md should include measured parallax");
+assert.ok(designMd.includes("- Fixed-background parallax surfaces: 1"), "DESIGN.md should count fixed backgrounds");
+assert.ok(designMd.includes("- WebGL scenes: 1 — `canvas#hero-gl` (webgl2, 1440x800, above the fold), rendered with Three.js r160 (WebGL)"), "DESIGN.md should describe WebGL scenes");
+assert.ok(designMd.includes("- Animation libraries detected: Three.js (r160 (WebGL)), AOS (data-aos attributes)"), "DESIGN.md should list animation libraries");
+assert.ok(skillMd.includes("- GSAP ScrollTrigger: 1 scroll-linked animations"), "SKILL.md should include ScrollTrigger");
+{
+  const json = generateDesignJson(normalized, { version: "0.10.0" });
+  assert.equal(json.animation.scrollTriggers.length, 1, "JSON should include ScrollTrigger data");
+  assert.equal(json.animation.scrollTriggers[0].pin, true, "JSON ScrollTrigger should keep pin state");
+  assert.equal(json.animation.parallax.measured[0].speedRatio, 0.42, "JSON should include measured parallax");
+  assert.equal(json.animation.webgl.webglCount, 1, "JSON should count WebGL canvases");
+  assert.deepEqual(json.animation.libraries.map((l) => l.name), ["Three.js", "AOS"], "JSON should list animation libraries");
+}
 
 // Design platform assertions
 assert.ok(designMd.includes("- Design platform: FIGMA (Figma workspace detected. File Key: AbCdEfGh1234, Active Node ID: 1:23.)"), "DESIGN.md should include Figma platform details");
@@ -553,6 +646,23 @@ assert.ok(skillMd.includes("## Design Health Score"), "SKILL.md should include t
   assert.equal(json.layout.containerMaxWidth, "1280px", "JSON should include the layout system");
   assert.ok(json.designScore.score > 0 && json.designScore.score <= 100, "JSON should include the design score");
   assert.ok(json.designScore.breakdown.length >= 6, "JSON design score should include its breakdown");
+}
+
+// Page Anatomy (structure, images, forms)
+assert.ok(designMd.includes("## Page Anatomy"), "DESIGN.md should include the page anatomy");
+assert.ok(designMd.includes('1. **header/navigation** (`header`) — CTAs: "Sign in"; layout flex row (3 columns); 1 img / 0 svg; 6 links; background #ffffff; padding-y 16px/16px; ~72px tall'), "anatomy should describe the header block");
+assert.ok(designMd.includes('2. **hero** (`section`) — "Manage your workspace"; CTAs: "Get started", "Book demo"; layout grid (nested) (2 columns)'), "anatomy should describe the hero block with content");
+assert.ok(designMd.includes("Images: 1 logo, 1 hero, 1 icon."), "anatomy should summarize image roles");
+assert.ok(designMd.includes('- Logo: `logo.svg` (140x40, alt "Example logo")'), "anatomy should identify the logo");
+assert.ok(designMd.includes("- Hero visual: `hero.png` (720x480)"), "anatomy should identify the hero visual");
+assert.ok(designMd.includes('Form `newsletter` (POST, 2 fields): `Email` (email, required), `Role` (select) → submit "Subscribe"'), "anatomy should map forms");
+assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page anatomy");
+{
+  const json = generateDesignJson(normalized, { version: "0.10.0" });
+  assert.equal(json.structure.length, 2, "JSON should include the page structure");
+  assert.equal(json.structure[1].role, "hero", "JSON structure should keep roles");
+  assert.equal(json.images.find((img) => img.role === "logo").width, 140, "JSON should include the image inventory");
+  assert.equal(json.forms[0].fields[0].type, "email", "JSON should include the forms map");
 }
 
 // Design System Starter Kit

@@ -49,6 +49,7 @@ const FIXTURE_HTML = `<!doctype html>
 </head>
 <body>
   <header><nav>
+    <img src="/photo.png" alt="Fixture logo" class="logo" width="120" height="32" />
     <a href="/pricing">Pricing</a>
     <a href="/docs">Docs</a>
     <a href="https://external.example.com/x">External</a>
@@ -70,6 +71,18 @@ const FIXTURE_HTML = `<!doctype html>
       <details><summary>FAQ item</summary><p>Answer.</p></details>
     </section>
     <iframe src="/frame.html" title="widget" width="300" height="120"></iframe>
+    <section>
+      <div id="para" class="parallax-bg" style="will-change: transform; transform: translateY(0px); height: 80px; background: #eee">Parallax layer</div>
+      <canvas id="chart" width="200" height="100"></canvas>
+      <div data-aos="fade-up">Reveals on scroll</div>
+      <div class="swiper"><div class="swiper-wrapper"><div class="swiper-slide">Slide</div></div></div>
+      <form id="newsletter" method="post">
+        <label for="nl-email">Email</label>
+        <input id="nl-email" type="email" name="email" placeholder="you@company.com" required />
+        <button type="submit">Subscribe</button>
+      </form>
+    </section>
+    <div style="height: 1800px"></div>
   </main>
   <script>
     // Constructed stylesheet on the document (CSS-in-JS pattern).
@@ -100,6 +113,40 @@ const FIXTURE_HTML = `<!doctype html>
       [{ opacity: 0 }, { opacity: 1 }],
       { duration: 400, easing: "ease-out", fill: "forwards" }
     );
+
+    // JS parallax: layer moves at half the scroll speed.
+    window.addEventListener("scroll", () => {
+      document.getElementById("para").style.transform =
+        "translateY(" + window.scrollY * 0.5 + "px)";
+    });
+
+    // 2D canvas graphic.
+    const ctx = document.getElementById("chart").getContext("2d");
+    ctx.fillStyle = "#2563eb";
+    ctx.fillRect(0, 0, 200, 100);
+
+    // Fake GSAP + ScrollTrigger runtimes for the MAIN-world inspector.
+    window.gsap = {
+      version: "3.12.5",
+      globalTimeline: {
+        getChildren: () => [{
+          constructor: { name: "Tween" },
+          duration: () => 1.2,
+          delay: () => 0,
+          vars: { x: 100, opacity: 1, onComplete: function () {} },
+          targets: () => [document.querySelector("h1")]
+        }]
+      }
+    };
+    window.ScrollTrigger = {
+      getAll: () => [{
+        trigger: document.querySelector(".hero"),
+        start: 120,
+        end: 800,
+        vars: { scrub: true, pin: true, start: "top top" },
+        animation: { vars: { y: -120 } }
+      }]
+    };
   </script>
 </body>
 </html>`;
@@ -150,6 +197,10 @@ async function main() {
         }
       };
     });
+    // Run the MAIN-world inspector first (in E2E everything shares the
+    // page context), then the content script that reads its output.
+    const inspectorScript = await readFile(new URL("../../inspector-main.js", import.meta.url), "utf8");
+    await page.evaluate(inspectorScript);
     const contentScript = await readFile(new URL("../../content-script.js", import.meta.url), "utf8");
     await page.evaluate(contentScript);
 
@@ -202,6 +253,55 @@ async function main() {
     check("runs the a11y audit", p.a11y.contrastChecked > 0 && p.a11y.targetsChecked > 0);
     check("collects form control spec", p.formControl && p.formControl.tag === "input");
     check("collects link spec", Boolean(p.linkSpec));
+
+    console.log("Motion payload:");
+    check("detects GSAP with animated values", p.gsap && p.gsap.detected && p.gsap.timelines[0].values.x === 100);
+    check("describes GSAP targets", p.gsap.timelines[0].targets[0] === "h1");
+    check(
+      "captures ScrollTrigger details",
+      p.scrollTriggers.length === 1 &&
+        p.scrollTriggers[0].pin === true &&
+        p.scrollTriggers[0].scrub === true &&
+        p.scrollTriggers[0].trigger.includes(".hero") &&
+        p.scrollTriggers[0].animation.y === -120
+    );
+    check(
+      "measures JS parallax speed",
+      p.parallax.measured.some(
+        (item) => item.selector.includes("parallax-bg") && item.speedRatio > 0.3 && item.speedRatio < 0.7
+      )
+    );
+    check(
+      "inventories canvas graphics",
+      p.canvasInventory.some((item) => item.selector.includes("chart") && item.context === "2d")
+    );
+    const libNames = p.animationLibs.map((lib) => lib.name);
+    check("detects DOM animation libraries", libNames.includes("AOS") && libNames.includes("Swiper"));
+
+    console.log("Anatomy payload:");
+    const roles = p.structure.map((block) => block.role);
+    check("maps the page structure", p.structure.length >= 3);
+    check("identifies the header block", roles.includes("header/navigation"));
+    check(
+      "identifies the hero with its content",
+      p.structure.some(
+        (block) => block.role === "hero" && block.heading.includes("Fixture Dashboard") && block.ctas.includes("Get started")
+      )
+    );
+    check(
+      "detects the logo image",
+      p.imageInventory.some((img) => img.role === "logo" && img.alt === "Fixture logo")
+    );
+    check(
+      "maps the newsletter form",
+      p.forms.some(
+        (form) =>
+          form.name === "newsletter" &&
+          form.method === "post" &&
+          form.fields.some((field) => field.type === "email" && field.required && field.label === "Email") &&
+          form.submitText === "Subscribe"
+      )
+    );
 
     /* ---------------- copy site ---------------- */
     const copy = await dispatch({ type: "TYPEUI_COPY_SITE", options: { autoScroll: false, staticSnapshot: true } });

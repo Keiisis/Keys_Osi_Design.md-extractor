@@ -79,16 +79,16 @@
       return;
     }
 
-    try {
-      const payload = extractStylesFromPage();
-      sendResponse({ ok: true, payload });
-    } catch (error) {
-      const text = error instanceof Error ? error.message : "Unknown extraction error";
-      sendResponse({ ok: false, error: text });
-    }
+    extractStylesFromPage()
+      .then((payload) => sendResponse({ ok: true, payload }))
+      .catch((error) => {
+        const text = error instanceof Error ? error.message : "Unknown extraction error";
+        sendResponse({ ok: false, error: text });
+      });
+    return true;
   });
 
-  function extractStylesFromPage() {
+  async function extractStylesFromPage() {
     const sampledElements = collectSampledElements(280);
     const typography = [];
     const colors = [];
@@ -141,6 +141,8 @@
 
     let gsap = null;
     let mainWorldFrameworks = [];
+    let scrollTriggers = [];
+    let mainWorldLibs = [];
     try {
       const gsapEl = document.getElementById("__typeui_gsap_data");
       if (gsapEl) {
@@ -151,6 +153,12 @@
             mainWorldFrameworks = Array.isArray(inspectorData.frameworks)
               ? inspectorData.frameworks
               : [];
+            scrollTriggers = Array.isArray(inspectorData.scrollTriggers)
+              ? inspectorData.scrollTriggers
+              : [];
+            mainWorldLibs = Array.isArray(inspectorData.animationLibs)
+              ? inspectorData.animationLibs
+              : [];
           } else {
             // Backward-compatible: older inspector wrote the GSAP object directly.
             gsap = inspectorData;
@@ -158,6 +166,8 @@
         }
       }
     } catch (e) {}
+
+    const parallax = await measureParallax();
 
     return {
       source: {
@@ -178,6 +188,10 @@
       interactionStyles: collectInteractionStyles(),
       breakpoints: collectBreakpoints(),
       runtimeAnimations: collectRuntimeAnimations(),
+      scrollTriggers,
+      animationLibs: mergeAnimationLibs(mainWorldLibs, detectDomAnimationLibs()),
+      canvasInventory: collectCanvasInventory(),
+      parallax,
       a11y: collectAccessibilityMetrics(sampledElements),
       stack: detectStack(mainWorldFrameworks),
       resources: collectResourceInventory(),
@@ -186,6 +200,9 @@
       formControl: collectFormControlSpec(),
       linkSpec: collectLinkSpec(),
       layout: collectLayoutSignals(),
+      structure: collectPageStructure(),
+      imageInventory: collectImageInventory(),
+      forms: collectFormsMap(),
       components: collectComponentCounts(),
       siteSignals: collectSiteSignals(),
       cssVariables: collectCssVariables(),
@@ -1164,6 +1181,205 @@
     };
   }
 
+  // Page anatomy: the ordered list of top-level sections with their
+  // inferred role, layout, content, and surface — the wireframe an
+  // agent needs to rebuild the page, not just restyle it.
+  function collectPageStructure() {
+    const candidates = document.querySelectorAll(
+      "body > header, body > nav, header, footer, main > section, main > div, body > section, [role='banner'], [role='contentinfo']"
+    );
+    const blocks = [];
+    const used = [];
+
+    for (const el of candidates) {
+      if (blocks.length >= 14) break;
+      if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
+      const rect = el.getBoundingClientRect();
+      // Landmarks (header/nav/footer) are structural even when compact.
+      const isLandmark = ["header", "nav", "footer"].includes(el.tagName.toLowerCase());
+      if (rect.height < (isLandmark ? 24 : 60)) continue;
+      if (used.some((other) => other.contains(el) || el.contains(other))) continue;
+      used.push(el);
+      blocks.push(analyzeSection(el, blocks.length));
+    }
+    return blocks;
+  }
+
+  function analyzeSection(el, index) {
+    const style = computedStyleOf(el);
+    const rect = el.getBoundingClientRect();
+    const text = normalizeWhitespace(el.textContent || "").slice(0, 500).toLowerCase();
+    const headingEl = el.querySelector("h1, h2, h3");
+    const heading = headingEl ? normalizeWhitespace(headingEl.textContent || "").slice(0, 90) : "";
+
+    const ctas = [];
+    for (const button of el.querySelectorAll("button, [role='button'], a[class*='btn'], a[class*='button'], input[type='submit']")) {
+      if (ctas.length >= 3) break;
+      const label = normalizeWhitespace(button.textContent || button.getAttribute("value") || "").slice(0, 40);
+      if (label) ctas.push(label);
+    }
+
+    const imageCount = el.querySelectorAll("img").length;
+    const svgCount = el.querySelectorAll("svg").length;
+    const linkCount = el.querySelectorAll("a[href]").length;
+    const hasForm = Boolean(el.querySelector("form, input:not([type='hidden'])"));
+    const tag = el.tagName.toLowerCase();
+
+    let role = "content";
+    if (tag === "header" || el.getAttribute("role") === "banner") role = "header/navigation";
+    else if (tag === "footer" || el.getAttribute("role") === "contentinfo") role = "footer";
+    else if (/price|pricing|\/mo|\/month|per month|plan[s]?\b|tarif/.test(text)) role = "pricing";
+    else if (/testimonial|review|customers say|trusted by|avis/.test(text) && text.length < 2500) role = "testimonials";
+    else if (/faq|frequently asked|questions fréquentes/.test(text)) role = "faq";
+    else if (hasForm && /contact|subscribe|newsletter|get in touch/.test(text)) role = "contact/form";
+    else if (el.querySelector("h1") && index <= 2) role = "hero";
+    else if (imageCount + svgCount >= 3 && linkCount <= imageCount) role = "features/gallery";
+    else if (ctas.length > 0 && text.length < 400) role = "cta";
+
+    let columns = 0;
+    let layoutKind = style.display;
+    if (style.display === "grid") {
+      columns = style.gridTemplateColumns && style.gridTemplateColumns !== "none"
+        ? style.gridTemplateColumns.split(" ").length
+        : 0;
+      layoutKind = "grid";
+    } else if (style.display === "flex") {
+      layoutKind = `flex ${style.flexDirection}`;
+      if (style.flexDirection.startsWith("row")) {
+        columns = Math.min(el.children.length, 12);
+      }
+    } else {
+      // The layout often lives one wrapper deeper.
+      const inner = Array.from(el.children).find((child) => {
+        if (!(child instanceof HTMLElement)) return false;
+        const display = computedStyleOf(child).display;
+        return display === "grid" || display === "flex";
+      });
+      if (inner) {
+        const innerStyle = computedStyleOf(inner);
+        if (innerStyle.display === "grid") {
+          layoutKind = "grid (nested)";
+          columns = innerStyle.gridTemplateColumns !== "none"
+            ? innerStyle.gridTemplateColumns.split(" ").length
+            : 0;
+        } else {
+          layoutKind = `flex ${innerStyle.flexDirection} (nested)`;
+          if (innerStyle.flexDirection.startsWith("row")) {
+            columns = Math.min(inner.children.length, 12);
+          }
+        }
+      }
+    }
+
+    const bgColor = style.backgroundColor;
+    const bgImage = style.backgroundImage;
+    let background = "transparent";
+    if (bgImage && bgImage !== "none") {
+      background = bgImage.includes("gradient") ? "gradient" : "image";
+    } else if (bgColor && !bgColor.includes("rgba(0, 0, 0, 0)")) {
+      background = bgColor;
+    }
+
+    return {
+      role,
+      tag,
+      heading,
+      ctas,
+      layout: layoutKind,
+      columns,
+      imageCount,
+      svgCount,
+      linkCount,
+      hasForm,
+      background,
+      paddingY: `${style.paddingTop}/${style.paddingBottom}`,
+      height: Math.round(rect.height)
+    };
+  }
+
+  // Image inventory with role guesses: logo, hero, icon, photo.
+  function collectImageInventory() {
+    const images = [];
+    let heroAssigned = false;
+    for (const img of document.querySelectorAll("img")) {
+      if (images.length >= 20) break;
+      if (!(img instanceof HTMLElement) || !isVisible(img)) continue;
+      const rect = img.getBoundingClientRect();
+      const src = img.getAttribute("src") || img.getAttribute("data-src") || "";
+      let absSrc = src;
+      try {
+        absSrc = new URL(src, window.location.href).href;
+      } catch (e) {}
+      const alt = normalizeWhitespace(img.getAttribute("alt") || "").slice(0, 80);
+      const hint = `${img.className} ${src} ${alt}`.toLowerCase();
+
+      let role = "photo";
+      if (/logo|brand/.test(hint) || (img.closest("header, nav") && rect.height <= 80)) {
+        role = "logo";
+      } else if (Math.max(rect.width, rect.height) <= 48) {
+        role = "icon";
+      } else if (!heroAssigned && rect.top < window.innerHeight && rect.width * rect.height > 90000) {
+        role = "hero";
+        heroAssigned = true;
+      }
+
+      images.push({
+        src: absSrc,
+        alt,
+        role,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      });
+    }
+    return images;
+  }
+
+  // Forms map: every field with its label, type, and constraints —
+  // enough to rebuild the form without guessing.
+  function collectFormsMap() {
+    const forms = [];
+    for (const form of document.querySelectorAll("form")) {
+      if (forms.length >= 5) break;
+      if (!(form instanceof HTMLElement)) continue;
+
+      const fields = [];
+      for (const field of form.querySelectorAll("input:not([type='hidden']), textarea, select")) {
+        if (fields.length >= 12) break;
+        let label = "";
+        if (field.id) {
+          const labelEl = form.querySelector(`label[for="${CSS.escape(field.id)}"]`);
+          if (labelEl) label = normalizeWhitespace(labelEl.textContent || "");
+        }
+        if (!label) {
+          const parentLabel = field.closest("label");
+          if (parentLabel) label = normalizeWhitespace(parentLabel.textContent || "");
+        }
+        fields.push({
+          tag: field.tagName.toLowerCase(),
+          type: field.getAttribute("type") || (field.tagName === "SELECT" ? "select" : "text"),
+          name: field.getAttribute("name") || "",
+          placeholder: field.getAttribute("placeholder") || "",
+          required: field.hasAttribute("required"),
+          label: label.slice(0, 60)
+        });
+      }
+
+      const submitEl = form.querySelector("button[type='submit'], input[type='submit'], button:not([type])");
+      forms.push({
+        name:
+          form.getAttribute("id") ||
+          form.getAttribute("name") ||
+          form.getAttribute("aria-label") ||
+          `form-${forms.length + 1}`,
+        method: (form.getAttribute("method") || "get").toLowerCase(),
+        fieldCount: fields.length,
+        fields,
+        submitText: submitEl ? normalizeWhitespace(submitEl.textContent || submitEl.getAttribute("value") || "").slice(0, 40) : ""
+      });
+    }
+    return forms;
+  }
+
   // Measured heading hierarchy: the exact computed style of the first
   // visible instance of each heading level.
   function collectHeadingStyles() {
@@ -1448,6 +1664,157 @@
       elementCount: limit,
       source: window.location.href
     };
+  }
+
+  // Measured parallax detection: sample transforms/positions of likely
+  // candidates, scroll the page, resample, diff, restore. Any element
+  // whose transform changes with scroll (or that moves at a different
+  // speed than the page) is scroll-linked.
+  async function measureParallax() {
+    const result = { measured: [], fixedBackgroundCount: 0 };
+
+    // background-attachment: fixed surfaces are parallax by construction.
+    let scannedBg = 0;
+    for (const el of document.querySelectorAll("section, header, div[class], footer")) {
+      if (scannedBg >= 300) break;
+      if (!(el instanceof HTMLElement)) continue;
+      scannedBg += 1;
+      try {
+        if (computedStyleOf(el).backgroundAttachment.includes("fixed")) {
+          result.fixedBackgroundCount += 1;
+        }
+      } catch (e) {}
+    }
+
+    const scrollRoom = (document.body ? document.body.scrollHeight : 0) - window.innerHeight;
+    if (scrollRoom < 400) {
+      return result;
+    }
+
+    const candidates = [];
+    for (const el of getAllElementsDeep(3000)) {
+      if (candidates.length >= 150) break;
+      if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
+      let style;
+      try {
+        style = computedStyleOf(el);
+      } catch (e) {
+        continue;
+      }
+      if (style.position === "fixed" || style.position === "sticky") continue;
+      const hasTransform = style.transform && style.transform !== "none";
+      const willChange = (style.willChange || "").includes("transform");
+      const parallaxClass = /parallax|rellax|jarallax/i.test(el.className || "");
+      if (hasTransform || willChange || parallaxClass) {
+        candidates.push(el);
+      }
+    }
+    if (candidates.length === 0) {
+      return result;
+    }
+
+    const before = candidates.map((el) => ({
+      transform: computedStyleOf(el).transform,
+      top: el.getBoundingClientRect().top
+    }));
+
+    const startX = window.scrollX;
+    const startY = window.scrollY;
+    const delta = Math.min(600, scrollRoom - startY > 200 ? Math.min(600, scrollRoom - startY) : 600);
+    window.scrollTo({ top: startY + delta, behavior: "instant" });
+    await sleep(260);
+    const actualDelta = window.scrollY - startY;
+
+    if (actualDelta > 50) {
+      for (let i = 0; i < candidates.length && result.measured.length < 10; i++) {
+        const el = candidates[i];
+        try {
+          const afterTransform = computedStyleOf(el).transform;
+          const afterTop = el.getBoundingClientRect().top;
+          const movedBy = before[i].top - afterTop; // page content moves up by actualDelta
+          const speedRatio = Math.round((movedBy / actualDelta) * 100) / 100;
+          const transformChanged = afterTransform !== before[i].transform;
+          if (transformChanged && Math.abs(speedRatio - 1) > 0.12) {
+            result.measured.push({
+              selector: describeElement(el),
+              speedRatio,
+              kind: "scroll-linked transform"
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    window.scrollTo({ top: startY, left: startX, behavior: "instant" });
+    await sleep(150);
+    return result;
+  }
+
+  function detectDomAnimationLibs() {
+    const libs = [];
+    const domChecks = [
+      ["AOS", "[data-aos]", "data-aos attributes"],
+      ["Lottie", "lottie-player, dotlottie-player", "lottie web component"],
+      ["Swiper", ".swiper, .swiper-container", "carousel markup"],
+      ["Locomotive Scroll", "[data-scroll-container], [data-scroll-section]", "data-scroll markup"],
+      ["Lenis", "html.lenis, .lenis", "smooth-scroll class"],
+      ["Rellax", ".rellax", "parallax class"],
+      ["Particles", "#particles-js", "particles container"],
+      ["Jarallax", ".jarallax", "parallax class"],
+      ["Splide", ".splide", "carousel markup"],
+      ["Framer Motion", "[data-framer-name], [data-projection-id]", "framer attributes"]
+    ];
+    for (const [name, selector, evidence] of domChecks) {
+      try {
+        if (document.querySelector(selector)) {
+          libs.push({ name, evidence });
+        }
+      } catch (e) {}
+    }
+    return libs;
+  }
+
+  function mergeAnimationLibs(mainWorldLibs, domLibs) {
+    const merged = new Map();
+    for (const lib of [...(mainWorldLibs || []), ...(domLibs || [])]) {
+      if (lib && lib.name && !merged.has(lib.name)) {
+        merged.set(lib.name, {
+          name: String(lib.name),
+          evidence: String(lib.evidence || "")
+        });
+      }
+    }
+    return Array.from(merged.values()).slice(0, 14);
+  }
+
+  // Canvas inventory: dimensions, position, and context type. GPU-drawn
+  // content cannot be extracted as CSS, but knowing a WebGL scene sits
+  // in the hero changes how a reproduction should be planned.
+  function collectCanvasInventory() {
+    const inventory = [];
+    for (const canvas of getAllElementsDeep(4000)) {
+      if (inventory.length >= 10) break;
+      if (!(canvas instanceof HTMLCanvasElement)) continue;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 50 || rect.height < 50) continue;
+      let context = "unknown";
+      try {
+        // getContext returns the existing context for a matching type and
+        // null for a mismatched one, so probing identifies initialized
+        // canvases without disturbing them.
+        if (canvas.getContext("webgl2")) context = "webgl2";
+        else if (canvas.getContext("webgl")) context = "webgl";
+        else if (canvas.getContext("2d")) context = "2d";
+      } catch (e) {}
+      inventory.push({
+        selector: describeElement(canvas),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        context,
+        inViewport: rect.top < window.innerHeight && rect.bottom > 0
+      });
+    }
+    return inventory;
   }
 
   function collectRuntimeAnimations() {
