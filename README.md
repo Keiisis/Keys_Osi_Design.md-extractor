@@ -26,6 +26,8 @@ Check out curated design systems at [typeui.sh/design-skills](https://www.typeui
 | Generate `SKILL.md` | The same measured sections packaged as an agent-ready skill (frontmatter + managed markers). |
 | Generate JSON | Third output mode: a complete machine-readable `design-system.json` — every token with raw value + CSS variable, colors in **hex + RGB + HSL**, component specs (headings, button variants, form control, links), layout system, design score, fonts with file URLs, stylesheets/scripts inventory, animations, breakpoints, interactions, a11y audit, detected stack, and an embedded W3C tokens document. |
 | Fonts + CSS + JS + Colors (ZIP) | One-click assets ZIP: every stylesheet (rewritten to local paths), scripts, font files referenced by the CSS, plus `colors.json` and `fonts.json`. |
+| Starter Kit (ZIP) | The extracted design system as ready-to-use code: `tokens.css` (every token as CSS custom properties), `components.css` (measured buttons/input/card/link/headings), a zero-build `components.html` live preview, React components, `tailwind.config.js`, and W3C tokens. |
+| Extract this component (right-click) | Context-menu action on any element: downloads a standalone `component_<name>.html` with computed styles inlined on every node and absolute asset URLs — pixel-faithful, framework-free. |
 | Clone site (ZIP) | Packages the page — HTML, rewritten CSS (fonts/background images/`@import` chains resolved to local paths), images, fonts, media, inline SVG icons, PWA manifest/favicons, and optional section-by-section screenshots — into a single ZIP. Can crawl up to 10 internal pages with working local navigation. Optional static snapshot strips scripts so SPA clones render offline. |
 | Export tokens | `tailwind.config.js` and W3C Design Tokens JSON (Style Dictionary / Figma Tokens compatible). |
 | Advanced audit (opt-in) | Real device emulation at 375/768/1440px with per-viewport tokens + screenshots, and a `prefers-color-scheme: dark` capture with its own palette (only kept when the site actually implements a dark theme). Uses the `debugger` permission, requested on demand — never at install. |
@@ -91,10 +93,20 @@ The generated markdown follows this structure:
 
 ## Local development
 
-Run tests locally:
+Run the unit tests (generators, normalization, ZIP, tokens, diff):
 
 ```bash
-node tests/run-tests.mjs
+npm test
+```
+
+Run the end-to-end test — executes `content-script.js` inside a real local
+Chrome/Edge (via `playwright-core`, no browser download) against a fixture
+page covering shadow DOM, `adoptedStyleSheets`, same-origin iframes, WAAPI
+animations, and the clone's asset rewriting:
+
+```bash
+npm install
+npm run test:e2e   # or npm run test:all
 ```
 
 ## License

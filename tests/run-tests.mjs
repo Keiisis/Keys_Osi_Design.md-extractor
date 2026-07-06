@@ -14,6 +14,7 @@ import { createZip, crc32 } from "../lib/zip.mjs";
 import { generateTailwindConfig, generateW3cTokens } from "../lib/export-tokens.mjs";
 import { diffNormalized, generateDiffMarkdown } from "../lib/diff-tokens.mjs";
 import { generateDesignJson } from "../lib/generate-json-export.mjs";
+import { generateStarterKit } from "../lib/generate-starter-kit.mjs";
 
 const mockPayload = {
   source: {
@@ -552,6 +553,41 @@ assert.ok(skillMd.includes("## Design Health Score"), "SKILL.md should include t
   assert.equal(json.layout.containerMaxWidth, "1280px", "JSON should include the layout system");
   assert.ok(json.designScore.score > 0 && json.designScore.score <= 100, "JSON should include the design score");
   assert.ok(json.designScore.breakdown.length >= 6, "JSON design score should include its breakdown");
+}
+
+// Design System Starter Kit
+{
+  const kit = generateStarterKit(normalized, { name: "Example DS" });
+  const byPath = new Map(kit.map((file) => [file.path, file.content]));
+
+  const tokens = byPath.get("starter-kit/tokens.css");
+  assert.ok(tokens.includes("--color-text-primary: #111827;"), "tokens.css should include measured colors");
+  assert.ok(tokens.includes("--font-size-xs: 14px;"), "tokens.css should include the type scale");
+  assert.ok(tokens.includes("--space-1: 8px;"), "tokens.css should include spacing");
+  assert.ok(tokens.includes("--font-family-primary: Inter"), "tokens.css should include the font stack");
+
+  const components = byPath.get("starter-kit/components.css");
+  assert.ok(components.includes(".ko-button--primary {"), "components.css should include the primary button");
+  assert.ok(components.includes("background: #2563eb;"), "button variant should use the measured background");
+  assert.ok(components.includes(".ko-button--secondary {"), "components.css should include the secondary button");
+  assert.ok(components.includes("background: transparent;"), "secondary button should keep transparency");
+  assert.ok(components.includes("h1 {"), "components.css should style measured headings");
+  assert.ok(components.includes("font-size: 48px;"), "h1 should use the measured size");
+  assert.ok(components.includes(".ko-input {"), "components.css should include the input spec");
+  assert.ok(components.includes(".ko-card {"), "components.css should include a card");
+  assert.ok(components.includes(":focus-visible"), "components should keep focus affordances");
+
+  const preview = byPath.get("starter-kit/components.html");
+  assert.ok(preview.includes('<link rel="stylesheet" href="tokens.css"'), "preview should link tokens.css");
+  assert.ok(preview.includes('class="ko-button--primary"'), "preview should render button variants");
+  assert.ok(preview.includes("Get started"), "preview should use measured button labels");
+  assert.ok(preview.includes("color.text.primary"), "preview should show color swatches");
+
+  const button = byPath.get("starter-kit/react/Button.jsx");
+  assert.ok(button.includes('import "../components.css"'), "React button should import the css");
+  assert.ok(button.includes('variant = "primary"'), "React button should default to the first variant");
+  assert.ok(byPath.has("starter-kit/react/Input.jsx"), "kit should include the React input");
+  assert.ok(byPath.has("starter-kit/README.md"), "kit should include a README");
 }
 
 // Advanced audit sections (multi-viewport, dark mode, disclosures)

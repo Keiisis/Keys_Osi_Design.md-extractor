@@ -43,6 +43,21 @@
       setTimeout(() => sendResponse({ ok: true, scrollY: window.scrollY }), 350);
       return true;
     }
+    if (message && message.type === "TYPEUI_EXTRACT_ELEMENT") {
+      try {
+        const target = message.selector
+          ? document.querySelector(message.selector)
+          : lastContextMenuTarget;
+        if (!target || !(target instanceof HTMLElement)) {
+          sendResponse({ ok: false, error: "No element selected. Right-click an element first." });
+          return;
+        }
+        sendResponse({ ok: true, ...serializeElementAsComponent(target) });
+      } catch (error) {
+        sendResponse({ ok: false, error: error instanceof Error ? error.message : "Element extraction error" });
+      }
+      return;
+    }
     if (message && message.type === "TYPEUI_SAFE_INTERACT_OPEN") {
       try {
         sendResponse({ ok: true, ...openSafeDisclosures() });
@@ -84,7 +99,7 @@
     const backgroundImages = [];
 
     for (const el of sampledElements) {
-      const style = window.getComputedStyle(el);
+      const style = computedStyleOf(el);
       typography.push({
         fontFamily: normalizeWhitespace(style.fontFamily),
         fontSize: style.fontSize,
@@ -236,11 +251,13 @@
     return output;
   }
 
-  // Depth-first walk that also enters open shadow roots, so web-component
-  // sites (Stencil, Lit, Salesforce...) are not invisible to extraction.
+  // Depth-first walk that also enters open shadow roots and same-origin
+  // iframes, so web-component sites and embedded widgets are not
+  // invisible to extraction.
   function getAllElementsDeep(limit) {
     const output = [];
     const stack = document.documentElement ? [document.documentElement] : [];
+    let iframesEntered = 0;
     while (stack.length > 0 && output.length < limit) {
       const node = stack.pop();
       if (!node) {
@@ -250,6 +267,17 @@
       if (node.shadowRoot) {
         for (let i = node.shadowRoot.children.length - 1; i >= 0; i--) {
           stack.push(node.shadowRoot.children[i]);
+        }
+      }
+      if (node.tagName === "IFRAME" && iframesEntered < 5) {
+        try {
+          const doc = node.contentDocument;
+          if (doc && doc.documentElement) {
+            iframesEntered += 1;
+            stack.push(doc.documentElement);
+          }
+        } catch (e) {
+          // cross-origin iframe
         }
       }
       for (let i = node.children.length - 1; i >= 0; i--) {
@@ -269,7 +297,7 @@
     if (rect.width <= 0 || rect.height <= 0) {
       return false;
     }
-    const style = window.getComputedStyle(el);
+    const style = computedStyleOf(el);
     if (style.display === "none" || style.visibility === "hidden") {
       return false;
     }
@@ -422,31 +450,24 @@
   function collectCssVariables() {
     const variables = {};
     try {
-      for (const sheet of document.styleSheets) {
-        try {
-          const rules = sheet.cssRules || sheet.rules;
-          if (!rules) continue;
-          for (const rule of rules) {
-            if (rule.type === CSSRule.STYLE_RULE) {
-              const selector = rule.selectorText ? rule.selectorText.toLowerCase() : "";
-              if (selector.includes(":root") || selector.includes("body") || selector.includes("html") || selector === "*") {
-                const style = rule.style;
-                for (let i = 0; i < style.length; i++) {
-                  const prop = style[i];
-                  if (prop.startsWith("--")) {
-                    const val = style.getPropertyValue(prop).trim();
-                    if (val) {
-                      variables[prop] = val;
-                    }
-                  }
-                }
+      forEachAccessibleRule((rule) => {
+        if (rule.type !== CSSRule.STYLE_RULE) {
+          return;
+        }
+        const selector = rule.selectorText ? rule.selectorText.toLowerCase() : "";
+        if (selector.includes(":root") || selector.includes("body") || selector.includes("html") || selector.includes(":host") || selector === "*") {
+          const style = rule.style;
+          for (let i = 0; i < style.length; i++) {
+            const prop = style[i];
+            if (prop.startsWith("--")) {
+              const val = style.getPropertyValue(prop).trim();
+              if (val) {
+                variables[prop] = val;
               }
             }
           }
-        } catch (e) {
-          // ignore cross-origin stylesheet errors
         }
-      }
+      });
     } catch (e) {
       // ignore
     }
@@ -475,8 +496,65 @@
     return Object.entries(variables).map(([name, value]) => ({ name, value }));
   }
 
+  // Computed style resolved through the element's own document view, so
+  // elements inside same-origin iframes are measured correctly.
+  function computedStyleOf(el) {
+    const view = (el && el.ownerDocument && el.ownerDocument.defaultView) || window;
+    return view.getComputedStyle(el);
+  }
+
+  function getSameOriginIframeDocs(limit) {
+    const docs = [];
+    for (const iframe of document.querySelectorAll("iframe")) {
+      if (docs.length >= limit) break;
+      try {
+        const doc = iframe.contentDocument;
+        if (doc && doc.documentElement) {
+          docs.push(doc);
+        }
+      } catch (e) {
+        // cross-origin iframe
+      }
+    }
+    return docs;
+  }
+
+  function getOpenShadowRoots(limit) {
+    const roots = [];
+    for (const el of getAllElementsDeep(6000)) {
+      if (roots.length >= limit) break;
+      if (el.shadowRoot) {
+        roots.push(el.shadowRoot);
+      }
+    }
+    return roots;
+  }
+
+  // Iterates every reachable CSS rule: document stylesheets, constructed
+  // stylesheets (adoptedStyleSheets — CSS-in-JS, web components), open
+  // shadow roots, and same-origin iframe documents.
   function forEachAccessibleRule(callback) {
-    for (const sheet of document.styleSheets) {
+    const sheets = [];
+    const pushAll = (list) => {
+      try {
+        for (const sheet of list || []) {
+          sheets.push(sheet);
+        }
+      } catch (e) {}
+    };
+
+    pushAll(document.styleSheets);
+    pushAll(document.adoptedStyleSheets);
+    for (const root of getOpenShadowRoots(50)) {
+      pushAll(root.styleSheets);
+      pushAll(root.adoptedStyleSheets);
+    }
+    for (const doc of getSameOriginIframeDocs(5)) {
+      pushAll(doc.styleSheets);
+      pushAll(doc.adoptedStyleSheets);
+    }
+
+    for (const sheet of sheets) {
       try {
         const rules = sheet.cssRules || sheet.rules;
         if (!rules) continue;
@@ -556,8 +634,21 @@
         return;
       }
       const declarations = [];
+      const seenProps = new Set();
+      const pushDeclaration = (prop, value) => {
+        if (value && !seenProps.has(prop) && declarations.length < 6) {
+          seenProps.add(prop);
+          declarations.push(`${prop}: ${value}`);
+        }
+      };
       try {
-        for (let i = 0; i < rule.style.length; i++) {
+        // Query shorthands directly first: a shorthand written with var()
+        // (e.g. `outline: 2px solid var(--x)`) leaves its longhands empty
+        // in the CSSOM, so iterating style[i] alone would miss it.
+        for (const prop of interactionProps) {
+          pushDeclaration(prop, rule.style.getPropertyValue(prop).trim());
+        }
+        for (let i = 0; i < rule.style.length && declarations.length < 6; i++) {
           const prop = rule.style[i];
           const isInteresting = interactionProps.some(
             (candidate) => prop === candidate || prop.startsWith(`${candidate}-`)
@@ -565,11 +656,7 @@
           if (!isInteresting) {
             continue;
           }
-          const value = rule.style.getPropertyValue(prop).trim();
-          if (value) {
-            declarations.push(`${prop}: ${value}`);
-          }
-          if (declarations.length >= 6) break;
+          pushDeclaration(prop, rule.style.getPropertyValue(prop).trim());
         }
       } catch (e) {}
       if (declarations.length === 0) {
@@ -716,6 +803,7 @@
     }
 
     collectComputedBackgroundImageAssets(addAsset);
+    collectSameOriginIframeAssets(addAsset);
     const siteMeta = collectSiteMetaAndAssets(addAsset);
     const generatedFiles = [
       ...collectInlineSvgIcons(),
@@ -927,6 +1015,27 @@
     return meta;
   }
 
+  // Media inside same-origin iframes (embedded widgets, players...):
+  // downloaded alongside the page assets. The iframe itself keeps its
+  // original URL in the clone.
+  function collectSameOriginIframeAssets(addAsset) {
+    for (const doc of getSameOriginIframeDocs(5)) {
+      const nodes = doc.querySelectorAll("img, source, video, audio");
+      let scanned = 0;
+      for (const node of nodes) {
+        if (scanned >= 80) break;
+        scanned += 1;
+        const src = node.getAttribute("src") || node.getAttribute("data-src");
+        if (!src) continue;
+        try {
+          const absUrl = new URL(src, doc.baseURI).href;
+          const isImage = node.tagName === "IMG" || /\.(png|jpe?g|gif|webp|avif|svg)([?#]|$)/i.test(absUrl);
+          addAsset(absUrl, isImage ? "img" : "video", isImage ? ".png" : ".mp4");
+        } catch (e) {}
+      }
+    }
+  }
+
   function collectComputedBackgroundImageAssets(addAsset) {
     const elements = getAllElementsDeep(4000);
     let scanned = 0;
@@ -936,7 +1045,7 @@
       scanned += 1;
       let backgroundImage = "";
       try {
-        backgroundImage = window.getComputedStyle(el).backgroundImage;
+        backgroundImage = computedStyleOf(el).backgroundImage;
       } catch (e) {
         continue;
       }
@@ -1064,7 +1173,7 @@
         (node) => node instanceof HTMLElement && isVisible(node)
       );
       if (!el) continue;
-      const style = window.getComputedStyle(el);
+      const style = computedStyleOf(el);
       out.push({
         level,
         fontSize: style.fontSize,
@@ -1093,7 +1202,7 @@
       if (scanned >= 60) break;
       if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
       scanned += 1;
-      const style = window.getComputedStyle(el);
+      const style = computedStyleOf(el);
       const spec = {
         background:
           style.backgroundImage && style.backgroundImage !== "none"
@@ -1129,7 +1238,7 @@
       (node) => node instanceof HTMLElement && isVisible(node)
     );
     if (!el) return null;
-    const style = window.getComputedStyle(el);
+    const style = computedStyleOf(el);
     const rect = el.getBoundingClientRect();
     return {
       tag: el.tagName.toLowerCase(),
@@ -1150,7 +1259,7 @@
       if (scanned >= 40) break;
       if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
       scanned += 1;
-      const style = window.getComputedStyle(el);
+      const style = computedStyleOf(el);
       const key = JSON.stringify({
         color: style.color,
         textDecoration: style.textDecorationLine,
@@ -1175,7 +1284,7 @@
       if (scanned >= 200) break;
       if (!(el instanceof HTMLElement)) continue;
       scanned += 1;
-      const maxWidth = window.getComputedStyle(el).maxWidth;
+      const maxWidth = computedStyleOf(el).maxWidth;
       if (maxWidth && maxWidth !== "none" && maxWidth.endsWith("px")) {
         maxWidthCounts.set(maxWidth, (maxWidthCounts.get(maxWidth) || 0) + 1);
       }
@@ -1192,7 +1301,7 @@
       if (!(el instanceof HTMLElement)) continue;
       let style;
       try {
-        style = window.getComputedStyle(el);
+        style = computedStyleOf(el);
       } catch (e) {
         continue;
       }
@@ -1211,7 +1320,7 @@
     const sectionPaddingCounts = new Map();
     for (const el of document.querySelectorAll("body > section, main > section, main > div, body > main > *")) {
       if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
-      const pt = window.getComputedStyle(el).paddingTop;
+      const pt = computedStyleOf(el).paddingTop;
       const px = Number.parseFloat(pt);
       if (Number.isFinite(px) && px >= 16) {
         sectionPaddingCounts.set(pt, (sectionPaddingCounts.get(pt) || 0) + 1);
@@ -1231,6 +1340,113 @@
         .sort((a, b) => b[1] - a[1])
         .slice(0, 4)
         .map(([value, count]) => ({ value, count }))
+    };
+  }
+
+  // "Extract this component": tracks the element under the last
+  // right-click so the context-menu action knows what to serialize.
+  let lastContextMenuTarget = null;
+  document.addEventListener(
+    "contextmenu",
+    (event) => {
+      if (event.target instanceof HTMLElement) {
+        lastContextMenuTarget = event.target;
+      }
+    },
+    true
+  );
+
+  // Serializes an element subtree into a standalone HTML document:
+  // computed styles inlined on every node, asset URLs made absolute.
+  const COMPONENT_STYLE_PROPS = [
+    "display", "position", "flex-direction", "flex-wrap", "flex", "justify-content",
+    "align-items", "align-self", "gap", "grid-template-columns", "grid-template-rows",
+    "width", "max-width", "min-width", "height", "min-height", "aspect-ratio",
+    "margin", "padding", "box-sizing", "overflow",
+    "background-color", "background-image", "background-size", "background-position", "background-repeat",
+    "color", "font-family", "font-size", "font-weight", "font-style", "line-height",
+    "letter-spacing", "text-align", "text-transform", "text-decoration", "white-space",
+    "border", "border-radius", "box-shadow", "outline", "opacity", "z-index",
+    "transition", "transform", "cursor", "object-fit", "list-style"
+  ];
+
+  function serializeElementAsComponent(target) {
+    const clone = target.cloneNode(true);
+    const originals = [target, ...target.querySelectorAll("*")];
+    const clones = [clone, ...clone.querySelectorAll("*")];
+    const limit = Math.min(originals.length, clones.length, 300);
+
+    for (let i = 0; i < limit; i++) {
+      const original = originals[i];
+      const copy = clones[i];
+      if (!(original instanceof HTMLElement) || !(copy instanceof HTMLElement)) {
+        continue;
+      }
+      const style = computedStyleOf(original);
+      const declarations = [];
+      for (const prop of COMPONENT_STYLE_PROPS) {
+        const value = style.getPropertyValue(prop);
+        if (value && value !== "none" && value !== "normal" && value !== "auto") {
+          declarations.push(`${prop}: ${value}`);
+        }
+      }
+      copy.setAttribute("style", declarations.join("; "));
+      copy.removeAttribute("class");
+      copy.removeAttribute("id");
+
+      if (copy.tagName === "IMG") {
+        const src = original.getAttribute("src") || original.getAttribute("data-src");
+        if (src) {
+          try {
+            copy.setAttribute("src", new URL(src, window.location.href).href);
+          } catch (e) {}
+        }
+        copy.removeAttribute("srcset");
+        copy.removeAttribute("loading");
+      }
+      if (copy.tagName === "A") {
+        const href = original.getAttribute("href");
+        if (href) {
+          try {
+            copy.setAttribute("href", new URL(href, window.location.href).href);
+          } catch (e) {}
+        }
+      }
+    }
+
+    for (const script of clone.querySelectorAll("script")) {
+      script.remove();
+    }
+
+    const suggestedName = (
+      target.id ||
+      (target.className && String(target.className).split(/\s+/)[0]) ||
+      target.tagName.toLowerCase()
+    )
+      .replace(/[^a-z0-9-_]/gi, "")
+      .slice(0, 40) || "component";
+
+    const bodyStyle = computedStyleOf(document.body || document.documentElement);
+    const html = [
+      "<!doctype html>",
+      '<html lang="en">',
+      "<head>",
+      '  <meta charset="utf-8" />',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+      `  <title>${suggestedName} — extracted component</title>`,
+      `  <!-- Extracted from ${window.location.href} by Keys_Osi_Design.md-extractor -->`,
+      "</head>",
+      `<body style="margin:0; padding:24px; background:${bodyStyle.backgroundColor}; font-family:${bodyStyle.fontFamily.replace(/"/g, "'")}">`,
+      clone.outerHTML,
+      "</body>",
+      "</html>"
+    ].join("\n");
+
+    return {
+      html,
+      suggestedName,
+      elementCount: limit,
+      source: window.location.href
     };
   }
 
@@ -1305,7 +1521,7 @@
       if (!hasDirectText) {
         continue;
       }
-      const style = window.getComputedStyle(el);
+      const style = computedStyleOf(el);
       const fg = parseColorToRgb(style.color);
       const bg = resolveEffectiveBackground(el);
       if (!fg || !bg) {
@@ -1353,7 +1569,7 @@
   function resolveEffectiveBackground(el) {
     let current = el;
     for (let depth = 0; current && depth < 12; depth++) {
-      const bg = parseColorToRgb(window.getComputedStyle(current).backgroundColor);
+      const bg = parseColorToRgb(computedStyleOf(current).backgroundColor);
       if (bg && bg.a > 0.05) {
         return bg;
       }

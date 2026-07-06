@@ -1,3 +1,5 @@
+import { computeDesignScore } from "../lib/generate-design-md.mjs";
+
 const state = {
   markdown: "",
   filename: "",
@@ -148,6 +150,32 @@ if (assetsZipBtn) {
   assetsZipBtn.addEventListener("click", () => {
     runDownloadAssets().catch((error) => setStatus(toErrorText(error), true));
   });
+}
+
+const starterKitBtn = document.getElementById("starterKitBtn");
+if (starterKitBtn) {
+  starterKitBtn.addEventListener("click", () => {
+    runDownloadStarterKit().catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
+async function runDownloadStarterKit() {
+  if (state.busy) {
+    return;
+  }
+  setBusy(true);
+  setStatus("Génération du starter kit (tokens, composants, preview)...", false);
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "DOWNLOAD_STARTER_KIT" });
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "Starter kit generation failed.");
+    }
+    setStatus(`Starter kit exporté : ${response.path} (${response.fileCount} fichiers — ouvre components.html pour la preview)`, false);
+  } catch (error) {
+    setStatus(`Erreur starter kit : ${toErrorText(error)}`, true);
+  } finally {
+    setBusy(false);
+  }
 }
 
 async function runDownloadAssets() {
@@ -499,33 +527,48 @@ function renderGenerationExplanation() {
     typographyTokens: (normalized.typographyScale || []).length,
     colorTokens: (normalized.colorPalette || []).length,
     spacingTokens: (normalized.spacingScale || []).length,
-    radiusTokens: (normalized.radiusTokens || []).length,
+    gradientTokens: (normalized.gradientTokens || []).length,
     shadowTokens: (normalized.shadowTokens || []).length,
-    motionTokens: (normalized.motionDurationTokens || []).length + (normalized.motionEasingTokens || []).length
+    keyframes: (normalized.keyframes || []).length,
+    interactionRules: (normalized.interactionStyles || []).length,
+    breakpoints: (normalized.breakpoints || []).length,
+    runtimeAnimations: (normalized.runtimeAnimations || []).length,
+    headings: (normalized.headings || []).length,
+    buttonVariants: (normalized.buttonVariants || []).length
   };
 
-  const componentHints = (normalized.componentHints || [])
-    .slice(0, 5)
-    .map((item) => `${item.type}: ${item.count}`)
-    .join(", ");
+  const stackNames = (normalized.stack || []).map((item) => item.name).join(", ");
+  const fontFaceCount = normalized.resources?.fontFaces?.length || 0;
+
+  let scoreHtml = "";
+  try {
+    const { score, breakdown } = computeDesignScore(normalized);
+    scoreHtml = `<li><strong>Design Health Score.</strong> ${escapeHtml(String(score))}/100 — ${escapeHtml(breakdown.slice(0, 3).join("; "))}.</li>`;
+  } catch (error) {
+    scoreHtml = "";
+  }
 
   const inferenceEvidence = (siteProfile.evidence || []).slice(0, 5).join("; ");
   const inferenceText = siteProfile.audience || siteProfile.productSurface
     ? `Audience "${escapeHtml(siteProfile.audience || "n/a")}" and surface "${escapeHtml(siteProfile.productSurface || "n/a")}" inferred with ${escapeHtml(siteProfile.confidence || "unknown")} confidence.`
     : "Audience and product surface fallback values were used because evidence confidence was low.";
 
+  const conformanceItem =
+    state.mode === "json"
+      ? "<li><strong>Machine-readable assembly.</strong> The JSON bundles every measurement: tokens with hex/RGB/HSL formats, component specs, layout system, resources inventory, design score, and an embedded W3C Design Tokens document.</li>"
+      : `<li><strong>Blueprint assembly & conformance.</strong> Sections are assembled (YAML frontmatter with colors/typography blocks, atmosphere, component specs, agent prompt guide) and validated: ${escapeHtml(String(passedChecks))}/${escapeHtml(String(checks.length))} checks passed.</li>`;
+
   helpContentEl.innerHTML = `
-    <p><strong>${modeLabel}</strong> is generated automatically through a multi-step pipeline:</p>
+    <p><strong>${modeLabel}</strong> is generated through a measurement pipeline:</p>
     <ol>
-      <li><strong>Style extraction.</strong> The extension scans visible page elements and captures computed typography, colors, spacing, radius, shadows, and motion values. Current run: ${escapeHtml(String(summary.sampledElements))} sampled elements from ${escapeHtml(String(summary.totalElements))} total nodes.</li>
-      <li><strong>Token normalization.</strong> Raw values are deduplicated and grouped into semantic-like token sets to create reusable foundations. Current token coverage: typography ${escapeHtml(String(summary.typographyTokens))}, color ${escapeHtml(String(summary.colorTokens))}, spacing ${escapeHtml(String(summary.spacingTokens))}, radius ${escapeHtml(String(summary.radiusTokens))}, shadow ${escapeHtml(String(summary.shadowTokens))}, motion ${escapeHtml(String(summary.motionTokens))}.</li>
-      <li><strong>Website profiling.</strong> The generator uses URL/path patterns, metadata, headings, navigation labels, CTA text, and structural signals (forms, tables, code blocks, pricing/product markers) to infer brand context. ${escapeHtml(inferenceText)} ${inferenceEvidence ? `Evidence: ${escapeHtml(inferenceEvidence)}.` : ""}</li>
-      <li><strong>Blueprint assembly.</strong> The content is assembled into required sections for ${modeLabel}, including mission, brand, style foundations, accessibility, rule sets, workflow, and quality gates, while preserving required state coverage.</li>
-      <li><strong>Conformance checks.</strong> The generated file is validated against required headings, frontmatter/managed markers (for SKILL), accessibility target wording, and state references. Current run passed ${escapeHtml(String(passedChecks))}/${escapeHtml(String(checks.length))} checks.</li>
+      <li><strong>Deep capture.</strong> ${escapeHtml(String(summary.sampledElements))} elements sampled from ${escapeHtml(String(summary.totalElements))} nodes — including open shadow DOM, constructed stylesheets (adoptedStyleSheets), and same-origin iframes. Captured: ${escapeHtml(String(summary.keyframes))} @keyframes, ${escapeHtml(String(summary.interactionRules))} hover/focus rules, ${escapeHtml(String(summary.breakpoints))} breakpoints, ${escapeHtml(String(summary.runtimeAnimations))} runtime animations, ${escapeHtml(String(fontFaceCount))} @font-face declarations.</li>
+      <li><strong>Element precision.</strong> ${escapeHtml(String(summary.headings))} heading levels measured, ${escapeHtml(String(summary.buttonVariants))} button variants clustered into copy-paste CSS specs, form control and link specs, layout system (container width, flex/grid, z-index scale).</li>
+      <li><strong>Token normalization.</strong> Colors ${escapeHtml(String(summary.colorTokens))} (clustered, mapped to CSS variables), typography ${escapeHtml(String(summary.typographyTokens))}, spacing ${escapeHtml(String(summary.spacingTokens))}, gradients ${escapeHtml(String(summary.gradientTokens))}, shadows ${escapeHtml(String(summary.shadowTokens))}.</li>
+      <li><strong>Profiling.</strong> ${escapeHtml(inferenceText)}${stackNames ? ` Detected stack: ${escapeHtml(stackNames)}.` : ""} ${inferenceEvidence ? `Evidence: ${escapeHtml(inferenceEvidence)}.` : ""}</li>
+      ${scoreHtml}
+      ${conformanceItem}
     </ol>
-    <p>This generation flow is based on the TypeUI DESIGN.md configuration and structure guidelines:</p>
-    <p><a href="https://www.typeui.sh/design-md" target="_blank" rel="noopener noreferrer">https://www.typeui.sh/design-md</a></p>
-    <p>${componentHints ? `Detected component density signals: ${escapeHtml(componentHints)}.` : "No strong component density signals were detected for this page."}</p>
+    <p>Format lineage: <a href="https://www.typeui.sh/design-md" target="_blank" rel="noopener noreferrer">TypeUI DESIGN.md</a> structure, <a href="https://github.com/VoltAgent/awesome-design-md" target="_blank" rel="noopener noreferrer">awesome-design-md</a> YAML frontmatter, <a href="https://github.com/adityarajdigital/designmd" target="_blank" rel="noopener noreferrer">designmd</a> narrative sections.</p>
   `;
 }
 

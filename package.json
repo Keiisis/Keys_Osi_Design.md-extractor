@@ -1,0 +1,15 @@
+{
+  "name": "keys-osi-design-md-extractor",
+  "version": "0.9.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome extension that extracts design systems from any site: DESIGN.md / SKILL.md / JSON, ZIP site cloning, measured audits, and a local MCP server.",
+  "scripts": {
+    "test": "node tests/run-tests.mjs",
+    "test:e2e": "node tests/e2e/run-e2e.mjs",
+    "test:all": "node tests/run-tests.mjs && node tests/e2e/run-e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}

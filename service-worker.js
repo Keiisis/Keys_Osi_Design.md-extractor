@@ -6,6 +6,7 @@ import { processCssAssets } from "./lib/css-assets.mjs";
 import { generateTailwindConfig, generateW3cTokens } from "./lib/export-tokens.mjs";
 import { generateDiffMarkdown } from "./lib/diff-tokens.mjs";
 import { generateDesignJson } from "./lib/generate-json-export.mjs";
+import { generateStarterKit } from "./lib/generate-starter-kit.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
@@ -16,7 +17,33 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     outputMode: "design"
   });
+  chrome.contextMenus.create({
+    id: "keys-osi-extract-element",
+    title: "Extraire ce composant (Keys_Osi)",
+    contexts: ["all"]
+  });
 });
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== "keys-osi-extract-element" || !tab || !tab.id) {
+    return;
+  }
+  handleExtractElement(tab).catch(() => {});
+});
+
+async function handleExtractElement(tab) {
+  await injectExtractor(tab.id);
+  const response = await sendTabMessage(tab.id, { type: "TYPEUI_EXTRACT_ELEMENT" });
+  if (!response.html) {
+    return;
+  }
+  await chrome.downloads.download({
+    url: `data:text/html;charset=utf-8,${encodeURIComponent(response.html)}`,
+    filename: `component_${response.suggestedName || "extracted"}.html`,
+    saveAs: true,
+    conflictAction: "uniquify"
+  });
+}
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || !message.type) {
@@ -46,6 +73,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === "COPY_SITE") {
     handleCopySite(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "DOWNLOAD_STARTER_KIT") {
+    handleDownloadStarterKit()
       .then((result) => sendResponse({ ok: true, ...result }))
       .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
     return true;
@@ -614,6 +648,50 @@ async function handleDownloadAssets() {
     skipped: zipResult.failures?.length || 0,
     path: `${siteName}_assets.zip`
   };
+}
+
+/**
+ * Design System Starter Kit ZIP: tokens.css + components.css built from
+ * the measured specs, a zero-build preview page, and React components.
+ */
+async function handleDownloadStarterKit() {
+  const tab = await getActiveTab();
+  await injectExtractor(tab.id);
+  await injectMainWorldInspector(tab.id);
+
+  const payload = await requestExtractionPayload(tab.id);
+  const normalized = normalizeExtractedStyles(payload);
+
+  const siteName = String(tab.title || "site")
+    .replace(/[^a-z0-9]+/gi, "_")
+    .toLowerCase()
+    .slice(0, 30) || "site";
+
+  const files = [
+    ...generateStarterKit(normalized, { name: normalized.source?.title || siteName }).map((file) => ({
+      path: file.path,
+      content: file.content
+    })),
+    {
+      path: "starter-kit/tailwind.config.js",
+      content: generateTailwindConfig(normalized)
+    },
+    {
+      path: "starter-kit/design.tokens.json",
+      content: JSON.stringify(generateW3cTokens(normalized), null, 2)
+    }
+  ];
+
+  const zipResult = await buildZipViaOffscreen(files);
+  const downloadId = await chrome.downloads.download({
+    url: zipResult.blobUrl,
+    filename: `${siteName}_starter_kit.zip`,
+    saveAs: true,
+    conflictAction: "uniquify"
+  });
+  revokeBlobWhenDownloadSettles(downloadId, zipResult.blobUrl);
+
+  return { fileCount: zipResult.fileCount, path: `${siteName}_starter_kit.zip` };
 }
 
 async function buildBlueprintFiles(tabId, screenshotCount, audit) {
