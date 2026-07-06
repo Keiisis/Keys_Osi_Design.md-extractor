@@ -15,6 +15,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { chromium } from "playwright-core";
+import { normalizeExtractedStyles } from "../../lib/normalize.mjs";
 
 const PNG_1PX = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -253,6 +254,18 @@ async function main() {
     check("runs the a11y audit", p.a11y.contrastChecked > 0 && p.a11y.targetsChecked > 0);
     check("collects form control spec", p.formControl && p.formControl.tag === "input");
     check("collects link spec", Boolean(p.linkSpec));
+
+    console.log("Normalization on real payload:");
+    const normalized = normalizeExtractedStyles(p);
+    const surfaceBase = normalized.colorPalette.find((row) => row.token === "color.surface.base");
+    check(
+      "surface.base is the real canvas, not phantom black from transparency",
+      Boolean(surfaceBase) && surfaceBase.value.startsWith("#ffffff")
+    );
+    check(
+      "borderColor is only reported for elements that draw a border",
+      p.colors.some((row) => row.borderColor === "") && p.colors.some((row) => row.borderColor !== "")
+    );
 
     console.log("Motion payload:");
     check("detects GSAP with animated values", p.gsap && p.gsap.detected && p.gsap.timelines[0].values.x === 100);

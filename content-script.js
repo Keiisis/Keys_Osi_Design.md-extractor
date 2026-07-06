@@ -108,11 +108,16 @@
         letterSpacing: style.letterSpacing
       });
 
+      // Border/outline colors are only meaningful when actually drawn:
+      // Chrome reports the text color as the default for both, which
+      // would poison the palette with phantom tokens.
+      const hasBorder = Number.parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none";
+      const hasOutline = style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0;
       colors.push({
         textColor: style.color,
         backgroundColor: style.backgroundColor,
-        borderColor: style.borderColor,
-        outlineColor: style.outlineColor
+        borderColor: hasBorder ? style.borderColor : "",
+        outlineColor: hasOutline ? style.outlineColor : ""
       });
 
       spacing.push({
@@ -184,6 +189,7 @@
       shadows,
       motion,
       backgroundImages,
+      pageBackground: getPageBackgroundHex(),
       keyframes: collectKeyframes(),
       interactionStyles: collectInteractionStyles(),
       breakpoints: collectBreakpoints(),
@@ -1185,14 +1191,16 @@
   // inferred role, layout, content, and surface — the wireframe an
   // agent needs to rebuild the page, not just restyle it.
   function collectPageStructure() {
+    // `section` anywhere in the tree: modern sites nest sections under
+    // framework wrappers (div#__next > main > div > section...), and the
+    // outermost-wins dedupe below keeps the top-level ones.
     const candidates = document.querySelectorAll(
-      "body > header, body > nav, header, footer, main > section, main > div, body > section, [role='banner'], [role='contentinfo']"
+      "body > header, body > nav, header, footer, main > section, main > div, body > section, section, [role='banner'], [role='contentinfo']"
     );
-    const blocks = [];
     const used = [];
 
     for (const el of candidates) {
-      if (blocks.length >= 14) break;
+      if (used.length >= 14) break;
       if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
       const rect = el.getBoundingClientRect();
       // Landmarks (header/nav/footer) are structural even when compact.
@@ -1200,9 +1208,16 @@
       if (rect.height < (isLandmark ? 24 : 60)) continue;
       if (used.some((other) => other.contains(el) || el.contains(other))) continue;
       used.push(el);
-      blocks.push(analyzeSection(el, blocks.length));
     }
-    return blocks;
+
+    // Present sections in visual order, top of the page first.
+    used.sort((a, b) => {
+      const topA = a.getBoundingClientRect().top;
+      const topB = b.getBoundingClientRect().top;
+      return topA - topB;
+    });
+
+    return used.map((el, index) => analyzeSection(el, index));
   }
 
   function analyzeSection(el, index) {
@@ -1931,6 +1946,16 @@
     }
     metrics.targetsChecked = checked;
     return metrics;
+  }
+
+  // The page canvas color: body/html background resolved through
+  // transparency, white as the browser default.
+  function getPageBackgroundHex() {
+    const root = document.body || document.documentElement;
+    if (!root) {
+      return "#ffffff";
+    }
+    return rgbToHexString(resolveEffectiveBackground(root));
   }
 
   function resolveEffectiveBackground(el) {

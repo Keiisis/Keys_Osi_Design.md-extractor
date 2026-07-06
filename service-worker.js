@@ -7,6 +7,7 @@ import { generateTailwindConfig, generateW3cTokens } from "./lib/export-tokens.m
 import { generateDiffMarkdown } from "./lib/diff-tokens.mjs";
 import { generateDesignJson } from "./lib/generate-json-export.mjs";
 import { generateStarterKit } from "./lib/generate-starter-kit.mjs";
+import { generateMotionMarkdown } from "./lib/generate-motion-md.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
@@ -132,7 +133,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function handleExtraction(message) {
-  const mode = ["skill", "json"].includes(message.mode) ? message.mode : "design";
+  const mode = ["skill", "json", "motion"].includes(message.mode) ? message.mode : "design";
   const tab = await getActiveTab();
   await injectExtractor(tab.id);
   await injectMainWorldInspector(tab.id);
@@ -149,6 +150,9 @@ async function handleExtraction(message) {
   if (mode === "json") {
     markdown = JSON.stringify(generateDesignJson(normalized, { version: chrome.runtime.getManifest().version }), null, 2);
     filename = "design-system.json";
+  } else if (mode === "motion") {
+    markdown = generateMotionMarkdown(context);
+    filename = "MOTION.md";
   } else if (mode === "skill") {
     markdown = generateSkillMarkdown(context);
     validation = validateMarkdownOutput(mode, markdown);
@@ -392,8 +396,9 @@ function stringifyError(error) {
 }
 
 function normalizeMarkdownFilename(inputName, mode) {
-  const normalizedMode = mode === "skill" ? "skill" : "design";
-  const fallback = normalizedMode === "skill" ? "SKILL.md" : "DESIGN.md";
+  const normalizedMode = ["skill", "motion"].includes(mode) ? mode : "design";
+  const fallback =
+    normalizedMode === "skill" ? "SKILL.md" : normalizedMode === "motion" ? "MOTION.md" : "DESIGN.md";
   const raw = String(inputName || "").trim();
 
   if (!raw) {
@@ -405,15 +410,8 @@ function normalizeMarkdownFilename(inputName, mode) {
     return fallback;
   }
 
-  if (normalizedMode === "skill") {
-    if (/^skill(\.md)?$/i.test(name)) {
-      return "SKILL.md";
-    }
-    return name.toLowerCase().endsWith(".md") ? name : `${name}.md`;
-  }
-
-  if (/^design(\.md)?$/i.test(name)) {
-    return "DESIGN.md";
+  if (new RegExp(`^${normalizedMode}(\\.md)?$`, "i").test(name)) {
+    return fallback;
   }
   return name.toLowerCase().endsWith(".md") ? name : `${name}.md`;
 }
@@ -713,6 +711,7 @@ async function buildBlueprintFiles(tabId, screenshotCount, audit) {
     const files = [
       { path: "DESIGN.md", content: designMd },
       { path: "SKILL.md", content: generateSkillMarkdown(context) },
+      { path: "MOTION.md", content: generateMotionMarkdown(context) },
       { path: "tokens/design_tokens.json", content: JSON.stringify(normalized, null, 2) },
       { path: "tokens/design.tokens.json", content: JSON.stringify(generateW3cTokens(normalized), null, 2) },
       { path: "tokens/tailwind.config.js", content: generateTailwindConfig(normalized) }

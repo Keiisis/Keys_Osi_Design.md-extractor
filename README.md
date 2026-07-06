@@ -1,8 +1,8 @@
 # Keys_Osi_Design.md-extractor (Chrome Extension)
 
-This Chrome extension extracts styles and information from any given site and generates a `DESIGN.md` or `SKILL.md` file that you can use with tools such as Google Stitch, Claude Code, Codex, and others to build websites with a given design system blueprint. The file format is based on the open-source [TypeUI DESIGN.md](https://www.typeui.sh/design-md) specification.
+Extract the complete, **measured** design system of any website — tokens, typography, colors, motion, page anatomy — and turn it into files that AI coding agents (Claude Code, Codex, Cursor, Google Stitch...) can use to rebuild the site: `DESIGN.md`, `SKILL.md`, `MOTION.md`, a machine-readable JSON, a full site clone ZIP, a ready-to-use code Starter Kit, and a local MCP server.
 
-<img width="1200" height="630" alt="designmdchrome" src="https://github.com/user-attachments/assets/64efbebb-1c68-4ca1-8792-ca167d5e12d6" />
+Everything runs locally in your browser: no account, no remote server, nothing leaves your machine.
 
 ## Getting started
 
@@ -13,10 +13,6 @@ Load the extension in Chrome:
 3. Click **Load unpacked**
 4. Select this project folder
 
-## Curated design skills
-
-Check out curated design systems at [typeui.sh/design-skills](https://www.typeui.sh/design-skills).
-
 ## Available actions
 
 | Action | Description |
@@ -26,6 +22,7 @@ Check out curated design systems at [typeui.sh/design-skills](https://www.typeui
 | Page Anatomy | The ordered wireframe of the page: each top-level section with its inferred role (header, hero, features, pricing, testimonials, FAQ, CTA, footer...), layout (grid/flex, column count), real content (heading, CTA labels), surface, vertical rhythm, and height — plus an **image inventory with role guesses** (logo, hero, icons, photos) and a **forms map** (fields, labels, types, required, submit label). Everything an agent needs to rebuild the page, not just restyle it. |
 | Generate `DESIGN.md` | Expert design-system blueprint: token tables with CSS-variable mapping, measured contrast of the core text/surface pair, estimated type-scale ratio, inferred spacing base grid, **measured h1–h6 hierarchy**, **button variants clustered into copy-paste CSS specs**, form-control and link specs, **layout system** (container width, flex/grid architecture, section rhythm, z-index scale), motion specs (keyframes + Web Animations API + GSAP), responsive breakpoint table, measured interaction states, a **Design Health Score (0–100)** with breakdown, and stack-aware implementation notes. |
 | Generate `SKILL.md` | The same measured sections packaged as an agent-ready skill (frontmatter + managed markers). |
+| Generate `MOTION.md` | Fourth output mode: a dedicated, exhaustive motion report — full `@keyframes` steps as copy-paste CSS, every hover/focus rule, WAAPI runtime animations with keyframes, GSAP timelines and ScrollTriggers, measured parallax speed ratios, WebGL scenes, animation libraries, and a step-by-step reproduction guide. |
 | Generate JSON | Third output mode: a complete machine-readable `design-system.json` — every token with raw value + CSS variable, colors in **hex + RGB + HSL**, component specs (headings, button variants, form control, links), layout system, design score, fonts with file URLs, stylesheets/scripts inventory, animations, breakpoints, interactions, a11y audit, detected stack, and an embedded W3C tokens document. |
 | Fonts + CSS + JS + Colors (ZIP) | One-click assets ZIP: every stylesheet (rewritten to local paths), scripts, font files referenced by the CSS, plus `colors.json` and `fonts.json`. |
 | Starter Kit (ZIP) | The extracted design system as ready-to-use code: `tokens.css` (every token as CSS custom properties), `components.css` (measured buttons/input/card/link/headings), a zero-build `components.html` live preview, React components, `tailwind.config.js`, and W3C tokens. |
@@ -114,20 +111,3 @@ npm run test:e2e   # or npm run test:all
 ## License
 
 This project is open-source under the MIT License.
-
-## Sponsors
-
-A huge thank you to the companies supporting our open-source work.
-
-<table width="100%">
-  <tr>
-    <td align="center" width="33%">
-      <a href="https://www.skybridge.tech/?ref=typeui.sh" target="_blank" rel="noopener noreferrer">
-        <img src="https://github.com/user-attachments/assets/88c401ee-b19b-4b78-9a7e-325337dba529" alt="Skybridge" width="300" />
-        <br /><b>Skybridge</b>
-      </a>
-    </td>
-  </tr>
-</table>
-
-Want to see your logo here? [Become a sponsor](https://www.typeui.sh/sponsor).

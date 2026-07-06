@@ -15,6 +15,8 @@ import { generateTailwindConfig, generateW3cTokens } from "../lib/export-tokens.
 import { diffNormalized, generateDiffMarkdown } from "../lib/diff-tokens.mjs";
 import { generateDesignJson } from "../lib/generate-json-export.mjs";
 import { generateStarterKit } from "../lib/generate-starter-kit.mjs";
+import { generateMotionMarkdown } from "../lib/generate-motion-md.mjs";
+import { buildAtmosphereDescription } from "../lib/generate-design-md.mjs";
 
 const mockPayload = {
   source: {
@@ -58,6 +60,7 @@ const mockPayload = {
       animationTimingFunction: "ease"
     }
   ],
+  pageBackground: "#ffffff",
   backgroundImages: [
     "linear-gradient(135deg, rgb(59, 130, 246) 0%, rgb(147, 51, 234) 100%)",
     "linear-gradient(135deg, rgb(59, 130, 246) 0%, rgb(147, 51, 234) 100%)",
@@ -563,7 +566,7 @@ assert.ok(designMd.includes("WCAG 2.2 AA"), "accessibility target must survive t
 // Expert-level generator assertions (tables, measured metrics, inventory)
 assert.ok(designMd.includes("### Color System"), "DESIGN.md should have a color system section");
 assert.ok(designMd.includes("| `color.text.primary` | `#111827` | — | 3 |"), "DESIGN.md color table should include text primary");
-assert.ok(designMd.includes("| `color.surface.base` | `#ffffff` | `var(--color-bg)` | 4 |"), "DESIGN.md color table should map CSS variables");
+assert.ok(designMd.includes("| `color.surface.base` | `#ffffff` | `var(--color-bg)` | 7 |"), "DESIGN.md color table should map CSS variables (page background boosted)");
 assert.ok(/measured contrast \*\*\d+(\.\d+)?:1\*\*/.test(designMd), "DESIGN.md should compute the core contrast pair");
 assert.ok(designMd.includes("- Spacing base grid: **4px**"), "DESIGN.md should infer the spacing base grid");
 assert.ok(designMd.includes("- Estimated type scale ratio: ~1.2"), "DESIGN.md should estimate the type scale ratio");
@@ -663,6 +666,78 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   assert.equal(json.structure[1].role, "hero", "JSON structure should keep roles");
   assert.equal(json.images.find((img) => img.role === "logo").width, 140, "JSON should include the image inventory");
   assert.equal(json.forms[0].fields[0].type, "email", "JSON should include the forms map");
+}
+
+// REGRESSION (real-site bug): transparent backgrounds must never become
+// #000000 — they are the default background of almost every element.
+{
+  const payload = {
+    source: { url: "https://x.com", title: "X" },
+    sampledAt: "2026-07-06T00:00:00.000Z",
+    totalElements: 20,
+    sampledElements: 8,
+    typography: [],
+    colors: [
+      ...Array.from({ length: 6 }, () => ({
+        textColor: "rgb(20, 20, 20)",
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        borderColor: "",
+        outlineColor: ""
+      })),
+      { textColor: "rgb(20, 20, 20)", backgroundColor: "rgb(255, 255, 255)", borderColor: "", outlineColor: "" },
+      { textColor: "oklch(0.208 0.042 265.755)", backgroundColor: "rgb(255, 255, 255)", borderColor: "", outlineColor: "" }
+    ],
+    spacing: [],
+    radius: [],
+    shadows: [],
+    motion: []
+  };
+  const n = normalizeExtractedStyles(payload);
+  const surfaces = n.colorPalette.filter((row) => row.token.startsWith("color.surface"));
+  assert.equal(surfaces.length, 1, "transparent backgrounds should not create surface tokens");
+  assert.ok(surfaces[0].value.startsWith("#ffffff"), "the real background should win over transparency");
+  assert.ok(
+    !n.colorPalette.some((row) => row.token.startsWith("color.surface") && row.value.startsWith("#000000")),
+    "no phantom black surface from rgba(0,0,0,0)"
+  );
+  const oklchRow = n.colorPalette.find((row) => row.token === "color.text.secondary");
+  assert.ok(oklchRow && /^#[0-9a-f]{6}/.test(oklchRow.value), "oklch() colors should be converted to hex");
+  assert.ok(!JSON.stringify(n.colorPalette).includes("oklch("), "no raw oklch strings should remain in the palette");
+}
+
+// Accent selection must be usage-weighted (default link blue seen once
+// must not beat the brand color used everywhere).
+{
+  const fake = {
+    colorPalette: [
+      { token: "color.text.primary", value: "#0000ee", usage: 1 },
+      { token: "color.surface.raised", value: "#15a3e8", usage: 11 },
+      { token: "color.surface.base", value: "#ffffff", usage: 40 }
+    ],
+    mainFontStyle: { primaryFamily: "sans-serif", familyStack: "sans-serif", weight: "400" },
+    resources: { fontFaces: [{ family: "Helvetica Now Display", weight: "400", style: "normal", urls: [] }], stylesheets: [], scripts: [], inlineStyleBlocks: 0 },
+    radiusTokens: [],
+    shadowTokens: [],
+    keyframes: [],
+    runtimeAnimations: []
+  };
+  const atmosphere = buildAtmosphereDescription(fake);
+  assert.ok(atmosphere.includes("#15a3e8"), "atmosphere should pick the usage-weighted brand accent");
+  assert.ok(!atmosphere.includes("#0000ee"), "a stray default link blue must not become the accent");
+  assert.ok(atmosphere.includes("Helvetica Now Display"), "generic font stacks should fall back to the @font-face family");
+}
+
+// MOTION.md dedicated report
+{
+  const motionMd = generateMotionMarkdown({ normalized });
+  assert.ok(motionMd.startsWith("# Motion & Animation — Example Dashboard"), "MOTION.md should have a titled header");
+  assert.ok(motionMd.includes("@keyframes fade-in {"), "MOTION.md should include full keyframe blocks");
+  assert.ok(motionMd.includes("## GSAP ScrollTrigger"), "MOTION.md should include the ScrollTrigger table");
+  assert.ok(motionMd.includes("| `section.hero` | top top | +=100% | yes | yes |"), "ScrollTrigger table should carry measured values");
+  assert.ok(motionMd.includes("moves at **0.42x** scroll speed"), "MOTION.md should include measured parallax");
+  assert.ok(motionMd.includes("- `canvas#hero-gl` — webgl2, 1440x800"), "MOTION.md should include WebGL scenes");
+  assert.ok(motionMd.includes("## Reproduction Guide"), "MOTION.md should end with a reproduction guide");
+  assert.ok(motionMd.includes("- `.btn-primary:hover` → `background-color: rgb(37, 99, 235)`"), "MOTION.md should list interaction rules");
 }
 
 // Design System Starter Kit
