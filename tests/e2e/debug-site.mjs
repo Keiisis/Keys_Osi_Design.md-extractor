@@ -34,8 +34,20 @@ function findLocalChrome() {
 const browser = await chromium.launch({ executablePath: findLocalChrome(), headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await page.goto(url, { waitUntil: "load", timeout: 45000 });
-  await page.waitForTimeout(2500); // let hydration/animations settle
+  try {
+    await page.goto(url, { waitUntil: "networkidle", timeout: 45000 });
+  } catch (error) {
+    await page.goto(url, { waitUntil: "load", timeout: 45000 }).catch(() => {});
+  }
+  // Let hydration, web fonts, and lazy content settle — a small scroll
+  // wakes up builders that render on first interaction.
+  await page.evaluate(async () => {
+    await document.fonts.ready.catch(() => {});
+    window.scrollTo(0, 400);
+  });
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(1000);
 
   await page.evaluate(() => {
     window.__typeuiHandlers = [];

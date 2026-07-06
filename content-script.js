@@ -89,7 +89,14 @@
   });
 
   async function extractStylesFromPage() {
-    const sampledElements = collectSampledElements(280);
+    // Hydration-aware sampling: SPA builders (Framer, Wix, heavy React)
+    // can still be rendering when extraction starts. If the page looks
+    // empty, wait and resample instead of measuring a loading state.
+    let sampledElements = collectSampledElements(280);
+    for (let attempt = 0; attempt < 3 && sampledElements.length < 25; attempt++) {
+      await sleep(1200);
+      sampledElements = collectSampledElements(280);
+    }
     const typography = [];
     const colors = [];
     const spacing = [];
@@ -113,8 +120,16 @@
       // would poison the palette with phantom tokens.
       const hasBorder = Number.parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none";
       const hasOutline = style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0;
+      // Text color only counts on elements that render text themselves:
+      // wrappers inherit colors they never paint (Framer anchors keep the
+      // UA link blue while the glyphs use -webkit-text-fill-color).
+      const rendersText = Array.from(el.childNodes).some(
+        (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0
+      );
+      const fill = style.webkitTextFillColor;
+      const effectiveTextColor = fill && !fill.includes("rgba(0, 0, 0, 0)") ? fill : style.color;
       colors.push({
-        textColor: style.color,
+        textColor: rendersText ? effectiveTextColor : "",
         backgroundColor: style.backgroundColor,
         borderColor: hasBorder ? style.borderColor : "",
         outlineColor: hasOutline ? style.outlineColor : ""
@@ -1210,6 +1225,22 @@
       used.push(el);
     }
 
+    // Div-soup fallback (Framer, Wix, some React apps): no landmarks and
+    // no <section> tags — walk down the dominant wrapper chain and treat
+    // the content root's direct children as sections.
+    const landmarkTags = ["header", "nav", "footer"];
+    const contentBlocks = used.filter((el) => !landmarkTags.includes(el.tagName.toLowerCase()));
+    if (contentBlocks.length < 2) {
+      const root = findContentRoot();
+      for (const child of effectiveChildren(root)) {
+        if (used.length >= 14) break;
+        if (!isVisible(child)) continue;
+        if (child.getBoundingClientRect().height < 48) continue;
+        if (used.some((other) => other.contains(child) || child.contains(other))) continue;
+        used.push(child);
+      }
+    }
+
     // Present sections in visual order, top of the page first.
     used.sort((a, b) => {
       const topA = a.getBoundingClientRect().top;
@@ -1218,6 +1249,50 @@
     });
 
     return used.map((el, index) => analyzeSection(el, index));
+  }
+
+  // Children with `display: contents` wrappers flattened: builders like
+  // Framer wrap real sections in zero-size pass-through divs.
+  function effectiveChildren(node, depth = 0) {
+    const output = [];
+    for (const child of node.children) {
+      if (!(child instanceof HTMLElement)) continue;
+      let display = "";
+      try {
+        display = computedStyleOf(child).display;
+      } catch (e) {}
+      if (display === "contents" && depth < 4) {
+        output.push(...effectiveChildren(child, depth + 1));
+      } else {
+        output.push(child);
+      }
+    }
+    return output;
+  }
+
+  // Descends through single dominant wrappers (div#__next > div > main...)
+  // to find the element whose children are the page's real sections.
+  function findContentRoot() {
+    let node = document.body || document.documentElement;
+    for (let depth = 0; depth < 8; depth++) {
+      const children = effectiveChildren(node).filter((child) => isVisible(child));
+      if (children.length === 0) {
+        break;
+      }
+      const nodeHeight = Math.max(node.scrollHeight, node.getBoundingClientRect().height, 1);
+      const dominant =
+        children.length === 1
+          ? children[0]
+          : children.find((child) => {
+              const childHeight = Math.max(child.scrollHeight, child.getBoundingClientRect().height);
+              return childHeight > nodeHeight * 0.8 && children.filter((c) => Math.max(c.scrollHeight, c.getBoundingClientRect().height) > nodeHeight * 0.5).length === 1;
+            });
+      if (!dominant) {
+        break;
+      }
+      node = dominant;
+    }
+    return node;
   }
 
   function analyzeSection(el, index) {
