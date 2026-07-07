@@ -89,8 +89,49 @@ h1 {
 
 .mode-switch {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 3px;
+}
+
+.pro-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.pro-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pro-panel textarea,
+.pro-panel input,
+.pro-panel select {
+  font-size: 11px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+
+.pro-settings {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 6px;
+}
+
+.pro-status {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin: 0;
 }
 
 .mode-btn {

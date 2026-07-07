@@ -9,6 +9,7 @@ import { generateDesignJson } from "./lib/generate-json-export.mjs";
 import { generateStarterKit } from "./lib/generate-starter-kit.mjs";
 import { generateMotionMarkdown } from "./lib/generate-motion-md.mjs";
 import { generatePromptMarkdown } from "./lib/generate-prompt-md.mjs";
+import { generateAiPromptPro, generateLocalPromptPro } from "./lib/generate-prompt-pro.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
@@ -75,6 +76,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === "COPY_SITE") {
     handleCopySite(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "GENERATE_PROMPT_PRO") {
+    handleGeneratePromptPro(message)
       .then((result) => sendResponse({ ok: true, ...result }))
       .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
     return true;
@@ -694,6 +702,54 @@ async function handleDownloadStarterKit() {
   revokeBlobWhenDownloadSettles(downloadId, zipResult.blobUrl);
 
   return { fileCount: zipResult.fileCount, path: `${siteName}_starter_kit.zip` };
+}
+
+/**
+ * PROMPT PRO: fuses the measured design DNA of the current site with
+ * the user's own project description. Uses the AI provider configured
+ * in settings (key stored in chrome.storage.local only), with a
+ * deterministic local template as fallback.
+ */
+async function handleGeneratePromptPro(message) {
+  const description = String(message.projectDescription || "").trim();
+  if (description.length < 15) {
+    throw new Error("Décris ton projet en quelques phrases d'abord (produit, audience, sections voulues).");
+  }
+
+  const tab = await getActiveTab();
+  await injectExtractor(tab.id);
+  await injectMainWorldInspector(tab.id);
+  const payload = await requestExtractionPayload(tab.id);
+  const normalized = normalizeExtractedStyles(payload);
+  const basePrompt = generatePromptMarkdown({ normalized });
+
+  const stored = await chrome.storage.local.get(["promptProSettings"]);
+  const settings = stored.promptProSettings || {};
+
+  if (settings.apiKey) {
+    try {
+      const markdown = await generateAiPromptPro({
+        normalized,
+        basePrompt,
+        description,
+        settings,
+        fetchImpl: fetch
+      });
+      return { markdown, engine: `${settings.provider || "groq"} (IA)` };
+    } catch (error) {
+      const markdown = generateLocalPromptPro(normalized, description, basePrompt);
+      return {
+        markdown,
+        engine: "template local (fallback)",
+        warning: `Appel IA échoué : ${stringifyError(error)}`
+      };
+    }
+  }
+
+  return {
+    markdown: generateLocalPromptPro(normalized, description, basePrompt),
+    engine: "template local (pas de clé API configurée)"
+  };
 }
 
 async function buildBlueprintFiles(tabId, screenshotCount, audit) {

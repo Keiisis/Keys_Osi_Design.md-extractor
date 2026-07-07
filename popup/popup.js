@@ -5,7 +5,8 @@ const state = {
   filename: "",
   mode: "design",
   busy: false,
-  lastResult: null
+  lastResult: null,
+  proMarkdown: ""
 };
 
 const QUICK_INSTALL_PROVIDERS = {
@@ -159,6 +160,113 @@ if (starterKitBtn) {
   });
 }
 
+/* ---------------- PROMPT PRO ---------------- */
+
+const PRO_PLACEHOLDER = [
+  "PROMPT PRO — adapte le design du site courant à TON projet.",
+  "",
+  "1. Décris ton projet dans le champ ci-dessus (produit, audience, sections, ton).",
+  "2. (Recommandé) Configure un fournisseur IA + ta clé API — elle reste stockée",
+  "   uniquement sur cet ordinateur (chrome.storage.local), jamais dans le code.",
+  "3. Clique « Générer PROMPT_PRO.md ».",
+  "",
+  "Sans clé API, un moteur local (template) est utilisé. Avec l'IA, le prompt est",
+  "entièrement réécrit et adapté : mêmes tokens, même motion, TON contenu."
+].join("\n");
+
+function renderProPreview() {
+  previewEl.value = state.proMarkdown || PRO_PLACEHOLDER;
+  const hasResult = Boolean(state.proMarkdown);
+  downloadBtn.disabled = !hasResult;
+  copyBtn.disabled = !hasResult;
+}
+
+async function loadProSettings() {
+  try {
+    const data = await chrome.storage.local.get(["promptProSettings"]);
+    const settings = data.promptProSettings || {};
+    const provider = document.getElementById("proProvider");
+    const model = document.getElementById("proModel");
+    const baseUrl = document.getElementById("proBaseUrl");
+    const apiKey = document.getElementById("proApiKey");
+    if (provider && settings.provider) provider.value = settings.provider;
+    if (model) model.value = settings.model || "";
+    if (baseUrl) {
+      baseUrl.value = settings.baseUrl || "";
+      baseUrl.hidden = (provider?.value || "groq") !== "custom";
+    }
+    if (apiKey) apiKey.value = settings.apiKey || "";
+  } catch (error) {}
+}
+
+async function saveProSettings() {
+  const provider = document.getElementById("proProvider");
+  const baseUrl = document.getElementById("proBaseUrl");
+  if (baseUrl && provider) {
+    baseUrl.hidden = provider.value !== "custom";
+  }
+  await chrome.storage.local.set({
+    promptProSettings: {
+      provider: provider?.value || "groq",
+      model: document.getElementById("proModel")?.value.trim() || "",
+      baseUrl: baseUrl?.value.trim() || "",
+      apiKey: document.getElementById("proApiKey")?.value.trim() || ""
+    }
+  });
+}
+
+for (const id of ["proProvider", "proModel", "proBaseUrl", "proApiKey"]) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener("change", () => {
+      saveProSettings().catch(() => {});
+    });
+  }
+}
+
+const proGenerateBtn = document.getElementById("proGenerateBtn");
+if (proGenerateBtn) {
+  proGenerateBtn.addEventListener("click", () => {
+    runGeneratePromptPro().catch((error) => setProStatus(toErrorText(error), true));
+  });
+}
+
+function setProStatus(text, isError = false) {
+  const el = document.getElementById("proStatus");
+  if (!el) return;
+  const value = String(text || "").trim();
+  el.hidden = !value;
+  el.textContent = value;
+  el.style.color = isError ? "#b91c1c" : "";
+}
+
+async function runGeneratePromptPro() {
+  if (state.busy) {
+    return;
+  }
+  const description = document.getElementById("proDescription")?.value || "";
+  await saveProSettings();
+  setBusy(true);
+  setProStatus("Extraction du site + génération en cours...");
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "GENERATE_PROMPT_PRO",
+      projectDescription: description
+    });
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "Génération échouée.");
+    }
+    state.proMarkdown = response.markdown;
+    renderProPreview();
+    setProStatus(
+      `Généré via ${response.engine}.${response.warning ? ` ⚠ ${response.warning}` : ""} Télécharge ou copie le résultat.`,
+      Boolean(response.warning)
+    );
+  } finally {
+    setBusy(false);
+  }
+}
+
 async function runDownloadStarterKit() {
   if (state.busy) {
     return;
@@ -202,7 +310,8 @@ init().catch((error) => setStatus(`Init failed: ${toErrorText(error)}`, true));
 
 async function init() {
   const data = await chrome.storage.local.get(["outputMode"]);
-  state.mode = ["skill", "json", "motion", "prompt"].includes(data.outputMode) ? data.outputMode : "design";
+  state.mode = ["skill", "json", "motion", "prompt", "pro"].includes(data.outputMode) ? data.outputMode : "design";
+  await loadProSettings();
   syncModeUi();
   updateQuickInstallUi();
   await runExtraction();
@@ -210,6 +319,11 @@ async function init() {
 
 async function runExtraction() {
   if (state.busy) {
+    return;
+  }
+  if (state.mode === "pro") {
+    chrome.storage.local.set({ outputMode: "pro" }).catch(() => {});
+    renderProPreview();
     return;
   }
   setBusy(true);
@@ -298,13 +412,24 @@ async function runExtraction() {
 }
 
 async function downloadCurrent() {
-  if (!state.markdown || !state.filename) {
+  if (state.mode === "pro" && !state.proMarkdown) {
+    setStatus("Génère d'abord ton PROMPT_PRO.md.", true);
+    return;
+  }
+  if (state.mode !== "pro" && (!state.markdown || !state.filename)) {
     setStatus("Nothing to download yet.", true);
     return;
   }
 
   const response =
-    state.mode === "json"
+    state.mode === "pro"
+      ? await chrome.runtime.sendMessage({
+          type: "DOWNLOAD_TEXT",
+          filename: "PROMPT_PRO.md",
+          text: state.proMarkdown,
+          mime: "text/markdown"
+        })
+      : state.mode === "json"
       ? await chrome.runtime.sendMessage({
           type: "DOWNLOAD_TEXT",
           filename: state.filename,
@@ -492,6 +617,13 @@ function syncModeUi() {
     const isActive = button.dataset.mode === state.mode;
     button.classList.toggle("is-active", isActive);
   }
+  const proPanel = document.getElementById("proPanel");
+  if (proPanel) {
+    proPanel.hidden = state.mode !== "pro";
+  }
+  if (state.mode === "pro") {
+    renderProPreview();
+  }
   clearQuickInstallResult();
   updateQuickInstallUi();
   if (!helpPanel.hidden) {
@@ -505,6 +637,7 @@ function renderGenerationExplanation() {
     json: "design-system.json",
     motion: "MOTION.md",
     prompt: "PROMPT.md",
+    pro: "PROMPT_PRO.md",
     design: "DESIGN.md"
   };
   const modeLabel = modeLabels[state.mode] || "DESIGN.md";
