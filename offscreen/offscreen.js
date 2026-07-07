@@ -8,6 +8,7 @@
  * as a blob URL that the service worker hands to chrome.downloads.
  */
 import { createZip } from "../lib/zip.mjs";
+import { ssimFromRgba } from "../lib/fidelity.mjs";
 
 const activeBlobUrls = new Set();
 
@@ -24,6 +25,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           ok: false,
           error: error instanceof Error ? error.message : String(error)
         })
+      );
+    return true;
+  }
+
+  if (message.type === "TYPEUI_SSIM") {
+    computeSsim(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) =>
+        sendResponse({ ok: false, error: error instanceof Error ? error.message : String(error) })
       );
     return true;
   }
@@ -93,6 +103,35 @@ async function buildZip(message) {
     byteLength: zipBytes.length,
     failures: failures.slice(0, 25)
   };
+}
+
+// Structural similarity between two screenshots (baseline vs reproduction).
+// Both are decoded, drawn to a common canvas size, and compared.
+async function computeSsim({ baselineDataUrl, compareDataUrl }) {
+  const [imgA, imgB] = await Promise.all([
+    loadBitmap(baselineDataUrl),
+    loadBitmap(compareDataUrl)
+  ]);
+  // Common comparison size — cap for speed, preserve the baseline aspect ratio.
+  const width = Math.min(1024, imgA.width);
+  const height = Math.round((width / imgA.width) * imgA.height);
+
+  const rgbaA = drawToRgba(imgA, width, height);
+  const rgbaB = drawToRgba(imgB, width, height);
+  const score = ssimFromRgba(rgbaA, rgbaB, width, height);
+  return { score, width, height };
+}
+
+async function loadBitmap(dataUrl) {
+  const blob = await (await fetch(dataUrl)).blob();
+  return createImageBitmap(blob);
+}
+
+function drawToRgba(bitmap, width, height) {
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  return ctx.getImageData(0, 0, width, height).data;
 }
 
 async function fetchWithPool(items, poolSize, worker) {

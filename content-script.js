@@ -842,6 +842,7 @@
 
     collectComputedBackgroundImageAssets(addAsset);
     collectSameOriginIframeAssets(addAsset);
+    collectLottieAssets(addAsset);
     const siteMeta = collectSiteMetaAndAssets(addAsset);
     const generatedFiles = [
       ...collectInlineSvgIcons(),
@@ -1070,6 +1071,29 @@
           const isImage = node.tagName === "IMG" || /\.(png|jpe?g|gif|webp|avif|svg)([?#]|$)/i.test(absUrl);
           addAsset(absUrl, isImage ? "img" : "video", isImage ? ".png" : ".mp4");
         } catch (e) {}
+      }
+    }
+  }
+
+  // Lottie animations: download the actual .json/.lottie animation files
+  // referenced by <lottie-player>/<dotlottie-player> web components so
+  // the clone can replay them, not just detect them.
+  function collectLottieAssets(addAsset) {
+    const players = document.querySelectorAll(
+      "lottie-player, dotlottie-player, [data-animation-path], [data-lottie]"
+    );
+    let scanned = 0;
+    for (const el of players) {
+      if (scanned >= 20) break;
+      scanned += 1;
+      const src =
+        el.getAttribute("src") ||
+        el.getAttribute("data-src") ||
+        el.getAttribute("data-animation-path") ||
+        el.getAttribute("data-lottie");
+      if (src && !src.startsWith("data:")) {
+        const ext = /\.lottie([?#]|$)/i.test(src) ? ".lottie" : ".json";
+        addAsset(src, "lottie", ext);
       }
     }
   }

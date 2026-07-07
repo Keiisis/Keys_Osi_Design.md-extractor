@@ -215,6 +215,104 @@ async function saveProSettings() {
   });
 }
 
+function proVisionEnabled() {
+  const chk = document.getElementById("proVisionChk");
+  return Boolean(chk && chk.checked);
+}
+
+async function runGenerateCode() {
+  if (state.busy) return;
+  const framework = document.getElementById("codeFramework")?.value || "react";
+  setBusy(true);
+  setProStatus(`Génération du code ${framework} en cours...`);
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "GENERATE_CODE",
+      framework,
+      vision: proVisionEnabled()
+    });
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "Génération de code échouée.");
+    }
+    setProStatus(`Code exporté : ${response.path} (${response.fileCount} fichiers, via ${response.engine}).`);
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function runRenameTokens() {
+  if (state.busy || !state.lastResult?.normalized) {
+    setProStatus("Lance d'abord une extraction.", true);
+    return;
+  }
+  setBusy(true);
+  setProStatus("Renommage sémantique des tokens (IA)...");
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "RENAME_TOKENS",
+      normalized: state.lastResult.normalized
+    });
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "Renommage échoué.");
+    }
+    const text = JSON.stringify(response.renameMap, null, 2);
+    const dl = await chrome.runtime.sendMessage({
+      type: "DOWNLOAD_TEXT",
+      filename: "token-rename-map.json",
+      text,
+      mime: "application/json"
+    });
+    if (!dl || !dl.ok) throw new Error(dl?.error || "Téléchargement échoué.");
+    setProStatus(`Carte de renommage générée (${Object.keys(response.renameMap).length} tokens) — token-rename-map.json.`);
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function runFidelityBaseline() {
+  setProStatus("Capture de la référence...");
+  const response = await chrome.runtime.sendMessage({ type: "FIDELITY_BASELINE" });
+  if (!response || !response.ok) {
+    setProStatus(response?.error || "Capture échouée.", true);
+    return;
+  }
+  setProStatus("Référence capturée. Ouvre ta reproduction et clique « Comparer la fidélité ».");
+}
+
+async function runFidelityCompare() {
+  if (state.busy) return;
+  setBusy(true);
+  setProStatus("Comparaison en cours (SSIM + analyse)...");
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "FIDELITY_COMPARE" });
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "Comparaison échouée.");
+    }
+    let text = `Fidélité mesurée : ${response.percent}% (${response.label}).`;
+    if (response.critique) {
+      text += `\nÉcarts à corriger :\n${response.critique}`;
+    }
+    previewEl.value = text;
+    setProStatus(`Fidélité : ${response.percent}% (${response.label}).`);
+  } finally {
+    setBusy(false);
+  }
+}
+
+for (const [id, handler] of [
+  ["genCodeBtn", runGenerateCode],
+  ["renameTokensBtn", runRenameTokens],
+  ["fidelityBaselineBtn", runFidelityBaseline],
+  ["fidelityCompareBtn", runFidelityCompare]
+]) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener("click", () => {
+      handler().catch((error) => setProStatus(toErrorText(error), true));
+    });
+  }
+}
+
 for (const id of ["proProvider", "proModel", "proBaseUrl", "proApiKey"]) {
   const el = document.getElementById(id);
   if (el) {
@@ -251,7 +349,8 @@ async function runGeneratePromptPro() {
   try {
     const response = await chrome.runtime.sendMessage({
       type: "GENERATE_PROMPT_PRO",
-      projectDescription: description
+      projectDescription: description,
+      vision: proVisionEnabled()
     });
     if (!response || !response.ok) {
       throw new Error(response?.error || "Génération échouée.");

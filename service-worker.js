@@ -10,6 +10,9 @@ import { generateStarterKit } from "./lib/generate-starter-kit.mjs";
 import { generateMotionMarkdown } from "./lib/generate-motion-md.mjs";
 import { generatePromptMarkdown } from "./lib/generate-prompt-md.mjs";
 import { generateAiPromptPro, generateLocalPromptPro } from "./lib/generate-prompt-pro.mjs";
+import { generateComponentCode } from "./lib/generate-code.mjs";
+import { renameTokensWithAI } from "./lib/token-intelligence.mjs";
+import { scoreToGrade } from "./lib/fidelity.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
@@ -83,6 +86,34 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === "GENERATE_PROMPT_PRO") {
     handleGeneratePromptPro(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "GENERATE_CODE") {
+    handleGenerateCode(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "RENAME_TOKENS") {
+    handleRenameTokens(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "FIDELITY_BASELINE") {
+    handleFidelityBaseline()
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "FIDELITY_COMPARE") {
+    handleFidelityCompare()
       .then((result) => sendResponse({ ok: true, ...result }))
       .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
     return true;
@@ -726,6 +757,13 @@ async function handleGeneratePromptPro(message) {
   const stored = await chrome.storage.local.get(["promptProSettings"]);
   const settings = stored.promptProSettings || {};
 
+  // Vision grounding: capture a few section screenshots so the model
+  // sees the real composition, not just the numbers.
+  let screenshots = null;
+  if (settings.apiKey && message.vision) {
+    screenshots = await captureSectionScreenshots(tab).catch(() => []);
+  }
+
   if (settings.apiKey) {
     try {
       const markdown = await generateAiPromptPro({
@@ -733,9 +771,11 @@ async function handleGeneratePromptPro(message) {
         basePrompt,
         description,
         settings,
+        screenshots,
         fetchImpl: fetch
       });
-      return { markdown, engine: `${settings.provider || "groq"} (IA)` };
+      const visionNote = screenshots && screenshots.length > 0 ? " + vision" : "";
+      return { markdown, engine: `${settings.provider || "groq"} (IA${visionNote})` };
     } catch (error) {
       const markdown = generateLocalPromptPro(normalized, description, basePrompt);
       return {
@@ -749,6 +789,131 @@ async function handleGeneratePromptPro(message) {
   return {
     markdown: generateLocalPromptPro(normalized, description, basePrompt),
     engine: "template local (pas de clé API configurée)"
+  };
+}
+
+async function handleGenerateCode(message) {
+  const framework = ["react", "vue", "html"].includes(message.framework) ? message.framework : "react";
+  const stored = await chrome.storage.local.get(["promptProSettings"]);
+  const settings = stored.promptProSettings || {};
+  if (!settings.apiKey) {
+    throw new Error("Configure une clé API dans l'onglet PRO pour générer du code.");
+  }
+
+  const tab = await getActiveTab();
+  await injectExtractor(tab.id);
+  await injectMainWorldInspector(tab.id);
+  const payload = await requestExtractionPayload(tab.id);
+  const normalized = normalizeExtractedStyles(payload);
+
+  let screenshots = null;
+  if (message.vision) {
+    screenshots = await captureSectionScreenshots(tab).catch(() => []);
+  }
+
+  const { files, provider, model } = await generateComponentCode({
+    normalized,
+    framework,
+    settings,
+    screenshots,
+    fetchImpl: fetch
+  });
+
+  const siteName = String(tab.title || "site").replace(/[^a-z0-9]+/gi, "_").toLowerCase().slice(0, 30) || "site";
+  const zipResult = await buildZipViaOffscreen(files);
+  const downloadId = await chrome.downloads.download({
+    url: zipResult.blobUrl,
+    filename: `${siteName}_${framework}_code.zip`,
+    saveAs: true,
+    conflictAction: "uniquify"
+  });
+  revokeBlobWhenDownloadSettles(downloadId, zipResult.blobUrl);
+  return { fileCount: files.length, engine: `${provider}/${model}`, path: `${siteName}_${framework}_code.zip` };
+}
+
+async function handleRenameTokens(message) {
+  const stored = await chrome.storage.local.get(["promptProSettings"]);
+  const settings = stored.promptProSettings || {};
+  if (!settings.apiKey) {
+    throw new Error("Configure une clé API dans l'onglet PRO pour renommer les tokens.");
+  }
+  const normalized = message.normalized;
+  if (!normalized) {
+    throw new Error("Lance d'abord une extraction.");
+  }
+  const renameMap = await renameTokensWithAI({ normalized, settings, fetchImpl: fetch });
+  return { renameMap };
+}
+
+const FIDELITY_BASELINE_KEY = "fidelityBaseline";
+
+async function handleFidelityBaseline() {
+  const tab = await getActiveTab();
+  const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+  await chrome.storage.local.set({
+    [FIDELITY_BASELINE_KEY]: { dataUrl, url: tab.url || "", capturedAt: new Date().toISOString() }
+  });
+  return { url: tab.url || "" };
+}
+
+async function handleFidelityCompare() {
+  const stored = await chrome.storage.local.get([FIDELITY_BASELINE_KEY, "promptProSettings"]);
+  const baseline = stored[FIDELITY_BASELINE_KEY];
+  if (!baseline || !baseline.dataUrl) {
+    throw new Error("Capture d'abord une référence sur le site cible (bouton « Référence »).");
+  }
+  const tab = await getActiveTab();
+  const compareDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+
+  await ensureOffscreenDocument();
+  const ssimResult = await chrome.runtime.sendMessage({
+    target: "offscreen",
+    type: "TYPEUI_SSIM",
+    baselineDataUrl: baseline.dataUrl,
+    compareDataUrl
+  });
+  if (!ssimResult || !ssimResult.ok) {
+    throw new Error(ssimResult?.error || "Comparaison échouée.");
+  }
+  const grade = scoreToGrade(ssimResult.score);
+
+  // Optional AI gap analysis grounded in the two screenshots.
+  let critique = "";
+  const settings = stored.promptProSettings || {};
+  if (settings.apiKey) {
+    try {
+      const { callAI } = await import("./lib/ai-client.mjs");
+      const result = await callAI({
+        provider: settings.provider,
+        apiKey: settings.apiKey,
+        model: settings.model,
+        baseUrl: settings.baseUrl,
+        maxTokens: 800,
+        messages: [
+          { role: "system", text: "You compare a reference website design (first image) with a reproduction (second image). List the top 4 concrete visual differences to fix, most impactful first. Be specific (spacing, color, type weight, layout). Bullet points only." },
+          {
+            role: "user",
+            text: `Measured structural similarity: ${grade.percent}%. What differs?`,
+            images: [
+              { mediaType: "image/png", base64: baseline.dataUrl.split(",")[1] },
+              { mediaType: "image/png", base64: compareDataUrl.split(",")[1] }
+            ]
+          }
+        ],
+        fetchImpl: fetch
+      });
+      critique = result.content;
+    } catch (error) {
+      critique = "";
+    }
+  }
+
+  return {
+    percent: grade.percent,
+    label: grade.label,
+    baselineUrl: baseline.url,
+    compareUrl: tab.url || "",
+    critique
   };
 }
 

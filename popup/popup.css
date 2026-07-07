@@ -132,6 +132,19 @@ h1 {
   font-size: 10.5px;
   color: var(--muted);
   margin: 0;
+  white-space: pre-line;
+}
+
+.pro-ai-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.pro-ai-actions .pro-settings {
+  grid-template-columns: 1fr 1fr;
 }
 
 .mode-btn {
