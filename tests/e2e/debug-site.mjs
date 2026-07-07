@@ -11,6 +11,7 @@ import { existsSync } from "node:fs";
 import { chromium } from "playwright-core";
 import { normalizeExtractedStyles } from "../../lib/normalize.mjs";
 import { buildAtmosphereDescription } from "../../lib/generate-design-md.mjs";
+import { generatePromptMarkdown } from "../../lib/generate-prompt-md.mjs";
 
 const url = process.argv[2];
 if (!url) {
@@ -106,6 +107,11 @@ try {
   console.log(`Parallax measured: ${n.parallax.measured.length}, fixed-bg: ${n.parallax.fixedBackgroundCount}`);
   console.log(`Structure: ${n.structure.map((s) => s.role).join(" → ")}`);
   console.log(`\nATMOSPHERE:\n  ${buildAtmosphereDescription(n)}`);
+
+  if (process.argv.includes("--prompt")) {
+    console.log("\n===== PROMPT.md =====");
+    console.log(generatePromptMarkdown({ normalized: n }));
+  }
 } finally {
   await browser.close();
 }

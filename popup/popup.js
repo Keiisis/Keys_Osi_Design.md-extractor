@@ -202,7 +202,7 @@ init().catch((error) => setStatus(`Init failed: ${toErrorText(error)}`, true));
 
 async function init() {
   const data = await chrome.storage.local.get(["outputMode"]);
-  state.mode = ["skill", "json", "motion"].includes(data.outputMode) ? data.outputMode : "design";
+  state.mode = ["skill", "json", "motion", "prompt"].includes(data.outputMode) ? data.outputMode : "design";
   syncModeUi();
   updateQuickInstallUi();
   await runExtraction();
@@ -500,14 +500,14 @@ function syncModeUi() {
 }
 
 function renderGenerationExplanation() {
-  const modeLabel =
-    state.mode === "skill"
-      ? "SKILL.md"
-      : state.mode === "json"
-        ? "design-system.json"
-        : state.mode === "motion"
-          ? "MOTION.md"
-          : "DESIGN.md";
+  const modeLabels = {
+    skill: "SKILL.md",
+    json: "design-system.json",
+    motion: "MOTION.md",
+    prompt: "PROMPT.md",
+    design: "DESIGN.md"
+  };
+  const modeLabel = modeLabels[state.mode] || "DESIGN.md";
   const result = state.lastResult;
 
   if (!result) {

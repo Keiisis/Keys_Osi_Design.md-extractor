@@ -8,6 +8,7 @@ import { generateDiffMarkdown } from "./lib/diff-tokens.mjs";
 import { generateDesignJson } from "./lib/generate-json-export.mjs";
 import { generateStarterKit } from "./lib/generate-starter-kit.mjs";
 import { generateMotionMarkdown } from "./lib/generate-motion-md.mjs";
+import { generatePromptMarkdown } from "./lib/generate-prompt-md.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
@@ -133,7 +134,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function handleExtraction(message) {
-  const mode = ["skill", "json", "motion"].includes(message.mode) ? message.mode : "design";
+  const mode = ["skill", "json", "motion", "prompt"].includes(message.mode) ? message.mode : "design";
   const tab = await getActiveTab();
   await injectExtractor(tab.id);
   await injectMainWorldInspector(tab.id);
@@ -153,6 +154,9 @@ async function handleExtraction(message) {
   } else if (mode === "motion") {
     markdown = generateMotionMarkdown(context);
     filename = "MOTION.md";
+  } else if (mode === "prompt") {
+    markdown = generatePromptMarkdown(context);
+    filename = "PROMPT.md";
   } else if (mode === "skill") {
     markdown = generateSkillMarkdown(context);
     validation = validateMarkdownOutput(mode, markdown);
@@ -396,9 +400,9 @@ function stringifyError(error) {
 }
 
 function normalizeMarkdownFilename(inputName, mode) {
-  const normalizedMode = ["skill", "motion"].includes(mode) ? mode : "design";
-  const fallback =
-    normalizedMode === "skill" ? "SKILL.md" : normalizedMode === "motion" ? "MOTION.md" : "DESIGN.md";
+  const normalizedMode = ["skill", "motion", "prompt"].includes(mode) ? mode : "design";
+  const fallbacks = { skill: "SKILL.md", motion: "MOTION.md", prompt: "PROMPT.md", design: "DESIGN.md" };
+  const fallback = fallbacks[normalizedMode];
   const raw = String(inputName || "").trim();
 
   if (!raw) {
@@ -712,6 +716,7 @@ async function buildBlueprintFiles(tabId, screenshotCount, audit) {
       { path: "DESIGN.md", content: designMd },
       { path: "SKILL.md", content: generateSkillMarkdown(context) },
       { path: "MOTION.md", content: generateMotionMarkdown(context) },
+      { path: "PROMPT.md", content: generatePromptMarkdown(context) },
       { path: "tokens/design_tokens.json", content: JSON.stringify(normalized, null, 2) },
       { path: "tokens/design.tokens.json", content: JSON.stringify(generateW3cTokens(normalized), null, 2) },
       { path: "tokens/tailwind.config.js", content: generateTailwindConfig(normalized) }

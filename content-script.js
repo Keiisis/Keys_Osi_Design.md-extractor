@@ -1305,8 +1305,10 @@
     const ctas = [];
     for (const button of el.querySelectorAll("button, [role='button'], a[class*='btn'], a[class*='button'], input[type='submit']")) {
       if (ctas.length >= 3) break;
-      const label = normalizeWhitespace(button.textContent || button.getAttribute("value") || "").slice(0, 40);
-      if (label) ctas.push(label);
+      const label = dedupeDoubledText(
+        normalizeWhitespace(button.textContent || button.getAttribute("value") || "")
+      ).slice(0, 40);
+      if (label && !ctas.includes(label)) ctas.push(label);
     }
 
     const imageCount = el.querySelectorAll("img").length;
@@ -1316,7 +1318,10 @@
     const tag = el.tagName.toLowerCase();
 
     let role = "content";
-    if (tag === "header" || el.getAttribute("role") === "banner") role = "header/navigation";
+    // A tall <header> with an h1 is a hero that happens to contain the nav.
+    if ((tag === "header" || el.getAttribute("role") === "banner") && el.querySelector("h1") && rect.height > 500) {
+      role = "hero (with navigation)";
+    } else if (tag === "header" || el.getAttribute("role") === "banner") role = "header/navigation";
     else if (tag === "footer" || el.getAttribute("role") === "contentinfo") role = "footer";
     else if (/price|pricing|\/mo|\/month|per month|plan[s]?\b|tarif/.test(text)) role = "pricing";
     else if (/testimonial|review|customers say|trusted by|avis/.test(text) && text.length < 2500) role = "testimonials";
@@ -1530,7 +1535,9 @@
       const entry = clusters.get(key) || { spec, count: 0, example: "" };
       entry.count += 1;
       if (!entry.example) {
-        entry.example = normalizeWhitespace(el.textContent || el.getAttribute("value") || "").slice(0, 30);
+        entry.example = dedupeDoubledText(
+          normalizeWhitespace(el.textContent || el.getAttribute("value") || "")
+        ).slice(0, 30);
       }
       clusters.set(key, entry);
     }
@@ -2296,6 +2303,19 @@
         document.activeElement.dispatchEvent(escapeEvent);
       }
     } catch (e) {}
+  }
+
+  // Webflow-style hover-swap buttons duplicate their label in two
+  // stacked spans: "Book nowBook now" → "Book now".
+  function dedupeDoubledText(text) {
+    const value = String(text || "");
+    if (value.length >= 4 && value.length % 2 === 0) {
+      const half = value.length / 2;
+      if (value.slice(0, half) === value.slice(half)) {
+        return value.slice(0, half);
+      }
+    }
+    return value;
   }
 
   function normalizePageUrl(url) {

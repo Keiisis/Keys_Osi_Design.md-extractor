@@ -89,8 +89,8 @@ h1 {
 
 .mode-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
 }
 
 .mode-btn {
@@ -98,9 +98,10 @@ h1 {
   background: transparent;
   color: #555;
   border-radius: 7px;
-  padding: 8px 10px;
-  font-size: 12px;
+  padding: 8px 2px;
+  font-size: 10px;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 

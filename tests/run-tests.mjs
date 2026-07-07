@@ -16,6 +16,7 @@ import { diffNormalized, generateDiffMarkdown } from "../lib/diff-tokens.mjs";
 import { generateDesignJson } from "../lib/generate-json-export.mjs";
 import { generateStarterKit } from "../lib/generate-starter-kit.mjs";
 import { generateMotionMarkdown } from "../lib/generate-motion-md.mjs";
+import { generatePromptMarkdown } from "../lib/generate-prompt-md.mjs";
 import { buildAtmosphereDescription } from "../lib/generate-design-md.mjs";
 
 const mockPayload = {
@@ -738,6 +739,28 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   assert.ok(motionMd.includes("- `canvas#hero-gl` — webgl2, 1440x800"), "MOTION.md should include WebGL scenes");
   assert.ok(motionMd.includes("## Reproduction Guide"), "MOTION.md should end with a reproduction guide");
   assert.ok(motionMd.includes("- `.btn-primary:hover` → `background-color: rgb(37, 99, 235)`"), "MOTION.md should list interaction rules");
+}
+
+// PROMPT.md master reproduction prompt
+{
+  const promptMd = generatePromptMarkdown({ normalized });
+  assert.ok(promptMd.startsWith('# PROMPT.md — Rebuild "Example Dashboard" pixel-faithfully'), "PROMPT.md should open with the rebuild mission");
+  assert.ok(promptMd.includes("You are a senior design engineer"), "PROMPT.md should frame the agent role");
+  assert.ok(promptMd.includes("**The site in one sentence:** Extracted design system:"), "PROMPT.md should embed the measured atmosphere");
+  assert.ok(promptMd.includes("## 2. Non-negotiable design tokens"), "PROMPT.md should include the token section");
+  assert.ok(promptMd.includes("- `color.text.primary`: `#111827`"), "PROMPT.md tokens should carry measured values");
+  assert.ok(promptMd.includes("snap **everything** to a 4px grid"), "PROMPT.md should include the measured spacing grid");
+  assert.ok(promptMd.includes("## 3. Build the page in this exact order"), "PROMPT.md should include the build plan");
+  assert.ok(promptMd.includes('**hero** — headline **"Manage your workspace"**, CTAs "Get started" / "Book demo"'), "PROMPT.md build plan should carry real content");
+  assert.ok(promptMd.includes("/* button.primary — e.g. \"Get started\" */"), "PROMPT.md should include verbatim button specs");
+  assert.ok(promptMd.includes("background: #2563eb;"), "PROMPT.md button spec should use measured values");
+  assert.ok(promptMd.includes("- `newsletter` (POST):"), "PROMPT.md should include the forms plan");
+  assert.ok(promptMd.includes("ScrollTrigger on `section.hero`: start top top, scrubbed to scroll, pinned"), "PROMPT.md should include the motion script");
+  assert.ok(promptMd.includes("Parallax: `div.hero-bg` moves at 0.42x scroll speed."), "PROMPT.md should include measured parallax");
+  assert.ok(promptMd.includes("- Breakpoints, exactly: 640px, 768px, 1024px."), "PROMPT.md should include breakpoints");
+  assert.ok(promptMd.includes("## Definition of done"), "PROMPT.md should end with a definition of done");
+  assert.ok(/Design health ≥ \d+\/100/.test(promptMd), "PROMPT.md should anchor the target score");
+  assert.ok(promptMd.includes("**Companion files**"), "PROMPT.md should reference companion files");
 }
 
 // Design System Starter Kit
