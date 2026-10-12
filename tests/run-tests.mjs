@@ -24,7 +24,7 @@ import {
   generateLocalPromptPro
 } from "../lib/generate-prompt-pro.mjs";
 import { buildAtmosphereDescription } from "../lib/generate-design-md.mjs";
-import { AI_PROVIDERS, callAI } from "../lib/ai-client.mjs";
+import { AI_PROVIDERS, callAI, normalizeBaseUrl, parseConnectionString, pickBestModel } from "../lib/ai-client.mjs";
 import { parseGeneratedFiles } from "../lib/generate-code.mjs";
 import { analyzeColorSystem } from "../lib/token-intelligence.mjs";
 import { analyzeFontLicensing } from "../lib/font-licenses.mjs";
@@ -375,7 +375,7 @@ const skillValidation = validateMarkdownOutput("skill", skillMd);
 
 assert.ok(designValidation.isValid, `DESIGN.md should be valid: ${designValidation.errors.join(", ")}`);
 assert.ok(skillValidation.isValid, `SKILL.md should be valid: ${skillValidation.errors.join(", ")}`);
-assert.ok(skillMd.includes("TYPEUI_SH_MANAGED_START"), "SKILL.md should include managed markers");
+assert.ok(skillMd.includes("KEYS_OSI_MANAGED_START"), "SKILL.md should include managed markers");
 assert.ok(designMd.includes("WCAG 2.2 AA"), "DESIGN.md should include accessibility target");
 assert.ok(designMd.includes("- URL: https://example.com/dashboard"), "DESIGN.md should include extraction URL");
 assert.ok(designMd.includes("- Primary font: `Inter` — stack: `Inter, Helvetica Neue, Arial, sans-serif`"), "DESIGN.md should include inferred main font style");
@@ -578,7 +578,9 @@ assert.ok(designMd.includes("WCAG 2.2 AA"), "accessibility target must survive t
 // Expert-level generator assertions (tables, measured metrics, inventory)
 assert.ok(designMd.includes("### Color System"), "DESIGN.md should have a color system section");
 assert.ok(designMd.includes("| `color.text.primary` | `#111827` | — | 3 |"), "DESIGN.md color table should include text primary");
-assert.ok(designMd.includes("| `color.surface.base` | `#ffffff` | `var(--color-bg)` | 7 |"), "DESIGN.md color table should map CSS variables (page background boosted)");
+assert.ok(designMd.includes("| `color.surface.base` | `#ffffff` | `var(--color-bg)` | 3 |"), "DESIGN.md color table should map CSS variables with the measured canvas usage");
+assert.ok(designMd.includes("| `color.surface.muted` | `#f9fafb` |"), "near-white card surface survives clustering");
+assert.ok(designMd.includes("| `color.brand.primary` | `#2563eb` |"), "button color becomes the brand token");
 assert.ok(/measured contrast \*\*\d+(\.\d+)?:1\*\*/.test(designMd), "DESIGN.md should compute the core contrast pair");
 assert.ok(designMd.includes("- Spacing base grid: **4px**"), "DESIGN.md should infer the spacing base grid");
 assert.ok(designMd.includes("- Estimated type scale ratio: ~1.2"), "DESIGN.md should estimate the type scale ratio");
@@ -620,7 +622,8 @@ assert.ok(designMd.includes("| `h1` | `48px/56px` | 700 | -0.02em | none | `#111
 assert.ok(designMd.includes("### Component Specs (measured)"), "DESIGN.md should include component specs");
 assert.ok(designMd.includes("/* button.primary — seen 8x, e.g. \"Get started\" */"), "DESIGN.md should include the primary button variant");
 assert.ok(designMd.includes("background: #2563eb;"), "DESIGN.md button spec should canonicalize colors to hex");
-assert.ok(designMd.includes("border: 1px solid rgb(37, 99, 235);"), "DESIGN.md should include the secondary button border");
+assert.ok(designMd.includes("border: 1px solid #2563eb;"), "DESIGN.md should include the secondary button border, canonicalized to hex");
+assert.ok(designMd.includes("/* button.secondary — seen 4x, e.g. \"Learn more\" */"), "outlined button is named secondary by its look");
 assert.ok(designMd.includes("- Form control (`input`): height 40px"), "DESIGN.md should include the form control spec");
 assert.ok(designMd.includes("- Links: color `#2563eb`") || designMd.includes("- Links: color `rgb(37, 99, 235)`"), "DESIGN.md should include the link spec");
 assert.ok(designMd.includes("### Layout System"), "DESIGN.md should include the layout system");
@@ -791,8 +794,16 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   const localPro = generateLocalPromptPro(normalized, description, basePrompt);
   assert.ok(localPro.startsWith("# PROMPT_PRO.md — Build YOUR project"), "local PRO should have its own title");
   assert.ok(localPro.includes(description), "local PRO should embed the project description");
-  assert.ok(localPro.includes("## Section remapping plan"), "local PRO should remap sections");
+  assert.ok(localPro.includes("## 6. Sections (in order)"), "local PRO should plan sections");
   assert.ok(localPro.includes("Reuse the **hero** skeleton"), "local PRO should reuse measured skeletons");
+  assert.ok(localPro.includes("restaurant / food / local business"), "food-truck brief maps to the restaurant archetype");
+  assert.ok(localPro.includes("All copy in French"), "copy language follows the brief");
+  assert.ok(localPro.indexOf("— Menu") < localPro.indexOf("— Réservation / booking"), "user-named sections keep their order");
+  assert.ok(/blur\(10px\)→blur\(0\).*0\.6s/.test(localPro), "motion recipes carry numbers");
+  assert.ok(localPro.includes("prefers-reduced-motion"), "reduced motion is mandatory");
+  assert.ok(localPro.includes("## 10. Dependencies") && localPro.includes("npm i react"), "dependencies are listed");
+  assert.ok(localPro.includes("- [ ] Lighthouse accessibility ≥ 95"), "definition of done is checkable");
+  assert.ok(localPro.includes("  --text-primary: #111827;"), "color system becomes CSS variables");
   assert.ok(localPro.includes("# Reference design system (measured — inherit verbatim)"), "local PRO should append the base prompt");
   assert.ok(localPro.includes("- `color.text.primary`: `#111827`"), "local PRO should carry the measured tokens");
 
@@ -800,6 +811,8 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   assert.equal(messages[0].role, "system", "PRO messages should start with the system role");
   assert.ok(messages[0].text.includes("never invent new tokens"), "system prompt should lock tokens");
   assert.ok(messages[1].text.includes("=== USER PROJECT ==="), "user message should carry the project");
+  assert.ok(messages[1].text.includes("=== PLAYBOOK ===") && messages[1].text.includes("REQUIRED DOCUMENT ANATOMY"), "AI gets the playbook");
+  assert.ok(messages[0].text.includes("prefers-reduced-motion"), "system prompt enforces a11y + reduced motion");
 
   const openAiFetch = () => async (url, options) => ({
     ok: true,
@@ -817,6 +830,7 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
     fetchImpl: openAiFetch()
   });
   assert.ok(aiPro.includes("# PROMPT_PRO généré par IA"), "AI PRO should wrap the model output");
+  assert.ok(aiPro.includes("· restaurant"), "provenance header names the archetype");
   assert.ok(aiPro.startsWith("<!-- PROMPT_PRO.md — generated by Keys_Osi_Design.md-extractor (groq/llama-3.3-70b-versatile)"), "AI PRO should carry a provenance header");
 }
 
@@ -866,7 +880,7 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
     fetchImpl: fakeFetch
   });
   assert.equal(res.content, "claude says hi", "Claude response text is parsed from content[]");
-  assert.equal(res.model, "claude-opus-4-8", "Claude defaults to claude-opus-4-8");
+  assert.equal(res.model, "claude-opus-5-5", "Claude defaults to claude-opus-5-5");
   assert.ok(captured.url.endsWith("/messages"), "Claude uses the Messages endpoint");
   assert.equal(captured.headers["x-api-key"], "sk-ant", "Claude uses x-api-key, not Bearer");
   assert.equal(captured.headers["anthropic-version"], "2023-06-01", "Claude sends the version header");
@@ -897,8 +911,66 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   assert.ok(threw, "HTTP errors must throw");
   await assert.rejects(
     callAI({ provider: "groq", messages: [], fetchImpl: async () => ({}) }),
-    /No API key/,
+    /Aucune clé API/,
     "missing key must throw"
+  );
+}
+
+// New API gateways (MiaRouter): connection string, base URL, model discovery, adaptive retries
+{
+  const conn = parseConnectionString('{"_type":"newapi_channel_conn","key":"sk-test","url":"https://miarouter.online"}');
+  assert.deepEqual(conn, { provider: "newapi", baseUrl: "https://miarouter.online/v1", apiKey: "sk-test" }, "parses New API connection JSON");
+  assert.equal(parseConnectionString("sk-plain-key"), null, "plain keys are not connection strings");
+  assert.equal(normalizeBaseUrl("miarouter.online/"), "https://miarouter.online/v1");
+  assert.equal(normalizeBaseUrl("https://h.io/v1/chat/completions"), "https://h.io/v1", "strips a pasted endpoint");
+  assert.equal(normalizeBaseUrl("https://h.io/api/openai/v1"), "https://h.io/api/openai/v1");
+  assert.equal(pickBestModel(["text-embedding-3-small", "whisper-1", "llama-3.1-8b-instant", "gpt-4o-mini", "claude-sonnet-4-6", "deepseek-chat"]), "claude-sonnet-4-6");
+  assert.equal(pickBestModel(["dall-e-3", "qwen-max", "glm-4-flash"]), "qwen-max");
+
+  // No model configured (the reported "No model configured for this provider" case).
+  const calls = [];
+  const gateway = async (url, options = {}) => {
+    calls.push(url);
+    if (url.endsWith("/models")) {
+      assert.equal(options.headers.Authorization, "Bearer sk-test", "lists models with the key");
+      return { ok: true, json: async () => ({ object: "list", data: [{ id: "text-embedding-3-large" }, { id: "gpt-4o-mini" }, { id: "deepseek-chat" }] }) };
+    }
+    const body = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ model: body.model, choices: [{ message: { content: `via ${body.model}` } }] }) };
+  };
+  const viaGateway = await callAI({ provider: conn.provider, apiKey: conn.apiKey, baseUrl: conn.baseUrl, messages: [{ role: "user", text: "hi" }], fetchImpl: gateway });
+  assert.equal(viaGateway.content, "via deepseek-chat", "auto-picks the strongest chat model");
+  assert.deepEqual(calls, ["https://miarouter.online/v1/models", "https://miarouter.online/v1/chat/completions"]);
+
+  // Configured model unknown to the gateway -> discover + retry once.
+  let attempts = 0;
+  const strictGateway = async (url, options = {}) => {
+    if (url.endsWith("/models")) return { ok: true, json: async () => ({ data: [{ id: "gpt-4.1" }] }) };
+    attempts += 1;
+    const body = JSON.parse(options.body);
+    if (body.model !== "gpt-4.1") return { ok: false, status: 404, text: async () => '{"error":{"message":"model not found"}}' };
+    return { ok: true, json: async () => ({ choices: [{ message: { content: "ok" } }] }) };
+  };
+  const retried = await callAI({ provider: "newapi", apiKey: "k", baseUrl: "https://g.io", model: "old-model", messages: [{ role: "user", text: "x" }], fetchImpl: strictGateway });
+  assert.equal(retried.model, "gpt-4.1", "falls back to an available model");
+  assert.equal(attempts, 2);
+
+  // max_tokens rejected (newer OpenAI models) -> max_completion_tokens.
+  const bodies = [];
+  const picky = async (_url, options) => {
+    const body = JSON.parse(options.body);
+    bodies.push(body);
+    if ("max_tokens" in body) return { ok: false, status: 400, text: async () => "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead." };
+    return { ok: true, json: async () => ({ choices: [{ message: { content: "done" } }] }) };
+  };
+  await callAI({ provider: "openai", apiKey: "k", model: "gpt-5", maxTokens: 9000, messages: [{ role: "user", text: "x" }], fetchImpl: picky });
+  assert.equal(bodies[1].max_completion_tokens, 9000, "retries with max_completion_tokens");
+
+  // Real gateway 401 shape is surfaced with a French hint.
+  await assert.rejects(
+    callAI({ provider: "newapi", apiKey: "bad", baseUrl: "https://miarouter.online", model: "gpt-4o", messages: [{ role: "user", text: "x" }],
+      fetchImpl: async () => ({ ok: false, status: 401, text: async () => '{"error":{"code":"","message":"Invalid token","type":"new_api_error"}}' }) }),
+    /clé API refusée.*401/
   );
 }
 
@@ -1048,5 +1120,61 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   assert.ok(sections.includes("## Disclosure States (captured)"), "audit should include disclosures section");
   assert.ok(sections.includes("3 menus/accordions/dropdowns were safely opened"), "audit should count opened disclosures");
 }
+
+// PROMPT PRO playbook
+{
+  const { detectArchetypes, detectLanguage, buildPlaybookBrief, ARCHETYPES, MOTION_RECIPES, PROMPT_ANATOMY } = await import("../lib/prompt-pro-playbook.mjs");
+  assert.equal(detectArchetypes("Agence de branding et studio créatif à Paris")[0].id, "agency");
+  assert.equal(detectArchetypes("SaaS B2B de facturation avec dashboard analytics")[0].id, "saas");
+  assert.equal(detectArchetypes("Portfolio de photographe freelance")[0].id, "portfolio");
+  assert.equal(detectArchetypes("rien de spécial")[0].id, "saas", "falls back to a sensible default");
+  assert.equal(detectLanguage("Je veux un site pour mon restaurant avec une carte et des avis"), "French");
+  assert.equal(detectLanguage("I want a landing page for my AI agent with pricing"), "English");
+  const brief = buildPlaybookBrief({ description: "Lancement d'une voiture électrique, site immersif 3D", normalized: { scrollTriggers: [{}] } });
+  assert.ok(brief.recipes.includes("scrollScrub") && brief.recipes.includes("three") && brief.recipes.includes("reducedMotion"));
+  assert.ok(brief.text.includes("REQUIRED DOCUMENT ANATOMY") && brief.text.includes("QUALITY BAR"));
+  assert.ok(ARCHETYPES.length >= 10 && Object.keys(MOTION_RECIPES).length >= 18 && PROMPT_ANATOMY.length === 13);
+  for (const recipe of Object.values(MOTION_RECIPES)) assert.ok(/\d/.test(recipe), "every motion recipe carries numbers");
+}
+
+// Color science: the "black everywhere" root cause and modern color syntaxes
+{
+  const { visibleHex, parseCssColor, contrastRatio } = await import("../lib/color-science.mjs");
+  assert.equal(visibleHex("rgba(0, 0, 0, 0.1)", "#ffffff"), "#e6e6e6", "translucent border composites over the canvas, never #000000");
+  assert.equal(visibleHex("rgb(0 0 0 / 8%)", "#ffffff"), "#ebebeb", "space syntax + percent alpha");
+  assert.equal(visibleHex("rgba(0, 0, 0, 0)", "#ffffff"), "transparent");
+  assert.equal(visibleHex("oklch(0 0 none / 0)", "#ffffff"), "transparent", "Figma-style oklch with none");
+  assert.equal(visibleHex("oklch(0 0 none / 0.54)", "#ffffff"), "#757575");
+  assert.equal(visibleHex("oklch(0.627955 0.257683 29.2339)", null), "#ff0000", "oklch red");
+  assert.equal(visibleHex("lab(54.29 80.82 69.91)", null), "#ff0000", "lab red");
+  assert.equal(visibleHex("lch(54.29 106.84 40.85)", null), "#ff0000", "lch red");
+  assert.equal(visibleHex("color(display-p3 1 0 0)", null), "#ff0000", "p3 red clips to sRGB red");
+  assert.equal(visibleHex("color(srgb 0.5 0.5 0.5)", null), "#808080");
+  assert.equal(parseCssColor("#0a0b0c80").a.toFixed(2), "0.50");
+  assert.ok(Math.abs(contrastRatio("#000000", "#ffffff") - 21) < 0.01);
+}
+
+// Before/after comparison: pixel diff mask
+{
+  const { diffMask } = await import("../lib/fidelity.mjs");
+  const white = new Uint8Array(4 * 4 * 4).fill(255);
+  const changed = white.slice();
+  changed.set([0, 0, 0, 255], 0);
+  changed.set([250, 250, 250, 255], 4); // below threshold: anti-aliasing noise
+  const { ratio, mask } = diffMask(white, changed, 4, 4);
+  assert.equal(ratio, 1 / 16, "one strongly different pixel out of 16");
+  assert.deepEqual([mask[0], mask[1]], [1, 0], "small deltas are ignored");
+}
+
+await import("./ai-stream-tests.mjs");
+await import("./model-tests.mjs");
+await import("./site-structure-tests.mjs");
+await import("./tech-decode-tests.mjs");
+await import("./intelligence-tests.mjs");
+await import("./figma-import-tests.mjs");
+await import("./figma-offline-tests.mjs");
+await import("./native-host-tests.mjs");
+await import("./brand-kit-tests.mjs");
+await import("./platform-exports-tests.mjs");
 
 console.log("All tests passed.");

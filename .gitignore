@@ -3,3 +3,10 @@ node_modules/
 mcp-server/node_modules/
 mcp-server/package-lock.json
 package-lock.json
+.audit/
+graphify-out/
+
+# Keys_Osi native host: files generated per machine by native-host/install.mjs
+native-host/keys-osi-host.bat
+native-host/keys-osi-host.sh
+native-host/com.keysosi.host.json

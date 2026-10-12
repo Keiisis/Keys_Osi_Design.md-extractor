@@ -1,0 +1,13 @@
+{
+  "name": "Keys_Osi Import",
+  "id": "keys-osi-import",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Les captures Keys_Osi référencent les images de la page d'origine, qui peut être hébergée sur n'importe quel domaine. Le plugin ne fait que télécharger ces images pour les poser en remplissage ; aucune donnée n'est envoyée."
+  }
+}

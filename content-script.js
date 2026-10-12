@@ -1,18 +1,18 @@
 (function installExtractor() {
-  const MESSAGE_TYPE = "TYPEUI_EXTRACT_STYLES";
+  const MESSAGE_TYPE = "KEYS_OSI_EXTRACT_STYLES";
 
-  if (window.__typeuiStyleExtractorInstalled) {
+  if (window.__keysOsiExtractorInstalled) {
     return;
   }
 
-  window.__typeuiStyleExtractorInstalled = true;
+  window.__keysOsiExtractorInstalled = true;
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message && message.type === "TYPEUI_PING") {
+    if (message && message.type === "KEYS_OSI_PING") {
       sendResponse({ ok: true });
       return;
     }
-    if (message && message.type === "TYPEUI_COPY_SITE") {
+    if (message && message.type === "KEYS_OSI_COPY_SITE") {
       collectPageResources(message.options || {})
         .then((payload) => sendResponse({ ok: true, payload }))
         .catch((error) => {
@@ -21,7 +21,15 @@
         });
       return true;
     }
-    if (message && message.type === "TYPEUI_LIST_LINKS") {
+    if (message && message.type === "KEYS_OSI_COLLECT_ASSETS") {
+      try {
+        sendResponse({ ok: true, assets: collectAssetInventory() });
+      } catch (error) {
+        sendResponse({ ok: false, error: error instanceof Error ? error.message : "Asset inventory error" });
+      }
+      return;
+    }
+    if (message && message.type === "KEYS_OSI_LIST_LINKS") {
       try {
         sendResponse({ ok: true, links: collectInternalLinks() });
       } catch (error) {
@@ -29,7 +37,7 @@
       }
       return;
     }
-    if (message && message.type === "TYPEUI_PAGE_METRICS") {
+    if (message && message.type === "KEYS_OSI_PAGE_METRICS") {
       sendResponse({
         ok: true,
         scrollHeight: document.body ? document.body.scrollHeight : 0,
@@ -38,16 +46,16 @@
       });
       return;
     }
-    if (message && message.type === "TYPEUI_SCROLL_TO") {
+    if (message && message.type === "KEYS_OSI_SCROLL_TO") {
       window.scrollTo(0, Number(message.y) || 0);
       setTimeout(() => sendResponse({ ok: true, scrollY: window.scrollY }), 350);
       return true;
     }
-    if (message && message.type === "TYPEUI_EXTRACT_ELEMENT") {
+    if (message && message.type === "KEYS_OSI_EXTRACT_ELEMENT") {
       try {
         const target = message.selector
           ? document.querySelector(message.selector)
-          : lastContextMenuTarget;
+          : window.__keysOsiContextTarget || lastContextMenuTarget;
         if (!target || !(target instanceof HTMLElement)) {
           sendResponse({ ok: false, error: "No element selected. Right-click an element first." });
           return;
@@ -58,7 +66,7 @@
       }
       return;
     }
-    if (message && message.type === "TYPEUI_SAFE_INTERACT_OPEN") {
+    if (message && message.type === "KEYS_OSI_SAFE_INTERACT_OPEN") {
       try {
         sendResponse({ ok: true, ...openSafeDisclosures() });
       } catch (error) {
@@ -66,7 +74,7 @@
       }
       return;
     }
-    if (message && message.type === "TYPEUI_SAFE_INTERACT_CLOSE") {
+    if (message && message.type === "KEYS_OSI_SAFE_INTERACT_CLOSE") {
       try {
         closeSafeDisclosures();
         sendResponse({ ok: true });
@@ -164,9 +172,11 @@
     let scrollTriggers = [];
     let mainWorldLibs = [];
     try {
-      const gsapEl = document.getElementById("__typeui_gsap_data");
+      const gsapEl = document.getElementById("__keys_osi_inspector_data");
       if (gsapEl) {
         const inspectorData = JSON.parse(gsapEl.getAttribute("data-gsap"));
+        // Read once, then remove: it would otherwise leak into the clone HTML.
+        gsapEl.remove();
         if (inspectorData && typeof inspectorData === "object") {
           if (inspectorData.gsap || inspectorData.frameworks) {
             gsap = inspectorData.gsap || null;
@@ -408,12 +418,7 @@
           "dashboard",
           "workspace"
         ]),
-        checkoutMarkers: countNodesByText("a, button, span", [
-          "add to cart",
-          "checkout",
-          "buy now",
-          "cart"
-        ])
+        checkoutMarkers: countPurchaseActions()
       }
     };
   }
@@ -446,6 +451,18 @@
       }
     }
     return output;
+  }
+
+  // Short action labels only ("Add to cart", "Panier"): a sub-string such
+  // as "checkout" inside a paragraph is not a storefront signal.
+  function countPurchaseActions() {
+    const labels = /^(add to (cart|bag|basket)|buy( it)? now|shop now|checkout|view cart|cart|basket|panier|ajouter au panier|acheter|in den warenkorb|in winkelwagen|añadir al carrito)(\s|$)/i;
+    let count = 0;
+    for (const node of document.querySelectorAll("a, button, [role='button'], input[type='submit']")) {
+      const text = normalizeWhitespace(node.textContent || node.getAttribute("value") || node.getAttribute("aria-label") || "");
+      if (text && text.length <= 30 && labels.test(text)) count += 1;
+    }
+    return count;
   }
 
   function countNodesByText(selector, keywords) {
@@ -604,12 +621,14 @@
   }
 
   function walkRules(rules, callback, depth) {
-    if (depth > 3) {
+    if (depth > 6) {
       return;
     }
     for (const rule of rules) {
       callback(rule);
-      if (rule.cssRules && (rule.type === CSSRule.MEDIA_RULE || rule.type === CSSRule.SUPPORTS_RULE)) {
+      // Every grouping rule: @media, @supports, @layer (Tailwind v4 puts
+      // its whole theme there), @container, @scope, nested style rules.
+      if (rule.cssRules && rule.type !== CSSRule.KEYFRAMES_RULE) {
         try {
           walkRules(rule.cssRules, callback, depth + 1);
         } catch (e) {}
@@ -766,7 +785,7 @@
       if (!url) return null;
       let absUrl;
       try {
-        absUrl = new URL(url, window.location.href).href;
+        absUrl = new URL(url, document.baseURI).href;
       } catch (e) {
         return null;
       }
@@ -819,15 +838,15 @@
       if (src) {
         addAsset(src, "img", ".png");
       }
-      const srcset = img.getAttribute("srcset");
-      if (srcset) {
-        const parts = srcset.split(",");
-        for (const part of parts) {
-          const url = part.trim().split(/\s+/)[0];
-          if (url) {
-            addAsset(url, "img", ".png");
-          }
-        }
+      for (const url of parseSrcset(img.getAttribute("srcset"))) {
+        addAsset(url, "img", ".png");
+      }
+    }
+
+    // <picture> art-direction sources.
+    for (const source of document.querySelectorAll("picture source[srcset]")) {
+      for (const url of parseSrcset(source.getAttribute("srcset"))) {
+        addAsset(url, "img", ".png");
       }
     }
 
@@ -837,6 +856,10 @@
       if (src) {
         const isAudio = media.tagName.toLowerCase() === "audio" || (media.tagName.toLowerCase() === "source" && media.parentElement?.tagName.toLowerCase() === "audio");
         addAsset(src, isAudio ? "audio" : "video", isAudio ? ".mp3" : ".mp4");
+      }
+      const poster = media.getAttribute("poster");
+      if (poster) {
+        addAsset(poster, "img", ".jpg");
       }
     }
 
@@ -849,32 +872,19 @@
       { path: "meta/site-meta.json", content: JSON.stringify(siteMeta, null, 2) }
     ];
 
-    try {
-      for (const sheet of document.styleSheets) {
+    // @font-face anywhere (nested in @media/@layer, adopted sheets...).
+    // Relative font URLs resolve against their stylesheet, not the page.
+    forEachAccessibleRule((rule) => {
+      if (rule.type !== CSSRule.FONT_FACE_RULE) return;
+      const srcVal = rule.style.getPropertyValue("src");
+      const base = rule.parentStyleSheet?.href || document.baseURI;
+      for (const match of srcVal.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)) {
+        if (match[2].startsWith("data:")) continue;
         try {
-          const rules = sheet.cssRules || sheet.rules;
-          if (!rules) continue;
-          for (const rule of rules) {
-            if (rule.type === CSSRule.FONT_FACE_RULE) {
-              const srcVal = rule.style.getPropertyValue("src");
-              if (srcVal) {
-                const matches = srcVal.match(/url\(['"]?([^'")]+)['"]?\)/g);
-                if (matches) {
-                  for (const match of matches) {
-                    const fontUrl = match.replace(/url\(['"]?|['"]?\)/g, "");
-                    addAsset(fontUrl, "fonts", ".woff2");
-                  }
-                }
-              }
-            }
-          }
-        } catch (e) {
-          // ignore cross-origin stylesheet errors
-        }
+          addAsset(new URL(match[2], base).href, "fonts", ".woff2");
+        } catch (e) {}
       }
-    } catch (e) {
-      // ignore
-    }
+    });
 
     const clone = document.documentElement.cloneNode(true);
 
@@ -882,11 +892,12 @@
     for (const base of clone.querySelectorAll("base")) {
       base.remove();
     }
+    clone.querySelector("#__keys_osi_inspector_data")?.remove();
 
     function localPathFor(rawUrl) {
       if (!rawUrl) return null;
       try {
-        const absUrl = new URL(rawUrl, window.location.href).href;
+        const absUrl = new URL(rawUrl, document.baseURI).href;
         return seenUrls.get(absUrl) || null;
       } catch (e) {
         return null;
@@ -927,6 +938,22 @@
       if (localPath) {
         media.setAttribute("src", relFromCurrentPage(localPath));
       }
+      const posterPath = localPathFor(media.getAttribute("poster"));
+      if (posterPath) {
+        media.setAttribute("poster", relFromCurrentPage(posterPath));
+      }
+    }
+
+    // <picture> sources would win over the rewritten <img> and load remote
+    // files: point them to the local copy of their largest candidate.
+    for (const source of clone.querySelectorAll("picture source[srcset]")) {
+      const candidates = parseSrcset(source.getAttribute("srcset"));
+      const localPath = localPathFor(candidates[candidates.length - 1]);
+      if (localPath) {
+        source.setAttribute("srcset", relFromCurrentPage(localPath));
+      } else {
+        source.remove();
+      }
     }
 
     const cloneIconLinks = clone.querySelectorAll("link[rel~='icon'], link[rel='apple-touch-icon'], link[rel='manifest']");
@@ -961,7 +988,7 @@
       for (const anchor of cloneAnchors) {
         let normalized;
         try {
-          normalized = normalizePageUrl(new URL(anchor.getAttribute("href"), window.location.href).href);
+          normalized = normalizePageUrl(new URL(anchor.getAttribute("href"), document.baseURI).href);
         } catch (e) {
           continue;
         }
@@ -992,6 +1019,263 @@
       pagePath: currentPagePath,
       staticSnapshot: Boolean(options.staticSnapshot)
     };
+  }
+
+  // Keys_Osi asset inventory: every visual asset, font and animation file
+  // the page uses, with real dimensions and transfer sizes, for the
+  // Assets panel (preview, copy, single download, ZIP).
+  function collectAssetInventory() {
+    const sizes = new Map();
+    const timing = [];
+    for (const entry of performance.getEntriesByType("resource")) {
+      sizes.set(entry.name, entry.encodedBodySize || entry.transferSize || 0);
+      timing.push(entry.name);
+    }
+    const abs = (value, base) => {
+      try {
+        const url = new URL(String(value).trim(), base || document.baseURI).href;
+        return /^(https?|data):/.test(url) ? url : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    const extOf = (url) => {
+      if (url.startsWith("data:")) return (url.match(/^data:[a-z]+\/([a-z0-9.+-]+)/i) || [])[1]?.replace("svg+xml", "svg") || "";
+      return (url.split(/[?#]/)[0].match(/\.([a-z0-9]{2,5})$/i) || [])[1]?.toLowerCase() || "";
+    };
+    const cssUrls = (value) =>
+      Array.from(String(value || "").matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g), (m) => m[2]);
+
+    const images = new Map();
+    const addImage = (raw, kind, extra = {}) => {
+      const url = abs(raw, extra.base);
+      if (!url || (url.startsWith("data:") && url.length > 200000)) return;
+      const entry = images.get(url);
+      if (entry) {
+        entry.width = Math.max(entry.width || 0, extra.width || 0);
+        entry.height = Math.max(entry.height || 0, extra.height || 0);
+        return;
+      }
+      if (images.size >= 400) return;
+      images.set(url, {
+        url,
+        kind,
+        ext: extOf(url) || "img",
+        width: extra.width || 0,
+        height: extra.height || 0,
+        alt: extra.alt || "",
+        bytes: sizes.get(url) || 0
+      });
+    };
+
+    for (const img of document.querySelectorAll("img")) {
+      const extra = { width: img.naturalWidth, height: img.naturalHeight, alt: normalizeWhitespace(img.alt || "").slice(0, 80) };
+      addImage(img.currentSrc || img.getAttribute("src") || img.getAttribute("data-src"), "img", extra);
+      for (const url of parseSrcset(img.getAttribute("srcset"))) addImage(url, "srcset", extra);
+    }
+    for (const source of document.querySelectorAll("picture source[srcset]")) {
+      for (const url of parseSrcset(source.getAttribute("srcset"))) addImage(url, "picture");
+    }
+    for (const video of document.querySelectorAll("video[poster]")) addImage(video.getAttribute("poster"), "poster");
+    for (const image of document.querySelectorAll("svg image")) {
+      addImage(image.getAttribute("href") || image.getAttribute("xlink:href"), "svg-image");
+    }
+    for (const link of document.querySelectorAll("link[rel~='icon'], link[rel='apple-touch-icon'], link[rel='mask-icon']")) {
+      addImage(link.getAttribute("href"), "favicon");
+    }
+    for (const name of ["og:image", "twitter:image"]) {
+      const meta = document.querySelector(`meta[property="${name}"], meta[name="${name}"]`);
+      if (meta) addImage(meta.getAttribute("content"), "social");
+    }
+    let scanned = 0;
+    for (const el of getAllElementsDeep(5000)) {
+      if (scanned >= 4000) break;
+      if (!(el instanceof Element)) continue;
+      scanned += 1;
+      for (const pseudo of [null, "::before", "::after"]) {
+        let style;
+        try {
+          const view = (el.ownerDocument && el.ownerDocument.defaultView) || window;
+          style = view.getComputedStyle(el, pseudo);
+        } catch (e) {
+          continue;
+        }
+        for (const prop of ["backgroundImage", "maskImage", "webkitMaskImage", "borderImageSource", "listStyleImage"]) {
+          const value = style[prop];
+          if (!value || value === "none" || !value.includes("url(")) continue;
+          const rect = el.getBoundingClientRect();
+          for (const url of cssUrls(value)) {
+            addImage(url, prop === "backgroundImage" ? "background" : "mask", {
+              width: Math.round(rect.width),
+              height: Math.round(rect.height)
+            });
+          }
+        }
+      }
+    }
+    // Images only reachable through the network log (lazy CSS, JS-built).
+    for (const url of timing) {
+      if (/\.(png|jpe?g|gif|webp|avif|svg|ico)(?:[?#]|$)/i.test(url)) addImage(url, "network");
+    }
+
+    // Inline SVG icons + sprite symbols, serialized standalone.
+    const svgs = [];
+    const seenSvg = new Set();
+    const pushSvg = (markup, label, width, height) => {
+      if (!markup || markup.length > 60000 || svgs.length >= 200) return;
+      const hash = shortHash(markup);
+      if (seenSvg.has(hash)) return;
+      seenSvg.add(hash);
+      svgs.push({ id: hash, label, markup, width, height });
+    };
+    for (const svg of document.querySelectorAll("svg")) {
+      if (svg.closest("defs") || svg.parentElement?.closest("svg")) continue;
+      const rect = svg.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0 && !svg.querySelector("symbol")) continue;
+      const copy = svg.cloneNode(true);
+      // currentColor would render black once detached from the page.
+      const color = computedStyleOf(svg).color;
+      copy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      if (!copy.getAttribute("width") && rect.width) copy.setAttribute("width", String(Math.round(rect.width)));
+      if (!copy.getAttribute("height") && rect.height) copy.setAttribute("height", String(Math.round(rect.height)));
+      let markup = copy.outerHTML.replace(/currentColor/g, color);
+      // <use href="#id"> pointing into a page sprite: inline the symbol.
+      const use = svg.querySelector("use");
+      const ref = use && (use.getAttribute("href") || use.getAttribute("xlink:href"));
+      if (ref && ref.startsWith("#")) {
+        const symbol = document.getElementById(ref.slice(1));
+        if (symbol) {
+          const viewBox = symbol.getAttribute("viewBox") || copy.getAttribute("viewBox") || "";
+          markup = `<svg xmlns="http://www.w3.org/2000/svg"${viewBox ? ` viewBox="${viewBox}"` : ""} width="${Math.round(rect.width) || 24}" height="${Math.round(rect.height) || 24}" fill="${color}">${symbol.innerHTML}</svg>`;
+        }
+      }
+      if (svg.querySelector("symbol") && !use) {
+        for (const symbol of svg.querySelectorAll("symbol[id]")) {
+          const viewBox = symbol.getAttribute("viewBox");
+          pushSvg(`<svg xmlns="http://www.w3.org/2000/svg"${viewBox ? ` viewBox="${viewBox}"` : ""} width="24" height="24">${symbol.innerHTML}</svg>`, `#${symbol.id}`, 24, 24);
+        }
+        continue;
+      }
+      const label = svg.getAttribute("aria-label") || svg.querySelector("title")?.textContent || describeElement(svg.closest("a, button") || svg);
+      pushSvg(markup, normalizeWhitespace(label).slice(0, 60), Math.round(rect.width), Math.round(rect.height));
+    }
+
+    // Video / audio / embeds.
+    const media = new Map();
+    const addMedia = (raw, kind, extra = {}) => {
+      const url = abs(raw);
+      if (!url || url.startsWith("data:") || media.has(url) || media.size >= 80) return;
+      media.set(url, { url, kind, ext: extOf(url), bytes: sizes.get(url) || 0, ...extra });
+    };
+    for (const el of document.querySelectorAll("video, audio")) {
+      const kind = el.tagName.toLowerCase();
+      const src = el.currentSrc && !el.currentSrc.startsWith("blob:") ? el.currentSrc : el.getAttribute("src");
+      addMedia(src, kind, { poster: el.getAttribute("poster") ? abs(el.getAttribute("poster")) : "" });
+      for (const source of el.querySelectorAll("source[src]")) addMedia(source.getAttribute("src"), kind);
+    }
+    for (const iframe of document.querySelectorAll("iframe[src]")) {
+      if (/youtube|youtu\.be|vimeo|wistia|loom|mux/i.test(iframe.src)) addMedia(iframe.src, "embed");
+    }
+    for (const url of timing) {
+      if (/\.(mp4|webm|mov|m4v|m3u8|mp3|wav|ogg|m4a)(?:[?#]|$)/i.test(url)) addMedia(url, /\.(mp3|wav|ogg|m4a)/i.test(url) ? "audio" : "video");
+    }
+
+    // Animation files: Lottie, Rive, Spline.
+    const animations = new Map();
+    const addAnimation = (raw, kind) => {
+      const url = abs(raw);
+      if (!url || url.startsWith("data:") || animations.has(url)) return;
+      animations.set(url, { url, kind, ext: extOf(url), bytes: sizes.get(url) || 0 });
+    };
+    for (const el of document.querySelectorAll("lottie-player, dotlottie-player, dotlottie-wc, [data-animation-path], [data-lottie]")) {
+      addAnimation(el.getAttribute("src") || el.getAttribute("data-animation-path") || el.getAttribute("data-lottie"), "lottie");
+    }
+    for (const el of document.querySelectorAll("spline-viewer[url]")) addAnimation(el.getAttribute("url"), "spline");
+    for (const url of timing) {
+      if (/\.riv(?:[?#]|$)/i.test(url)) addAnimation(url, "rive");
+      else if (/\.lottie(?:[?#]|$)|lottie[^/]*\.json|bodymovin[^/]*\.json/i.test(url)) addAnimation(url, "lottie");
+      else if (/\.splinecode(?:[?#]|$)/i.test(url)) addAnimation(url, "spline");
+    }
+
+    // Fonts: every @font-face file, loaded state, icon-font flag.
+    const loadedFaces = new Set();
+    try {
+      for (const face of document.fonts) {
+        if (face.status === "loaded") loadedFaces.add(`${face.family.replace(/^['"]|['"]$/g, "")}|${face.weight}|${face.style}`);
+      }
+    } catch (e) {}
+    const usedFamilies = new Set();
+    for (const el of collectSampledElements(400)) {
+      const family = computedStyleOf(el).fontFamily.split(",")[0].trim().replace(/^['"]|['"]$/g, "");
+      if (family) usedFamilies.add(family.toLowerCase());
+    }
+    const ICON_FONT = /icon|awesome|material symbols|material icons|glyph|fontello|icomoon|remixicon|ionicons|feather|phosphor|tabler/i;
+    const fonts = [];
+    const seenFont = new Set();
+    forEachAccessibleRule((rule) => {
+      if (rule.type !== CSSRule.FONT_FACE_RULE || fonts.length >= 120) return;
+      const family = normalizeWhitespace(rule.style.getPropertyValue("font-family")).replace(/^['"]|['"]$/g, "");
+      const weight = normalizeWhitespace(rule.style.getPropertyValue("font-weight")) || "400";
+      const style = normalizeWhitespace(rule.style.getPropertyValue("font-style")) || "normal";
+      const base = rule.parentStyleSheet?.href || document.baseURI;
+      const src = rule.style.getPropertyValue("src") || "";
+      // Best format first: woff2 > woff > ttf/otf.
+      const candidates = Array.from(src.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g), (m) => abs(m[2], base)).filter(Boolean);
+      const url =
+        candidates.find((u) => /\.woff2(?:[?#]|$)/i.test(u)) ||
+        candidates.find((u) => /\.woff(?:[?#]|$)/i.test(u)) ||
+        candidates[0];
+      if (!family || !url) return;
+      const key = `${family}|${weight}|${style}|${url}`;
+      if (seenFont.has(key)) return;
+      seenFont.add(key);
+      fonts.push({
+        family,
+        weight,
+        style,
+        url,
+        ext: url.startsWith("data:") ? "woff2" : extOf(url) || "woff2",
+        bytes: sizes.get(url) || 0,
+        loaded: loadedFaces.has(`${family}|${weight}|${style}`),
+        used: usedFamilies.has(family.toLowerCase()),
+        icon: ICON_FONT.test(family)
+      });
+    });
+    // Fonts fetched by JS/CSS we could not read (cross-origin sheets).
+    for (const url of timing) {
+      if (!/\.(woff2?|ttf|otf|eot)(?:[?#]|$)/i.test(url) || fonts.some((f) => f.url === url)) continue;
+      const name = decodeURIComponent(url.split(/[?#]/)[0].split("/").pop() || "font");
+      fonts.push({ family: name.replace(/\.[a-z0-9]+$/i, ""), weight: "?", style: "?", url, ext: extOf(url), bytes: sizes.get(url) || 0, loaded: true, used: false, icon: ICON_FONT.test(name) });
+    }
+
+    return {
+      page: { url: location.href, title: document.title || "" },
+      images: Array.from(images.values()),
+      svgs,
+      media: Array.from(media.values()),
+      animations: Array.from(animations.values()),
+      fonts
+    };
+  }
+
+  // srcset per HTML spec: URLs may contain commas (Cloudinary "w_400,h_300"),
+  // a candidate ends at whitespace or at a comma that terminates the URL.
+  function parseSrcset(value) {
+    const urls = [];
+    const text = String(value || "");
+    let i = 0;
+    while (i < text.length) {
+      while (i < text.length && /[\s,]/.test(text[i])) i++;
+      let url = "";
+      while (i < text.length && !/\s/.test(text[i])) url += text[i++];
+      const endsCandidate = /,+$/.test(url);
+      url = url.replace(/,+$/, "");
+      if (url) urls.push(url);
+      if (!endsCandidate) {
+        while (i < text.length && text[i] !== ",") i++; // skip descriptor
+      }
+    }
+    return urls;
   }
 
   function collectInlineSvgIcons() {
@@ -1160,6 +1444,15 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  // Two rendered frames (scroll handlers + rAF-driven JS have run), capped
+  // because rAF never fires in background tabs.
+  function settleFrames(capMs = 400) {
+    const frames = new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    );
+    return Promise.race([frames, sleep(capMs)]);
+  }
+
   function shortHash(value) {
     let hash = 5381;
     const text = String(value || "");
@@ -1177,7 +1470,7 @@
       const href = link.getAttribute("href");
       if (!href) continue;
       try {
-        stylesheets.push(new URL(href, window.location.href).href);
+        stylesheets.push(new URL(href, document.baseURI).href);
       } catch (e) {}
       if (stylesheets.length >= 30) break;
     }
@@ -1187,7 +1480,7 @@
       const src = script.getAttribute("src");
       if (!src) continue;
       try {
-        scripts.push(new URL(src, window.location.href).href);
+        scripts.push(new URL(src, document.baseURI).href);
       } catch (e) {}
       if (scripts.length >= 30) break;
     }
@@ -1208,7 +1501,7 @@
           const ref = match[2].trim();
           if (ref.startsWith("data:")) continue;
           try {
-            const baseHref = rule.parentStyleSheet?.href || window.location.href;
+            const baseHref = rule.parentStyleSheet?.href || document.baseURI;
             urls.push(new URL(ref, baseHref).href);
           } catch (e) {}
         }
@@ -1359,7 +1652,7 @@
     let layoutKind = style.display;
     if (style.display === "grid") {
       columns = style.gridTemplateColumns && style.gridTemplateColumns !== "none"
-        ? style.gridTemplateColumns.split(" ").length
+        ? countGridColumns(style.gridTemplateColumns)
         : 0;
       layoutKind = "grid";
     } else if (style.display === "flex") {
@@ -1379,7 +1672,7 @@
         if (innerStyle.display === "grid") {
           layoutKind = "grid (nested)";
           columns = innerStyle.gridTemplateColumns !== "none"
-            ? innerStyle.gridTemplateColumns.split(" ").length
+            ? countGridColumns(innerStyle.gridTemplateColumns)
             : 0;
         } else {
           layoutKind = `flex ${innerStyle.flexDirection} (nested)`;
@@ -1416,6 +1709,13 @@
     };
   }
 
+  // Computed grid-template-columns is a track list, possibly with named
+  // lines ("[full-start] 100px [content-start] 1fr"): count tracks only.
+  function countGridColumns(value) {
+    const tracks = String(value || "").replace(/\[[^\]]*\]/g, " ").trim();
+    return tracks && tracks !== "none" ? tracks.split(/\s+/).length : 0;
+  }
+
   // Image inventory with role guesses: logo, hero, icon, photo.
   function collectImageInventory() {
     const images = [];
@@ -1424,10 +1724,12 @@
       if (images.length >= 20) break;
       if (!(img instanceof HTMLElement) || !isVisible(img)) continue;
       const rect = img.getBoundingClientRect();
+      // currentSrc = the file actually displayed (srcset choice, lazy
+      // loader swap) instead of a data: placeholder in src.
       const src = img.getAttribute("src") || img.getAttribute("data-src") || "";
-      let absSrc = src;
+      let absSrc = img.currentSrc || src;
       try {
-        absSrc = new URL(src, window.location.href).href;
+        absSrc = new URL(absSrc, document.baseURI).href;
       } catch (e) {}
       const alt = normalizeWhitespace(img.getAttribute("alt") || "").slice(0, 80);
       const hint = `${img.className} ${src} ${alt}`.toLowerCase();
@@ -1682,12 +1984,15 @@
 
   // "Extract this component": tracks the element under the last
   // right-click so the context-menu action knows what to serialize.
+  // context-target.js (declared, runs from document_start) records it in
+  // the shared isolated world, so the very first right-click works too.
   let lastContextMenuTarget = null;
   document.addEventListener(
     "contextmenu",
     (event) => {
-      if (event.target instanceof HTMLElement) {
-        lastContextMenuTarget = event.target;
+      const el = event.target instanceof Element ? event.target.closest("*:not(svg *):not(svg)") || event.target.parentElement : null;
+      if (el instanceof HTMLElement) {
+        lastContextMenuTarget = el;
       }
     },
     true
@@ -1704,7 +2009,8 @@
     "color", "font-family", "font-size", "font-weight", "font-style", "line-height",
     "letter-spacing", "text-align", "text-transform", "text-decoration", "white-space",
     "border", "border-radius", "box-shadow", "outline", "opacity", "z-index",
-    "transition", "transform", "cursor", "object-fit", "list-style"
+    "transition", "transform", "cursor", "object-fit", "list-style",
+    "fill", "stroke", "stroke-width"
   ];
 
   function serializeElementAsComponent(target) {
@@ -1716,7 +2022,8 @@
     for (let i = 0; i < limit; i++) {
       const original = originals[i];
       const copy = clones[i];
-      if (!(original instanceof HTMLElement) || !(copy instanceof HTMLElement)) {
+      // SVG icons too: without their CSS width/fill they render huge/black.
+      if (!(original instanceof HTMLElement || original instanceof SVGElement) || !copy.setAttribute) {
         continue;
       }
       const style = computedStyleOf(original);
@@ -1732,10 +2039,10 @@
       copy.removeAttribute("id");
 
       if (copy.tagName === "IMG") {
-        const src = original.getAttribute("src") || original.getAttribute("data-src");
+        const src = original.currentSrc || original.getAttribute("src") || original.getAttribute("data-src");
         if (src) {
           try {
-            copy.setAttribute("src", new URL(src, window.location.href).href);
+            copy.setAttribute("src", new URL(src, document.baseURI).href);
           } catch (e) {}
         }
         copy.removeAttribute("srcset");
@@ -1745,7 +2052,7 @@
         const href = original.getAttribute("href");
         if (href) {
           try {
-            copy.setAttribute("href", new URL(href, window.location.href).href);
+            copy.setAttribute("href", new URL(href, document.baseURI).href);
           } catch (e) {}
         }
       }
@@ -1841,12 +2148,21 @@
 
     const startX = window.scrollX;
     const startY = window.scrollY;
-    const delta = Math.min(600, scrollRoom - startY > 200 ? Math.min(600, scrollRoom - startY) : 600);
+    // Scroll down when there is room, otherwise up (page already at the bottom).
+    const roomBelow = scrollRoom - startY;
+    const delta = roomBelow > 200 ? Math.min(600, roomBelow) : -Math.min(600, startY);
     window.scrollTo({ top: startY + delta, behavior: "instant" });
-    await sleep(260);
+    await settleFrames();
+    // Scroll handlers run on the next frames; under load they lag. Poll until
+    // a candidate's transform reacts (or 1 s passes) instead of guessing.
+    for (let waited = 0; waited < 1000; waited += 50) {
+      if (candidates.some((el, i) => computedStyleOf(el).transform !== before[i].transform)) break;
+      await sleep(50);
+    }
+    await sleep(80);
     const actualDelta = window.scrollY - startY;
 
-    if (actualDelta > 50) {
+    if (Math.abs(actualDelta) > 50) {
       for (let i = 0; i < candidates.length && result.measured.length < 10; i++) {
         const el = candidates[i];
         try {
@@ -1918,14 +2234,18 @@
       if (!(canvas instanceof HTMLCanvasElement)) continue;
       const rect = canvas.getBoundingClientRect();
       if (rect.width < 50 || rect.height < 50) continue;
-      let context = "unknown";
+      let context = canvas.hasAttribute("data-engine") ? "webgl" : "unknown";
+      // getContext() on a canvas that has no context yet CREATES one, which
+      // would break a lazily initialized scene and eat into the 16-context
+      // WebGL budget. Only probe canvases a script has already sized
+      // (renderers resize their canvas when they set up their context).
+      const initialized = canvas.width !== 300 || canvas.height !== 150;
       try {
-        // getContext returns the existing context for a matching type and
-        // null for a mismatched one, so probing identifies initialized
-        // canvases without disturbing them.
-        if (canvas.getContext("webgl2")) context = "webgl2";
-        else if (canvas.getContext("webgl")) context = "webgl";
-        else if (canvas.getContext("2d")) context = "2d";
+        if (context === "unknown" && initialized) {
+          if (canvas.getContext("webgl2")) context = "webgl2";
+          else if (canvas.getContext("webgl")) context = "webgl";
+          else if (canvas.getContext("2d")) context = "2d";
+        }
       } catch (e) {}
       inventory.push({
         selector: describeElement(canvas),
@@ -2183,7 +2503,7 @@
     for (const anchor of anchors) {
       let absUrl;
       try {
-        absUrl = new URL(anchor.getAttribute("href"), window.location.href);
+        absUrl = new URL(anchor.getAttribute("href"), document.baseURI);
       } catch (e) {
         continue;
       }

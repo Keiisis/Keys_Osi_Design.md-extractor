@@ -1,254 +1,573 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Keys_Osi_Design.md-extractor</title>
+  <title>Keys_Osi</title>
   <link rel="stylesheet" href="./popup.css" />
 </head>
 
-<body>
+<body data-view="design">
   <main class="app">
-    <header class="header">
-      <div class="brand">
-        <img src="../assets/icons/icon32.png" width="24" height="24" alt="App logo" />
-        <div>
-          <h1>Keys_Osi_Design.md-extractor</h1>
-          <p>Auto-generates from the active tab based on <a target="_blank" rel="noopener noreferrer"
-              href="https://www.typeui.sh/design-md">DESIGN.md</a>
-            specifications.</p>
-        </div>
+    <header class="masthead">
+      <span id="heroSpecimen" class="masthead__specimen" aria-hidden="true"></span>
+      <span class="masthead__mark"><img src="../assets/icons/icon48.png" width="44" height="44" alt="" /></span>
+      <div class="masthead__title">
+        <h1>Keys_Osi</h1>
+        <p class="masthead__line">design · structure · assets · 3D</p>
       </div>
-      <a href="https://github.com/Keiisis/Keys_Osi_Design.md-extractor" target="_blank" rel="noopener noreferrer"
-        class="badge">
-        <svg fill="currentColor" width="12" height="12" viewBox="0 -0.5 25 25" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="m12.301 0h.093c2.242 0 4.34.613 6.137 1.68l-.055-.031c1.871 1.094 3.386 2.609 4.449 4.422l.031.058c1.04 1.769 1.654 3.896 1.654 6.166 0 5.406-3.483 10-8.327 11.658l-.087.026c-.063.02-.135.031-.209.031-.162 0-.312-.054-.433-.144l.002.001c-.128-.115-.208-.281-.208-.466 0-.005 0-.01 0-.014v.001q0-.048.008-1.226t.008-2.154c.007-.075.011-.161.011-.249 0-.792-.323-1.508-.844-2.025.618-.061 1.176-.163 1.718-.305l-.076.017c.573-.16 1.073-.373 1.537-.642l-.031.017c.508-.28.938-.636 1.292-1.058l.006-.007c.372-.476.663-1.036.84-1.645l.009-.035c.209-.683.329-1.468.329-2.281 0-.045 0-.091-.001-.136v.007c0-.022.001-.047.001-.072 0-1.248-.482-2.383-1.269-3.23l.003.003c.168-.44.265-.948.265-1.479 0-.649-.145-1.263-.404-1.814l.011.026c-.115-.022-.246-.035-.381-.035-.334 0-.649.078-.929.216l.012-.005c-.568.21-1.054.448-1.512.726l.038-.022-.609.384c-.922-.264-1.981-.416-3.075-.416s-2.153.152-3.157.436l.081-.02q-.256-.176-.681-.433c-.373-.214-.814-.421-1.272-.595l-.066-.022c-.293-.154-.64-.244-1.009-.244-.124 0-.246.01-.364.03l.013-.002c-.248.524-.393 1.139-.393 1.788 0 .531.097 1.04.275 1.509l-.01-.029c-.785.844-1.266 1.979-1.266 3.227 0 .025 0 .051.001.076v-.004c-.001.039-.001.084-.001.13 0 .809.12 1.591.344 2.327l-.015-.057c.189.643.476 1.202.85 1.693l-.009-.013c.354.435.782.793 1.267 1.062l.022.011c.432.252.933.465 1.46.614l.046.011c.466.125 1.024.227 1.595.284l.046.004c-.431.428-.718 1-.784 1.638l-.001.012c-.207.101-.448.183-.699.236l-.021.004c-.256.051-.549.08-.85.08-.022 0-.044 0-.066 0h.003c-.394-.008-.756-.136-1.055-.348l.006.004c-.371-.259-.671-.595-.881-.986l-.007-.015c-.198-.336-.459-.614-.768-.827l-.009-.006c-.225-.169-.49-.301-.776-.38l-.016-.004-.32-.048c-.023-.002-.05-.003-.077-.003-.14 0-.273.028-.394.077l.007-.003q-.128.072-.08.184c.039.086.087.16.145.225l-.001-.001c.061.072.13.135.205.19l.003.002.112.08c.283.148.516.354.693.603l.004.006c.191.237.359.505.494.792l.01.024.16.368c.135.402.38.738.7.981l.005.004c.3.234.662.402 1.057.478l.016.002c.33.064.714.104 1.106.112h.007c.045.002.097.002.15.002.261 0 .517-.021.767-.062l-.027.004.368-.064q0 .609.008 1.418t.008.873v.014c0 .185-.08.351-.208.466h-.001c-.119.089-.268.143-.431.143-.075 0-.147-.011-.214-.032l.005.001c-4.929-1.689-8.409-6.283-8.409-11.69 0-2.268.612-4.393 1.681-6.219l-.032.058c1.094-1.871 2.609-3.386 4.422-4.449l.058-.031c1.739-1.034 3.835-1.645 6.073-1.645h.098-.005zm-7.64 17.666q.048-.112-.112-.192-.16-.048-.208.032-.048.112.112.192.144.096.208-.032zm.497.545q.112-.08-.032-.256-.16-.144-.256-.048-.112.08.032.256.159.157.256.047zm.48.72q.144-.112 0-.304-.128-.208-.272-.096-.144.08 0 .288t.272.112zm.672.673q.128-.128-.064-.304-.192-.192-.32-.048-.144.128.064.304.192.192.32.044zm.913.4q.048-.176-.208-.256-.24-.064-.304.112t.208.24q.24.097.304-.096zm1.009.08q0-.208-.272-.176-.256 0-.256.176 0 .208.272.176.256.001.256-.175zm.929-.16q-.032-.176-.288-.144-.256.048-.224.24t.288.128.225-.224z" />
-        </svg>
-        v0.14.0
-      </a>
+      <div class="masthead__meta">
+        <span id="siteHost" class="site-chip" title="Onglet analysé">—</span>
+        <button id="lensBtn" type="button" class="lens-btn" title="Inspecter la page au survol (police, couleurs, contraste) — E : pipette">Lens</button>
+        <a href="https://github.com/Keiisis/Keys_Osi_Design.md-extractor" target="_blank" rel="noopener noreferrer"
+          class="version-chip" title="Keys_Osi sur GitHub"><span id="appVersion"></span></a>
+      </div>
     </header>
 
-    <section class="mode-switch" aria-label="Output mode">
-      <button id="designModeBtn" type="button" data-mode="design" class="mode-btn is-active">
-        DESIGN.md
-      </button>
-      <button id="skillModeBtn" type="button" data-mode="skill" class="mode-btn">
-        SKILL.md
-      </button>
-      <button id="jsonModeBtn" type="button" data-mode="json" class="mode-btn">
-        JSON
-      </button>
-      <button id="motionModeBtn" type="button" data-mode="motion" class="mode-btn">
-        MOTION.md
-      </button>
-      <button id="promptModeBtn" type="button" data-mode="prompt" class="mode-btn">
-        PROMPT.md
-      </button>
-      <button id="proModeBtn" type="button" data-mode="pro" class="mode-btn">
-        PRO
-      </button>
-    </section>
+    <nav class="view-tabs" aria-label="Vues Keys_Osi">
+      <span class="view-tabs__thumb" aria-hidden="true"></span>
+      <button type="button" class="view-tab is-active" data-view="design">Design</button>
+      <button type="button" class="view-tab" data-view="site">Site</button>
+      <button type="button" class="view-tab" data-view="assets">Assets</button>
+      <button type="button" class="view-tab" data-view="models">3D <span id="modelBadge" class="tab-badge" hidden></span></button>
+      <button type="button" class="view-tab" data-view="board">Moodboard <span id="boardBadge" class="tab-badge" hidden></span></button>
+    </nav>
 
-    <section id="proPanel" class="pro-panel" hidden>
-      <label for="proDescription" class="pro-label">Décris TON projet — le design du site actuel sera adapté à ce projet :</label>
-      <textarea id="proDescription" rows="4"
-        placeholder="Ex : site vitrine pour mon food-truck de burgers « Smash Bros » à Lyon — audience jeune, sections : hero, menu, événements privés, avis clients, contact/réservation. Ton fun et direct."></textarea>
-      <div class="pro-settings">
-        <select id="proProvider" title="Fournisseur IA">
-          <option value="groq" selected>Groq</option>
-          <option value="openai">OpenAI</option>
-          <option value="claude">Claude (Anthropic)</option>
-          <option value="kimi">Kimi (Moonshot)</option>
-          <option value="custom">Custom (OpenAI-compatible)</option>
-        </select>
-        <input id="proModel" type="text" placeholder="modèle (laisser vide = défaut du fournisseur)" />
+    <!-- ===================== SITE ===================== -->
+    <section id="viewSite" class="view" hidden>
+      <div class="site-head">
+        <p class="eyebrow">Structure complète du site</p>
+        <strong id="siteOrigin" class="toolbar__title">—</strong>
+        <p class="site-head__hint">Toutes les pages : rôle, sections dans l’ordre, textes, CTA, formulaires, modèles de routes, parcours. Un fichier .md par page, écrit pour l’IA qui reconstruit le site. robots.txt respecté.</p>
       </div>
-      <input id="proBaseUrl" type="text" placeholder="Base URL (ex : https://api.mistral.ai/v1)" hidden />
-      <input id="proApiKey" type="password" autocomplete="off"
-        placeholder="Clé API — stockée uniquement sur cet ordinateur, jamais dans le code" />
-      <label class="copy-site-option">
-        <input type="checkbox" id="proVisionChk" />
-        Vision : envoyer des captures à l'IA (grounding visuel — modèle vision requis)
-      </label>
-      <button id="proGenerateBtn" type="button" class="secondary-btn">Générer PROMPT_PRO.md</button>
-
-      <div class="pro-ai-actions">
-        <div class="pro-settings">
-          <select id="codeFramework" title="Framework de génération">
-            <option value="react" selected>React</option>
-            <option value="vue">Vue 3</option>
-            <option value="html">HTML autonome</option>
+      <div class="site-options">
+        <label class="select-row">Pages max
+          <select id="siteMaxPages" class="field">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
           </select>
-          <button id="genCodeBtn" type="button" class="export-btn">Générer le code</button>
-        </div>
-        <button id="renameTokensBtn" type="button" class="export-btn">Renommer les tokens (IA)</button>
-        <div class="pro-settings">
-          <button id="fidelityBaselineBtn" type="button" class="export-btn">📸 Référence</button>
-          <button id="fidelityCompareBtn" type="button" class="export-btn">Comparer la fidélité</button>
-        </div>
+        </label>
+        <label class="select-row">Exemples par modèle
+          <select id="siteSample" class="field">
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+        <label class="switch"><input type="checkbox" id="siteRenderChk" checked /><span>Rendre les pages JavaScript (SPA)</span></label>
       </div>
-      <p id="proStatus" class="pro-status" hidden></p>
+      <div class="pro__row">
+        <button id="siteScanBtn" type="button" class="btn btn--primary btn--block">Scanner tout le site</button>
+        <button id="siteCancelBtn" type="button" class="btn btn--quiet" hidden>Annuler</button>
+      </div>
+      <div id="siteProgress" class="site-progress" hidden>
+        <div class="site-progress__bar"><span id="siteProgressFill"></span></div>
+        <p id="siteProgressText" class="site-progress__text"></p>
+      </div>
+      <p id="siteStatus" class="pane-status" hidden></p>
+      <div id="siteResult" class="site-result" hidden>
+        <div id="siteStats" class="site-stats"></div>
+        <div class="exports" aria-label="Exports de structure">
+          <button id="siteMasterBtn" type="button" class="export">SITE_STRUCTURE.md</button>
+          <button id="siteZipBtn" type="button" class="export">Tout (ZIP)</button>
+          <button id="siteJsonBtn" type="button" class="export">JSON</button>
+        </div>
+        <input id="siteFilter" class="field" type="search" placeholder="Filtrer : route, type, titre…" />
+        <ul id="sitePages" class="site-pages"></ul>
+      </div>
+
+      <details id="techFold" class="fold" open>
+        <summary><span>Décodage technique</span><span class="fold__meta">stack · routes · API · sources</span></summary>
+        <div class="tech">
+          <p class="site-head__hint">Lit ce que le site publie : frameworks et versions, manifestes de build (routes cachées), endpoints API, source maps publiques (sources originales), hébergement, en-têtes de sécurité. Les routes trouvées enrichissent le scan de structure.</p>
+          <button id="techBtn" type="button" class="btn btn--line btn--block">Décoder la stack de ce site</button>
+          <p id="techStatus" class="pane-status" hidden></p>
+          <div id="techResult" hidden>
+            <div id="techChips" class="chips"></div>
+            <div id="techStats" class="site-stats"></div>
+            <div class="exports">
+              <button id="techMdBtn" type="button" class="export">TECH_STACK.md</button>
+              <button id="techSourcesBtn" type="button" class="export">Sources (ZIP)</button>
+              <button id="techJsonBtn" type="button" class="export">JSON</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details id="reaFold" class="fold">
+        <summary><span>Reverse engineering avancé</span><span class="fold__meta">REA · preuves locales</span></summary>
+        <div class="rea">
+          <p class="site-head__hint">Analyse approfondie en local par REA : graphe des modules JavaScript, routes et endpoints trouvés dans le code, source maps, inspection passive de la page (DOM, réseau, workers, stockage), outils WebMCP déclarés, capture de preuve. Aussi pour un fichier : bundle, source map, WASM, archive, APK, exécutable.</p>
+          <div id="reaSetup" class="rea__setup" hidden>
+            <p>L'hôte Keys_Osi n'est pas installé sur cet ordinateur. Dans le dossier de l'extension, lance une fois :</p>
+            <code id="reaInstallCmd">node native-host/install.mjs</code>
+            <button id="reaCopyCmd" type="button" class="export">Copier la commande</button>
+          </div>
+          <p id="reaState" class="rea__state">Ouvre ce dépli pour démarrer REA.</p>
+          <div class="option-row">
+            <label class="switch"><input type="checkbox" id="reaMaps" checked /><span>Source maps</span></label>
+            <label class="switch"><input type="checkbox" id="reaA11y" /><span>Texte d'accessibilité</span></label>
+            <label class="switch"><input type="checkbox" id="reaStorage" /><span>Clés de stockage</span></label>
+          </div>
+          <button id="reaAnalyzeBtn" type="button" class="btn btn--primary btn--block">Analyser cette page avec REA</button>
+          <div class="pro__row">
+            <button id="reaFileBtn" type="button" class="btn btn--line">Analyser un fichier…</button>
+            <input id="reaFile" type="file" hidden />
+            <button id="reaOpenBtn" type="button" class="btn btn--quiet">Dossier des preuves</button>
+          </div>
+          <p id="reaStatus" class="pane-status" hidden></p>
+          <div id="reaResult" class="rea__result" hidden>
+            <div id="reaStats" class="site-stats"></div>
+            <ul id="reaFindings" class="rea__findings"></ul>
+            <div class="exports">
+              <button id="reaReportBtn" type="button" class="export">REA_REPORT.md</button>
+              <button id="reaOpenRunBtn" type="button" class="export">Ouvrir les preuves</button>
+            </div>
+          </div>
+          <details class="fold rea__expert">
+            <summary><span>Mode expert</span><span class="fold__meta"><span id="reaToolCount">0</span> outils REA</span></summary>
+            <div class="rea">
+              <select id="reaTool" class="field"></select>
+              <p id="reaToolDesc" class="site-head__hint"></p>
+              <label class="switch"><input type="checkbox" id="reaUseBrowser" checked /><span>Fournir l'onglet d'analyse (cdp_endpoint, target_id) sur cette page</span></label>
+              <textarea id="reaArgs" class="field field--area" rows="5" spellcheck="false">{}</textarea>
+              <button id="reaRunTool" type="button" class="btn btn--line">Exécuter l'outil</button>
+              <pre id="reaOutput" class="rea__output" hidden></pre>
+            </div>
+          </details>
+        </div>
+      </details>
     </section>
 
+    <!-- ===================== MOODBOARD ===================== -->
+    <section id="viewBoard" class="view" hidden>
+      <div class="site-head">
+        <p class="eyebrow">Moodboard</p>
+        <strong class="toolbar__title"><span id="boardCount">0</span> références</strong>
+        <p class="site-head__hint">Épingle pendant ta navigation : Lens (P couleurs et police, S section) ou clic droit « Épingler dans le moodboard ». Envoyé à PROMPT PRO.</p>
+      </div>
+      <div class="toolbar">
+        <div id="boardChips" class="chips" role="tablist">
+          <button type="button" class="chip is-active" data-kind="">Tout</button>
+          <button type="button" class="chip" data-kind="color">Couleurs</button>
+          <button type="button" class="chip" data-kind="font">Polices</button>
+          <button type="button" class="chip" data-kind="section">Sections</button>
+          <button type="button" class="chip" data-kind="image">Images</button>
+          <button type="button" class="chip" data-kind="text">Textes</button>
+        </div>
+      </div>
+      <div class="pro__row">
+        <button id="boardLensBtn" type="button" class="btn btn--line">Épingler avec Lens</button>
+        <button id="boardExportBtn" type="button" class="btn btn--line">Exporter (ZIP)</button>
+        <button id="boardClearBtn" type="button" class="btn btn--quiet">Vider</button>
+      </div>
+      <p id="boardStatus" class="pane-status" hidden></p>
+      <div id="boardGrid" class="board"></div>
+    </section>
 
-    <div id="extractionProgress" class="progress-container" hidden>
-      <div class="progress-step" id="step-connect"><span class="step-dot"></span> Établissement de la connexion...</div>
-      <div class="progress-step" id="step-extract"><span class="step-dot"></span> Analyse des éléments du DOM...</div>
-      <div class="progress-step" id="step-normalize"><span class="step-dot"></span> Normalisation des variables CSS...</div>
-      <div class="progress-step" id="step-assemble"><span class="step-dot"></span> Génération du rapport de design...</div>
+    <!-- ===================== ASSETS ===================== -->
+    <section id="viewAssets" class="view" hidden>
+      <div class="toolbar">
+        <input id="assetSearch" class="field" type="search" placeholder="Filtrer : nom, URL, police, format…" />
+        <button id="assetsRescanBtn" type="button" class="btn btn--quiet">Rescanner</button>
+        <button id="assetsZipAllBtn" type="button" class="btn btn--line">ZIP de la sélection</button>
+      </div>
+      <div id="assetChips" class="chips" role="tablist">
+        <button type="button" class="chip is-active" data-filter="images">Images</button>
+        <button type="button" class="chip" data-filter="svgs">SVG / icônes</button>
+        <button type="button" class="chip" data-filter="fonts">Polices</button>
+        <button type="button" class="chip" data-filter="media">Vidéo / audio</button>
+        <button type="button" class="chip" data-filter="animations">Lottie · Rive · Spline</button>
+        <button type="button" class="chip" data-filter="styles">Couleurs &amp; styles</button>
+      </div>
+      <p id="assetsStatus" class="pane-status" hidden></p>
+      <div id="assetGrid" class="asset-grid"></div>
+    </section>
+
+    <!-- ===================== 3D ===================== -->
+    <section id="viewModels" class="view" hidden>
+      <div class="toolbar">
+        <strong id="modelCount" class="toolbar__title">0 modèle 3D</strong>
+        <button id="modelsScanBtn" type="button" class="btn btn--line">Scanner la page</button>
+        <button id="modelsClearBtn" type="button" class="btn btn--quiet">Vider</button>
+        <button id="sceneExportBtn" type="button" class="btn btn--line" title="Exporte la scène three.js affichée (même sans fichier téléchargé)">Exporter la scène (GLB)</button>
+      </div>
+      <div class="option-row">
+        <label class="switch"><input type="checkbox" id="optZup" checked /><span>Y-up → Z-up</span></label>
+        <label class="switch"><input type="checkbox" id="optMm" checked /><span>×1000 · m → mm</span></label>
+        <label class="switch"><input type="checkbox" id="optSaveAs" checked /><span>Demander où enregistrer</span></label>
+      </div>
+      <p id="modelsStatus" class="pane-status" hidden></p>
+      <ul id="modelList" class="model-list"></ul>
+      <details id="netPanel" class="fold">
+        <summary><span>Inspecteur réseau</span><span class="fold__meta"><span id="netCount">0</span> requêtes</span></summary>
+        <div class="toolbar">
+          <input id="netSearch" class="field" type="search" placeholder="URL ou content-type" />
+          <select id="netType" class="field" title="Type de ressource">
+            <option value="">Tous types</option>
+            <option value="xmlhttprequest">XHR / fetch</option>
+            <option value="media">Media</option>
+            <option value="image">Image</option>
+            <option value="font">Font</option>
+            <option value="script">Script</option>
+            <option value="other">Other</option>
+          </select>
+          <input id="netMinKb" class="field field--narrow" type="number" min="0" placeholder="min Ko" />
+          <label class="switch"><input type="checkbox" id="netFlagged" /><span>Marqués</span></label>
+        </div>
+        <ul id="netList" class="net-list"></ul>
+      </details>
+    </section>
+
+    <!-- ===================== DESIGN SYSTEM ===================== -->
+    <div id="viewDesign" class="view">
+      <div id="sourceBar" class="source-bar" hidden>
+        <span class="source-bar__label">Source : <strong id="sourceName">Figma</strong></span>
+        <button id="sourceSiteBtn" type="button" class="btn btn--quiet">Revenir au site</button>
+      </div>
+
+      <section class="formats" aria-label="Format de sortie">
+        <button id="designModeBtn" type="button" data-mode="design" class="format is-active">
+          <span class="format__name">DESIGN.md</span><span class="format__hint">blueprint mesuré</span>
+        </button>
+        <button id="skillModeBtn" type="button" data-mode="skill" class="format">
+          <span class="format__name">SKILL.md</span><span class="format__hint">skill d'agent</span>
+        </button>
+        <button id="jsonModeBtn" type="button" data-mode="json" class="format">
+          <span class="format__name">JSON</span><span class="format__hint">tokens machine</span>
+        </button>
+        <button id="motionModeBtn" type="button" data-mode="motion" class="format">
+          <span class="format__name">MOTION.md</span><span class="format__hint">animations</span>
+        </button>
+        <button id="promptModeBtn" type="button" data-mode="prompt" class="format">
+          <span class="format__name">PROMPT.md</span><span class="format__hint">rebuild fidèle</span>
+        </button>
+        <button id="proModeBtn" type="button" data-mode="pro" class="format format--pro">
+          <span class="format__name">PROMPT PRO</span><span class="format__hint">ton projet + IA</span>
+        </button>
+      </section>
+
+      <section id="proPanel" class="pro" hidden>
+        <label for="proDescription" class="pro__label">Ton projet — le design du site actuel lui sera adapté</label>
+        <textarea id="proDescription" class="field field--area" rows="7"
+          placeholder="Ex : site vitrine pour mon food-truck de burgers « Smash Bros » à Lyon — audience jeune, sections : hero, menu, événements privés, avis clients, contact/réservation. Ton fun et direct. Plus le brief est complet (offre, cible, sections, ton, contenus, références), plus le PROMPT_PRO est précis."></textarea>
+        <div class="pro__row">
+          <button id="proBriefBtn" type="button" class="btn btn--quiet" title="Ajoute le contenu de fichiers .md / .txt au brief">Importer un brief (.md, .txt)</button>
+          <input id="proBriefFile" type="file" accept=".md,.markdown,.txt" multiple hidden />
+          <span id="proBriefCount" class="pro__count"></span>
+        </div>
+
+        <div id="brandBox" class="brand">
+          <div class="brand__head">
+            <span class="pro__label">Ta marque</span>
+            <span class="fold__meta">logo → charte complète</span>
+          </div>
+          <label id="brandDrop" class="brand__drop">
+            <input id="brandFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden />
+            <span class="brand__drop-title">Dépose ton logo</span>
+            <span class="brand__drop-hint">PNG, SVG ou JPG · couleurs exactes, palette AA, 3 paires de polices, logo SVG</span>
+          </label>
+          <div class="pro__engine">
+            <input id="brandName" class="field" type="text" placeholder="Nom de la marque" />
+            <label class="switch"><input type="checkbox" id="brandAiFont" /><span>Police du logo par IA</span></label>
+          </div>
+          <p id="brandStatus" class="pane-status" hidden></p>
+          <div id="brandResult" class="brand__result" hidden>
+            <div class="brand__identity">
+              <div id="brandLogo" class="brand__logo"></div>
+              <div>
+                <p id="brandMeta" class="brand__meta"></p>
+                <div id="brandLogoColors" class="brand__chips"></div>
+              </div>
+            </div>
+            <div id="brandScale" class="brand__scale" aria-label="Échelle primaire"></div>
+            <div id="brandSwatches" class="brand__swatches"></div>
+            <div id="brandFonts" class="brand__fonts"></div>
+            <div class="exports">
+              <button id="brandZipBtn" type="button" class="export">Brand kit (ZIP)</button>
+              <button id="brandTryBtn" type="button" class="export">Essayer sur ce site</button>
+              <button id="brandSvgBtn" type="button" class="export">Logo SVG</button>
+            </div>
+            <button id="brandClearBtn" type="button" class="btn btn--quiet">Retirer la marque</button>
+          </div>
+        </div>
+
+        <div class="pro__context" aria-label="Contexte envoyé à PROMPT PRO">
+          <label class="switch"><input type="checkbox" id="proUseBrand" checked /><span>Ma marque</span></label>
+          <label class="switch"><input type="checkbox" id="proUseBoard" checked /><span>Moodboard</span></label>
+          <label class="switch"><input type="checkbox" id="proUseSite" checked /><span>Structure du site</span></label>
+        </div>
+
+        <div class="pro__engine">
+          <select id="proProvider" class="field" title="Fournisseur IA">
+            <option value="groq" selected>Groq</option>
+            <option value="openai">OpenAI</option>
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="kimi">Kimi (Moonshot)</option>
+            <option value="newapi">Passerelle New API (MiaRouter…)</option>
+            <option value="custom">Custom (OpenAI-compatible)</option>
+          </select>
+          <input id="proModel" class="field" type="text" list="proModelList" placeholder="modèle (vide = meilleur détecté)" />
+          <datalist id="proModelList"></datalist>
+          <button id="proListModelsBtn" type="button" class="btn btn--quiet" title="Lister les modèles de l'endpoint">Modèles</button>
+        </div>
+        <div class="pro__engine">
+          <select id="proPriority" class="field" title="Sans modèle imposé : qualité = meilleur modèle, vitesse = le plus rapide mesuré sur tes générations">
+            <option value="quality" selected>Priorité : qualité (meilleur modèle)</option>
+            <option value="speed">Priorité : vitesse (le plus rapide mesuré)</option>
+          </select>
+        </div>
+        <input id="proBaseUrl" class="field" type="text" placeholder="Base URL (ex : https://miarouter.online) — ou colle le JSON de connexion" hidden />
+        <input id="proApiKey" class="field" type="password" autocomplete="off"
+          placeholder="Clé API — stockée uniquement sur cet ordinateur" />
+        <label class="switch"><input type="checkbox" id="proVisionChk" /><span>Vision : envoyer des captures à l'IA (modèle vision requis)</span></label>
+        <button id="proGenerateBtn" type="button" class="btn btn--primary btn--block">Générer PROMPT_PRO.md</button>
+        <p id="proStatus" class="pane-status" hidden></p>
+
+        <details class="fold">
+          <summary><span>Outils IA</span><span class="fold__meta">code · tokens · fidélité</span></summary>
+          <div class="pro__engine">
+            <select id="codeFramework" class="field" title="Framework de génération">
+              <option value="react" selected>React</option>
+              <option value="vue">Vue 3</option>
+              <option value="html">HTML autonome</option>
+            </select>
+            <button id="genCodeBtn" type="button" class="btn btn--line">Générer le code</button>
+          </div>
+          <div class="pro__engine">
+            <button id="renameTokensBtn" type="button" class="btn btn--quiet">Renommer les tokens</button>
+            <button id="fidelityBaselineBtn" type="button" class="btn btn--quiet">Capturer la référence</button>
+            <button id="fidelityCompareBtn" type="button" class="btn btn--quiet">Comparer la fidélité</button>
+          </div>
+        </details>
+      </section>
+
+      <div id="extractionProgress" class="meter" hidden>
+        <div class="meter__step" id="step-connect"><span class="meter__bar"></span>Connexion</div>
+        <div class="meter__step" id="step-extract"><span class="meter__bar"></span>Analyse DOM</div>
+        <div class="meter__step" id="step-normalize"><span class="meter__bar"></span>Tokens</div>
+        <div class="meter__step" id="step-assemble"><span class="meter__bar"></span>Rédaction</div>
+      </div>
+
+      <p id="status" class="pane-status" hidden></p>
+      <ul id="issues" class="issues" hidden></ul>
+
+      <section id="helpPanel" class="help" hidden>
+        <div class="help__head">
+          <h2>Comment ce fichier a été produit</h2>
+          <button id="closeHelpBtn" type="button" class="btn btn--quiet">Fermer</button>
+        </div>
+        <div id="helpContent" class="help__body"></div>
+      </section>
+
+      <section class="doc">
+        <div class="doc__bar">
+          <label for="preview" class="eyebrow">Sortie générée</label>
+          <div class="doc__actions">
+            <button id="copyBtn" type="button" class="icon-btn" disabled aria-label="Copier" title="Copier">
+              <svg class="icon-copy" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg class="icon-success" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </button>
+            <button id="downloadBtn" type="button" class="icon-btn" disabled aria-label="Télécharger" title="Télécharger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </button>
+            <button id="downloadJsonBtn" type="button" class="icon-btn" disabled aria-label="Télécharger les tokens JSON" title="Tokens JSON">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1"></path>
+                <path d="M16 3h1a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5a2 2 0 0 1-2 2h-1"></path>
+              </svg>
+            </button>
+            <button id="refreshBtn" type="button" class="icon-btn" aria-label="Relancer l'extraction" title="Relancer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+            </button>
+            <button id="helpBtn" type="button" class="icon-btn" aria-label="Comment c'est produit" title="Explications">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <path d="M12 17h.01"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <textarea id="preview" class="doc__text" readonly spellcheck="false"></textarea>
+        <div id="rateBar" class="rate" hidden>
+          <span class="rate__label">Ce résultat est-il juste ?</span>
+          <button id="rateUp" type="button" class="rate__btn" aria-label="Oui, bon résultat">Oui</button>
+          <button id="rateDown" type="button" class="rate__btn" aria-label="Non, à corriger">À corriger</button>
+          <div id="rateForm" class="rate__form" hidden>
+            <div id="rateReasons" class="chips"></div>
+            <textarea id="rateNote" class="field" rows="2" placeholder="Ta règle pour la prochaine fois (ex. « garde toujours un header sticky »)"></textarea>
+            <button id="rateSend" type="button" class="btn btn--line">Mémoriser</button>
+          </div>
+        </div>
+      </section>
+
+      <details class="fold" open>
+        <summary><span>Cloner le site</span><span class="fold__meta">HTML · CSS · médias · polices</span></summary>
+        <section id="copySiteWrap" class="clone">
+          <button id="copySiteBtn" type="button" class="btn btn--primary btn--block">Cloner le site complet</button>
+          <div class="clone__options">
+            <label class="switch"><input type="checkbox" id="staticSnapshotChk" checked /><span>Snapshot statique (React/Next/Vue)</span></label>
+            <label class="switch"><input type="checkbox" id="screenshotsChk" checked /><span>Captures section par section</span></label>
+            <label class="switch"><input type="checkbox" id="safeInteractChk" /><span>Ouvrir menus et accordéons</span></label>
+            <label class="switch"><input type="checkbox" id="advancedAuditChk" /><span>Audit 375/768/1440 + dark mode</span></label>
+            <label class="select-row">Pages internes
+              <select id="crawlPagesSelect" class="field">
+                <option value="0" selected>page active</option>
+                <option value="3">+ 3 pages</option>
+                <option value="5">+ 5 pages</option>
+                <option value="10">+ 10 pages</option>
+              </select>
+            </label>
+          </div>
+        </section>
+      </details>
+
+      <details id="compareFold" class="fold">
+        <summary><span>Comparer deux pages</span><span class="fold__meta">fidélité avant / après</span></summary>
+        <div class="compare">
+          <label class="select-row">Référence
+            <select id="cmpRef" class="field"></select>
+          </label>
+          <label class="select-row">Reproduction
+            <select id="cmpCand" class="field"></select>
+          </label>
+          <button id="cmpBtn" type="button" class="btn btn--primary btn--block">Comparer section par section</button>
+          <p id="cmpStatus" class="pane-status" hidden></p>
+          <ol id="cmpSections" class="compare__sections"></ol>
+        </div>
+      </details>
+
+      <details id="figmaFold" class="fold">
+        <summary><span>Figma</span><span class="fold__meta">aspirer · exporter · plugin</span></summary>
+        <div class="figma">
+          <p class="eyebrow">Aspirer un design Figma, sans API</p>
+          <div id="figmaPaste" class="figma__paste" tabindex="0" role="textbox" aria-label="Zone de collage Figma">
+            <strong>Colle ici (Ctrl+V)</strong>
+            <span>des cadres copiés dans Figma (sélection → Ctrl+C). Aucun jeton, aucune API.</span>
+          </div>
+          <div class="pro__row">
+            <button id="figmaFigBtn" type="button" class="btn btn--line">Ouvrir un fichier .fig</button>
+            <input id="figmaFigFile" type="file" accept=".fig" hidden />
+            <button id="figmaLiveBtn" type="button" class="btn btn--quiet" title="Lit le fichier ouvert dans l'onglet figma.com actif, quand la page expose son API">Lire l'onglet Figma</button>
+          </div>
+          <details class="fold figma__api">
+            <summary><span>Avec l'API Figma</span><span class="fold__meta">fichier entier · rendus</span></summary>
+            <div class="figma">
+          <input id="figmaUrl" class="field" type="url" placeholder="https://www.figma.com/design/…" />
+          <input id="figmaToken" class="field" type="password" autocomplete="off" placeholder="Jeton d'accès personnel Figma (stocké sur cet ordinateur)" />
+          <label class="switch"><input type="checkbox" id="figmaWholeFile" checked /><span>Fichier entier (ignorer la sélection du lien)</span></label>
+          <button id="figmaImportBtn" type="button" class="btn btn--line btn--block">Aspirer via l'API</button>
+            </div>
+          </details>
+          <p id="figmaStatus" class="pane-status" hidden></p>
+          <div id="figmaSummary" class="site-stats" hidden></div>
+          <div id="figmaExports" class="exports" hidden>
+            <button id="figmaKitBtn" type="button" class="export">Kit complet (ZIP)</button>
+            <button id="figmaStructBtn" type="button" class="export">FIGMA_STRUCTURE.md</button>
+            <button id="figmaUseBtn" type="button" class="export">Utiliser comme source</button>
+          </div>
+          <p class="eyebrow">Envoyer vers Figma</p>
+          <div class="exports">
+            <button id="figmaCaptureBtn" type="button" class="export" title="Calques éditables : auto-layout, textes, images, SVG, ombres">Page → calques</button>
+            <button id="figmaTokensBtn" type="button" class="export" title="Variables, styles de texte et d'ombre">Tokens → Variables</button>
+            <button id="figmaPluginBtn" type="button" class="export" title="Plugin Figma qui importe ces fichiers">Plugin Keys_Osi</button>
+          </div>
+        </div>
+      </details>
+
+      <details id="a11yFold" class="fold">
+        <summary><span>Accessibilité</span><span class="fold__meta">contrastes · correctifs</span></summary>
+        <div class="a11y">
+          <p id="a11ySummary" class="site-head__hint">Lance une extraction : chaque paire texte/fond utilisée est vérifiée (WCAG AA) et corrigée en ne changeant que la luminosité.</p>
+          <ul id="a11yList" class="a11y__list"></ul>
+          <div class="exports">
+            <button id="a11yPreviewBtn" type="button" class="export" disabled>Voir sur la page</button>
+            <button id="a11yCssBtn" type="button" class="export" disabled>Copier le CSS</button>
+            <button id="a11yMdBtn" type="button" class="export" disabled>A11Y_FIXES.md</button>
+          </div>
+          <p id="a11yStatus" class="pane-status" hidden></p>
+        </div>
+      </details>
+
+      <details id="memoryFold" class="fold">
+        <summary><span>Mémoire</span><span class="fold__meta"><span id="memoryCount">0</span> leçons actives</span></summary>
+        <div class="memory">
+          <p class="site-head__hint">Keys_Osi note ses erreurs (échecs IA, sections oubliées, extractions incohérentes) et tes avis. Il en tire des leçons appliquées aux prochaines générations. Tu peux en désactiver une.</p>
+          <div id="memoryStats" class="site-stats"></div>
+          <ul id="memoryLessons" class="memory__list"></ul>
+          <details class="fold memory__recent">
+            <summary><span>Derniers événements</span></summary>
+            <ul id="memoryEvents" class="memory__events"></ul>
+          </details>
+          <div class="exports">
+            <button id="memoryExportBtn" type="button" class="export">Exporter</button>
+            <button id="memoryImportBtn" type="button" class="export">Importer</button>
+            <button id="memoryResetBtn" type="button" class="export">Effacer</button>
+          </div>
+          <input id="memoryImportFile" type="file" accept=".json,application/json" hidden />
+          <p id="memoryStatus" class="pane-status" hidden></p>
+        </div>
+      </details>
+
+      <details class="fold">
+        <summary><span>Kits &amp; exports</span><span class="fold__meta">starter kit · tokens · MCP</span></summary>
+        <div class="kit">
+          <button id="starterKitBtn" type="button" class="btn btn--line btn--block">Starter kit composants (CSS + React + preview)</button>
+          <button id="assetsZipBtn" type="button" class="btn btn--line btn--block">Polices + CSS + JS + couleurs (ZIP)</button>
+          <div class="exports" aria-label="Exports">
+            <button id="exportTailwindBtn" type="button" class="export" disabled>tailwind.config.js</button>
+            <button id="exportW3cBtn" type="button" class="export" disabled>tokens W3C</button>
+            <button id="exportCssBtn" type="button" class="export" disabled>tokens.css</button>
+            <button id="exportScssBtn" type="button" class="export" disabled>_tokens.scss</button>
+            <button id="diffBtn" type="button" class="export" disabled>DIFF.md</button>
+            <button id="mcpBtn" type="button" class="export" disabled>→ MCP</button>
+            <button id="platformBtn" type="button" class="export" disabled title="SwiftUI, Compose, Flutter, Tailwind v4, Storybook, theme.json WordPress, motion, règles d'agent">Natif &amp; plateformes</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="fold">
+        <summary><span>Installer pour un agent</span><span class="fold__meta">SKILL.md dans ton projet</span></summary>
+        <div class="agents">
+          <button type="button" class="agent quick-install-btn" data-provider="claude">
+            <img src="../assets/logos/claude-color.svg" alt="" aria-hidden="true" />Claude Code
+          </button>
+          <button type="button" class="agent quick-install-btn" data-provider="codex">
+            <img src="../assets/logos/codex-color.svg" alt="" aria-hidden="true" />Codex
+          </button>
+          <button type="button" class="agent quick-install-btn" data-provider="cursor">
+            <img src="../assets/logos/cursor.svg" alt="" aria-hidden="true" />Cursor
+          </button>
+        </div>
+        <p id="quickInstallResult" class="pane-status" hidden></p>
+      </details>
     </div>
 
-    <p id="status" class="status" hidden></p>
-    <ul id="issues" class="issues" hidden></ul>
-
-    <section id="helpPanel" class="help-panel" hidden>
-      <div class="help-header">
-        <h2>How This Was Generated</h2>
-        <button id="closeHelpBtn" type="button" class="help-close">Close</button>
-      </div>
-      <div id="helpContent" class="help-content"></div>
-    </section>
-
-    <section class="preview-wrap">
-      <label for="preview">Generated Markdown</label>
-      <div class="textarea-container">
-        <textarea id="preview" readonly></textarea>
-        <div class="preview-actions">
-          <button id="copyBtn" type="button" class="icon-btn" disabled aria-label="Copy to clipboard">
-            <svg class="icon-copy" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            <svg class="icon-success" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          </button>
-          <button id="downloadBtn" type="button" class="icon-btn" disabled aria-label="Download Markdown">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-          </button>
-          <button id="downloadJsonBtn" type="button" class="icon-btn" disabled aria-label="Download JSON Tokens">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-          </button>
-          <button id="refreshBtn" type="button" class="icon-btn" aria-label="Refresh">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-            </svg>
-          </button>
-          <button id="helpBtn" type="button" class="icon-btn" aria-label="Info">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-              <path d="M12 17h.01"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section class="copy-site-wrap" style="margin: 4px 0 6px 0;">
-      <button id="copySiteBtn" type="button" class="primary-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--black); background: var(--black); color: var(--white); border-radius: 7px; padding: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Cloner le Site Complet (HTML + CSS + Médias + Polices)
-      </button>
-      <label class="copy-site-option">
-        <input type="checkbox" id="staticSnapshotChk" checked />
-        Snapshot statique — retire les scripts (recommandé pour React/Next/Vue)
-      </label>
-      <label class="copy-site-option">
-        <input type="checkbox" id="screenshotsChk" checked />
-        Screenshots section par section (références visuelles pour l'IA)
-      </label>
-      <label class="copy-site-option">
-        Pages internes à cloner :
-        <select id="crawlPagesSelect" class="copy-site-select">
-          <option value="0" selected>Page active uniquement</option>
-          <option value="3">+ 3 pages</option>
-          <option value="5">+ 5 pages</option>
-          <option value="10">+ 10 pages</option>
-        </select>
-      </label>
-      <label class="copy-site-option">
-        <input type="checkbox" id="safeInteractChk" />
-        Ouvrir menus/accordéons avant capture (sans navigation ni formulaire)
-      </label>
-      <label class="copy-site-option">
-        <input type="checkbox" id="advancedAuditChk" />
-        Audit avancé : viewports réels 375/768/1440 + dark mode (permission « debugger » demandée au clic)
-      </label>
-    </section>
-
-    <section class="copy-site-wrap" style="margin: 0 0 6px 0;">
-      <button id="starterKitBtn" type="button" class="secondary-btn" style="margin-bottom: 6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7"/>
-          <rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/>
-        </svg>
-        Starter Kit Composants (CSS + React + Preview)
-      </button>
-      <button id="assetsZipBtn" type="button" class="secondary-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Polices + CSS + JS + Couleurs (ZIP)
-      </button>
-    </section>
-
-    <section class="exports-row" aria-label="Advanced exports">
-      <button id="exportTailwindBtn" type="button" class="export-btn" disabled>tailwind.config.js</button>
-      <button id="exportW3cBtn" type="button" class="export-btn" disabled>Tokens W3C</button>
-      <button id="diffBtn" type="button" class="export-btn" disabled>DIFF.md</button>
-      <button id="mcpBtn" type="button" class="export-btn" disabled>→ MCP</button>
-    </section>
-
-    <section class="quick-install" aria-label="Quick install providers">
-      <span class="quick-install-title">Quick install</span>
-      <div class="quick-install-buttons">
-        <button type="button" class="quick-install-btn" data-provider="claude" data-tooltip="Select your working project folder">
-          <img src="../assets/logos/claude-color.svg" class="ai-logo" alt="" aria-hidden="true" />
-          Claude Code
-        </button>
-        <button type="button" class="quick-install-btn" data-provider="codex" data-tooltip="Select your working project folder">
-          <img src="../assets/logos/codex-color.svg" class="ai-logo" alt="" aria-hidden="true" />
-          Codex
-        </button>
-        <button type="button" class="quick-install-btn" data-provider="cursor" data-tooltip="Select your working project folder">
-          <img src="../assets/logos/cursor.svg" class="ai-logo" alt="" aria-hidden="true" />
-          Cursor
-        </button>
-      </div>
-      <p id="quickInstallResult" class="quick-install-result" hidden></p>
-    </section>
-
-    <footer class="footnote">
-      100% local — nothing leaves your machine.
-      <a href="https://github.com/Keiisis/Keys_Osi_Design.md-extractor" target="_blank" rel="noopener noreferrer">Docs &amp; source</a>
+    <footer class="colophon">
+      <span>Tout reste sur ta machine, sauf les appels que tu déclenches : IA, Figma, catalogue de polices.</span>
     </footer>
   </main>
 

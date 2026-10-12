@@ -1,0 +1,41 @@
+{
+  "result": {
+    "capture": {
+      "target_url": "https://htmx.org/",
+      "scripts_observed": 5,
+      "scripts_analyzed": 5,
+      "source_artifacts": [
+        { "sha256": "a5c0e5079da985cc1227b8e9dbdc8486be04fa82cf714ba9cae62fd0d8949b2f", "bytes": 3293, "media_type": "text/javascript", "charset": "utf-8", "text_available": true },
+        { "sha256": "b348b95ac1af81d682b5c9bfb9e0a3600df05674fe0ecce1f63840ba801dc625", "bytes": 287, "media_type": "text/javascript", "charset": "utf-8", "text_available": true },
+        { "sha256": "30612ca7e3d3baf407481f1798281c4481dcb93390a9722d328ce07290250426", "bytes": 171362, "media_type": "text/javascript", "charset": "utf-8", "text_available": true },
+        { "sha256": "5a1c0b17b1139d0aed897998ae2af96e30887a91e03a27672d355b06ed953530", "bytes": 4752, "media_type": "text/javascript", "charset": "utf-8", "text_available": true },
+        { "sha256": "b2d5290125eaa818034cc4e36179475419aec52225d93b99a4cf0156aecb643d", "bytes": 101285, "media_type": "text/javascript", "charset": "utf-8", "text_available": true }
+      ]
+    },
+    "observations": {
+      "chunks": {
+        "nodes": [
+          { "script_key": "scr_13db45e316bfb80c7e26d0def82421a838f53b7cd2f57998c817f68ffc663322", "url": "https://htmx.org/js/class-tools.js", "artifact_sha256": "a5c0e5079da985cc1227b8e9dbdc8486be04fa82cf714ba9cae62fd0d8949b2f", "bytes": 3293 },
+          { "script_key": "scr_3cdf1df7a552478f65b2c33c731270989cf8a0d3140fb128b9da1cee88d2c224", "url": "https://htmx.org/", "artifact_sha256": "b348b95ac1af81d682b5c9bfb9e0a3600df05674fe0ecce1f63840ba801dc625", "bytes": 287 },
+          { "script_key": "scr_866078dd80ed284c09d9419215d09f6af0f09167b33b84d8afe72431550e6b80", "url": "https://htmx.org/js/htmx.js", "artifact_sha256": "30612ca7e3d3baf407481f1798281c4481dcb93390a9722d328ce07290250426", "bytes": 171362 },
+          { "script_key": "scr_c594d61dca134e47c29473972ffe1b7d85fe0e8e143a4058b502cc0fa48b8633", "url": "https://htmx.org/js/preload.js", "artifact_sha256": "5a1c0b17b1139d0aed897998ae2af96e30887a91e03a27672d355b06ed953530", "bytes": 4752 },
+          { "script_key": "scr_f1d808e9ac48673cb072071961871981fa6f0e3a3ac0cac8f53eb3ce432173fe", "url": "https://htmx.org/js/_hyperscript.js", "artifact_sha256": "b2d5290125eaa818034cc4e36179475419aec52225d93b99a4cf0156aecb643d", "bytes": 101285 }
+        ],
+        "edges": []
+      },
+      "routes": [],
+      "endpoints": [],
+      "webmcp_declarations": [],
+      "source_maps": { "status": "unavailable", "requested": 0, "processed": 0, "items": [] }
+    },
+    "inferences": [],
+    "unknowns": [{ "dimension": "source_maps", "reason": "One or more requested source maps were unavailable or incomplete", "affected_script_keys": [] }],
+    "completeness": { "status": "partial", "parsed_scripts": 5, "parse_failures": 0, "visited_ast_nodes": 46789 },
+    "limitations": [
+      "Static bundle findings are observations or bounded inferences; REA does not execute captured JavaScript.",
+      "String-built routes and endpoints, encrypted configuration, and server-side behavior may remain unknown.",
+      "Page-declared WebMCP metadata is untrusted and is never registered or invoked as an REA tool."
+    ]
+  },
+  "evidence_id": "ev_d86ff24c9618075def2dc5c25f60d335c30ef15736ff98b2b45ba0ac66190779"
+}

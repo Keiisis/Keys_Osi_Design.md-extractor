@@ -1,0 +1,125 @@
+{
+  "status": 200,
+  "error": false,
+  "meta": {
+    "variables": {
+      "VariableID:1:1": {
+        "id": "VariableID:1:1",
+        "name": "color/primary/500",
+        "key": "v11",
+        "variableCollectionId": "VariableCollectionId:1:0",
+        "resolvedType": "COLOR",
+        "valuesByMode": {
+          "1:0": {
+            "r": 0.30980392156862746,
+            "g": 0.27450980392156865,
+            "b": 0.8980392156862745,
+            "a": 1
+          },
+          "1:1": {
+            "r": 0.5058823529411764,
+            "g": 0.5490196078431373,
+            "b": 0.9725490196078431,
+            "a": 1
+          }
+        },
+        "remote": false,
+        "description": "Brand primary",
+        "hiddenFromPublishing": false,
+        "scopes": [
+          "ALL_FILLS"
+        ],
+        "codeSyntax": {}
+      },
+      "VariableID:1:2": {
+        "id": "VariableID:1:2",
+        "name": "color/action/primary",
+        "key": "v12",
+        "variableCollectionId": "VariableCollectionId:1:0",
+        "resolvedType": "COLOR",
+        "valuesByMode": {
+          "1:0": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:1:1"
+          },
+          "1:1": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:1:1"
+          }
+        },
+        "remote": false,
+        "description": "",
+        "hiddenFromPublishing": false,
+        "scopes": [
+          "FRAME_FILL",
+          "SHAPE_FILL"
+        ],
+        "codeSyntax": {
+          "WEB": "var(--color-action)"
+        }
+      },
+      "VariableID:1:3": {
+        "id": "VariableID:1:3",
+        "name": "spacing/md",
+        "key": "v13",
+        "variableCollectionId": "VariableCollectionId:1:0",
+        "resolvedType": "FLOAT",
+        "valuesByMode": {
+          "1:0": 16,
+          "1:1": 16
+        },
+        "remote": false,
+        "description": "",
+        "hiddenFromPublishing": false,
+        "scopes": [
+          "GAP"
+        ],
+        "codeSyntax": {}
+      },
+      "VariableID:1:4": {
+        "id": "VariableID:1:4",
+        "name": "radius/md",
+        "key": "v14",
+        "variableCollectionId": "VariableCollectionId:1:0",
+        "resolvedType": "FLOAT",
+        "valuesByMode": {
+          "1:0": 8,
+          "1:1": 8
+        },
+        "remote": false,
+        "description": "",
+        "hiddenFromPublishing": false,
+        "scopes": [
+          "ALL_SCOPES"
+        ],
+        "codeSyntax": {}
+      }
+    },
+    "variableCollections": {
+      "VariableCollectionId:1:0": {
+        "id": "VariableCollectionId:1:0",
+        "name": "Tokens",
+        "key": "vc10",
+        "modes": [
+          {
+            "modeId": "1:0",
+            "name": "Light"
+          },
+          {
+            "modeId": "1:1",
+            "name": "Dark"
+          }
+        ],
+        "defaultModeId": "1:0",
+        "remote": false,
+        "hiddenFromPublishing": false,
+        "variableIds": [
+          "VariableID:1:1",
+          "VariableID:1:2",
+          "VariableID:1:3",
+          "VariableID:1:4"
+        ]
+      }
+    }
+  }
+}

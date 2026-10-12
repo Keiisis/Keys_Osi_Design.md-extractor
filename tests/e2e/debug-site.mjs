@@ -51,9 +51,9 @@ try {
   await page.waitForTimeout(1000);
 
   await page.evaluate(() => {
-    window.__typeuiHandlers = [];
+    window.__keysOsiHandlers = [];
     window.chrome = {
-      runtime: { onMessage: { addListener(fn) { window.__typeuiHandlers.push(fn); } } }
+      runtime: { onMessage: { addListener(fn) { window.__keysOsiHandlers.push(fn); } } }
     };
   });
   const inspector = await readFile(new URL("../../inspector-main.js", import.meta.url), "utf8");
@@ -62,7 +62,7 @@ try {
   await page.evaluate(contentScript);
 
   const extraction = await page.evaluate(
-    () => new Promise((resolve) => window.__typeuiHandlers[0]({ type: "TYPEUI_EXTRACT_STYLES" }, null, resolve))
+    () => new Promise((resolve) => window.__keysOsiHandlers[0]({ type: "KEYS_OSI_EXTRACT_STYLES" }, null, resolve))
   );
   if (!extraction.ok) {
     throw new Error(extraction.error);

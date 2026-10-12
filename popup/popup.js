@@ -1,4 +1,15 @@
 import { computeDesignScore } from "../lib/generate-design-md.mjs";
+import { initViews } from "./views.js";
+import { initBrandKit } from "./brand.js";
+import { initInsight } from "./insight.js";
+import { parseConnectionString } from "../lib/ai-client.mjs";
+
+// popup.html?tab=<id> (detached window, E2E) targets that tab instead of the active one.
+function pinnedTabId() {
+  return Number(new URLSearchParams(location.search).get("tab")) || undefined;
+}
+
+const PROVIDERS_WITH_BASE_URL = ["custom", "newapi"];
 
 const state = {
   markdown: "",
@@ -6,7 +17,9 @@ const state = {
   mode: "design",
   busy: false,
   lastResult: null,
-  proMarkdown: ""
+  proMarkdown: "",
+  // "site" = the active tab, "figma" = the imported Figma file.
+  source: "site"
 };
 
 const QUICK_INSTALL_PROVIDERS = {
@@ -27,8 +40,20 @@ const QUICK_INSTALL_PROVIDERS = {
 const modeButtons = Array.from(document.querySelectorAll("[data-mode]"));
 const exportTailwindBtn = document.getElementById("exportTailwindBtn");
 const exportW3cBtn = document.getElementById("exportW3cBtn");
+const exportCssBtn = document.getElementById("exportCssBtn");
+const exportScssBtn = document.getElementById("exportScssBtn");
 const diffBtn = document.getElementById("diffBtn");
 const mcpBtn = document.getElementById("mcpBtn");
+const platformBtn = document.getElementById("platformBtn");
+platformBtn?.addEventListener("click", async () => {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "PLATFORM_ZIP", normalized: state.lastResult?.normalized });
+    if (!response?.ok) throw new Error(response?.error || "Export impossible.");
+    setStatus(`Exports natifs : ${response.filename} (${response.fileCount} fichiers — SwiftUI, Compose, Flutter, Tailwind v4, Storybook, WordPress, motion, règles d'agent).`, false);
+  } catch (error) {
+    setStatus(toErrorText(error), true);
+  }
+});
 const refreshBtn = document.getElementById("refreshBtn");
 const downloadBtn = document.getElementById("downloadBtn");
 const downloadJsonBtn = document.getElementById("downloadJsonBtn");
@@ -93,22 +118,23 @@ closeHelpBtn.addEventListener("click", () => {
 
 copyBtn.addEventListener("click", async () => {
   try {
-    if (!state.markdown) {
+    const text = state.mode === "pro" ? state.proMarkdown : state.markdown;
+    if (!text) {
       setStatus("Nothing to copy yet.", true);
       return;
     }
-    await navigator.clipboard.writeText(state.markdown);
+    await navigator.clipboard.writeText(text);
     
     copyBtn.classList.add("copied");
     const copyIcon = copyBtn.querySelector(".icon-copy");
     const successIcon = copyBtn.querySelector(".icon-success");
     if (copyIcon && successIcon) {
-      copyIcon.style.display = "none";
-      successIcon.style.display = "block";
+      copyIcon.hidden = true;
+      successIcon.hidden = false;
       setTimeout(() => {
         copyBtn.classList.remove("copied");
-        copyIcon.style.display = "block";
-        successIcon.style.display = "none";
+        copyIcon.hidden = false;
+        successIcon.hidden = true;
       }, 2000);
     }
   } catch (error) {
@@ -125,6 +151,12 @@ if (copySiteBtn) {
 if (exportTailwindBtn) {
   exportTailwindBtn.addEventListener("click", () => {
     exportGeneratedTokens("tailwind").catch((error) => setStatus(toErrorText(error), true));
+  });
+}
+
+for (const [button, kind] of [[exportCssBtn, "css"], [exportScssBtn, "scss"]]) {
+  button?.addEventListener("click", () => {
+    exportGeneratedTokens(kind).catch((error) => setStatus(toErrorText(error), true));
   });
 }
 
@@ -163,15 +195,16 @@ if (starterKitBtn) {
 /* ---------------- PROMPT PRO ---------------- */
 
 const PRO_PLACEHOLDER = [
-  "PROMPT PRO — adapte le design du site courant à TON projet.",
+  "PROMPT PRO — le design mesuré de ce site, appliqué à TON projet.",
   "",
-  "1. Décris ton projet dans le champ ci-dessus (produit, audience, sections, ton).",
-  "2. (Recommandé) Configure un fournisseur IA + ta clé API — elle reste stockée",
-  "   uniquement sur cet ordinateur (chrome.storage.local), jamais dans le code.",
-  "3. Clique « Générer PROMPT_PRO.md ».",
+  "1. Décris ton projet ci-dessus (offre, audience, sections, ton) ou importe un brief .md/.txt.",
+  "2. Choisis un fournisseur IA et colle ta clé — ou le JSON de connexion d'une passerelle",
+  "   (MiaRouter, One API…). La clé reste sur cet ordinateur.",
+  "3. Clique « Générer PROMPT_PRO.md » : la progression s'affiche en direct, et le résultat",
+  "   est conservé même si tu fermes le popup.",
   "",
-  "Sans clé API, un moteur local (template) est utilisé. Avec l'IA, le prompt est",
-  "entièrement réécrit et adapté : mêmes tokens, même motion, TON contenu."
+  "Sans clé, le moteur local Keys_Osi produit la même structure (13 blocs, recettes motion",
+  "chiffrées, accessibilité, critères de fin) à partir des mesures du site."
 ].join("\n");
 
 function renderProPreview() {
@@ -193,9 +226,11 @@ async function loadProSettings() {
     if (model) model.value = settings.model || "";
     if (baseUrl) {
       baseUrl.value = settings.baseUrl || "";
-      baseUrl.hidden = (provider?.value || "groq") !== "custom";
+      baseUrl.hidden = !PROVIDERS_WITH_BASE_URL.includes(provider?.value || "groq");
     }
     if (apiKey) apiKey.value = settings.apiKey || "";
+    const priority = document.getElementById("proPriority");
+    if (priority) priority.value = settings.priority || "quality";
   } catch (error) {}
 }
 
@@ -203,14 +238,15 @@ async function saveProSettings() {
   const provider = document.getElementById("proProvider");
   const baseUrl = document.getElementById("proBaseUrl");
   if (baseUrl && provider) {
-    baseUrl.hidden = provider.value !== "custom";
+    baseUrl.hidden = !PROVIDERS_WITH_BASE_URL.includes(provider.value);
   }
   await chrome.storage.local.set({
     promptProSettings: {
       provider: provider?.value || "groq",
       model: document.getElementById("proModel")?.value.trim() || "",
       baseUrl: baseUrl?.value.trim() || "",
-      apiKey: document.getElementById("proApiKey")?.value.trim() || ""
+      apiKey: document.getElementById("proApiKey")?.value.trim() || "",
+      priority: document.getElementById("proPriority")?.value || "quality"
     }
   });
 }
@@ -313,7 +349,98 @@ for (const [id, handler] of [
   }
 }
 
-for (const id of ["proProvider", "proModel", "proBaseUrl", "proApiKey"]) {
+// A gateway connection string ({"_type":"newapi_channel_conn","key":..,"url":..})
+// pasted into the key or URL field fills provider + base URL + key at once.
+for (const id of ["proBaseUrl", "proApiKey"]) {
+  document.getElementById(id)?.addEventListener("input", (event) => {
+    const conn = parseConnectionString(event.target.value);
+    if (!conn) return;
+    document.getElementById("proProvider").value = conn.provider;
+    document.getElementById("proBaseUrl").value = conn.baseUrl;
+    document.getElementById("proApiKey").value = conn.apiKey;
+    saveProSettings()
+      .then(() =>
+        setProStatus(
+          conn.apiKey
+            ? `Connexion importée : ${conn.baseUrl}. Clique « Modèles » pour lister les modèles.`
+            : `URL importée : ${conn.baseUrl}. La clé du JSON est vide : colle ta clé API.`,
+          !conn.apiKey
+        )
+      )
+      .catch(() => {});
+  });
+}
+
+// Complete briefs: append one or more .md/.txt files to the description.
+const proDescriptionEl = document.getElementById("proDescription");
+const updateBriefCount = () => {
+  const counter = document.getElementById("proBriefCount");
+  if (counter) counter.textContent = proDescriptionEl.value ? `${proDescriptionEl.value.length.toLocaleString("fr-FR")} caractères` : "";
+};
+// The draft survives the popup closing (e.g. while a file picker is open).
+let briefSaveTimer = null;
+const saveBriefDraft = () => {
+  clearTimeout(briefSaveTimer);
+  briefSaveTimer = setTimeout(() => chrome.storage.local.set({ keysOsiBriefDraft: proDescriptionEl.value }).catch(() => {}), 300);
+};
+chrome.storage.local.get("keysOsiBriefDraft").then(({ keysOsiBriefDraft }) => {
+  if (keysOsiBriefDraft && proDescriptionEl && !proDescriptionEl.value) {
+    proDescriptionEl.value = keysOsiBriefDraft;
+    updateBriefCount();
+  }
+});
+const appendBriefFiles = async (files) => {
+  for (const file of files) {
+    if (!/\.(md|markdown|txt)$/i.test(file.name) && !file.type.startsWith("text/")) continue;
+    const text = (await file.text()).trim();
+    if (text) proDescriptionEl.value = `${proDescriptionEl.value.trim()}\n\n--- ${file.name} ---\n${text}`.trim();
+  }
+  updateBriefCount();
+  saveBriefDraft();
+};
+proDescriptionEl?.addEventListener("input", () => {
+  updateBriefCount();
+  saveBriefDraft();
+});
+proDescriptionEl?.addEventListener("dragover", (event) => event.preventDefault());
+proDescriptionEl?.addEventListener("drop", (event) => {
+  if (!event.dataTransfer?.files?.length) return;
+  event.preventDefault();
+  appendBriefFiles(event.dataTransfer.files).catch((error) => setProStatus(toErrorText(error), true));
+});
+document.getElementById("proBriefBtn")?.addEventListener("click", () => document.getElementById("proBriefFile").click());
+document.getElementById("proBriefFile")?.addEventListener("change", (event) => {
+  appendBriefFiles(event.target.files)
+    .catch((error) => setProStatus(toErrorText(error), true))
+    .finally(() => {
+      event.target.value = "";
+    });
+});
+
+document.getElementById("proListModelsBtn")?.addEventListener("click", async () => {
+  try {
+    await saveProSettings();
+    setProStatus("Lecture des modèles de l'endpoint...");
+    const response = await chrome.runtime.sendMessage({ type: "LIST_AI_MODELS" });
+    if (!response || !response.ok) throw new Error(response?.error || "Liste des modèles indisponible.");
+    const list = document.getElementById("proModelList");
+    list.replaceChildren(...response.models.map((id) => Object.assign(document.createElement("option"), { value: id })));
+    const modelInput = document.getElementById("proModel");
+    if (!modelInput.value && response.best) {
+      modelInput.value = response.best;
+      await saveProSettings();
+    }
+    const measured = Object.entries(response.stats || {})
+      .filter(([, s]) => s.runs > 0)
+      .sort(([, a], [, b]) => a.totalMs / a.runs - b.totalMs / b.runs)
+      .map(([id, s]) => `${id} ≈ ${Math.round(s.totalMs / s.runs / 1000)} s (${s.runs} réussite${s.runs > 1 ? "s" : ""}${s.fails ? `, ${s.fails} échec${s.fails > 1 ? "s" : ""}` : ""})`);
+    setProStatus(`${response.models.length} modèles disponibles. Sélectionné : ${modelInput.value || response.best}.${measured.length ? ` Mesuré ici : ${measured.join(" · ")}.` : ""}`);
+  } catch (error) {
+    setProStatus(toErrorText(error), true);
+  }
+});
+
+for (const id of ["proProvider", "proModel", "proBaseUrl", "proApiKey", "proPriority"]) {
   const el = document.getElementById(id);
   if (el) {
     el.addEventListener("change", () => {
@@ -335,7 +462,39 @@ function setProStatus(text, isError = false) {
   const value = String(text || "").trim();
   el.hidden = !value;
   el.textContent = value;
-  el.style.color = isError ? "#b91c1c" : "";
+  el.classList.toggle("is-error", Boolean(isError));
+}
+
+// Live steps streamed by the service worker during PROMPT_PRO generation.
+const PRO_STEPS = {
+  extract: "1/3 · Extraction du design du site",
+  vision: "2/3 · Captures des sections (vision)",
+  ai: "2/3 · Connexion à l'IA",
+  think: "3/3 · L'IA réfléchit à ton projet",
+  stream: "3/3 · L'IA écrit le PROMPT_PRO",
+  done: "Terminé"
+};
+let proRun = null;
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (!message || message.type !== "PRO_PROGRESS" || !proRun) return;
+  proRun.step = message.step;
+  if (message.chars) proRun.chars = message.chars;
+  if (message.reasoning) proRun.reasoning = message.reasoning;
+  if (message.round) proRun.round = message.round;
+  if (message.model) proRun.model = message.model;
+  renderProProgress();
+});
+
+function renderProProgress() {
+  if (!proRun) return;
+  const seconds = Math.round((Date.now() - proRun.startedAt) / 1000);
+  const parts = [PRO_STEPS[proRun.step] || "Préparation", `${seconds} s`];
+  if (proRun.step === "think" && proRun.reasoning) parts.push(`${proRun.reasoning.toLocaleString("fr-FR")} caractères de réflexion`);
+  if (proRun.chars) parts.push(`${proRun.chars.toLocaleString("fr-FR")} caractères écrits`);
+  if (proRun.round) parts.push(`suite ${proRun.round}`);
+  if (proRun.step === "ai" && proRun.model) parts.push(`modèle : ${proRun.model}`);
+  setProStatus(`⏳ ${parts.join(" · ")}`);
 }
 
 async function runGeneratePromptPro() {
@@ -345,24 +504,92 @@ async function runGeneratePromptPro() {
   const description = document.getElementById("proDescription")?.value || "";
   await saveProSettings();
   setBusy(true);
-  setProStatus("Extraction du site + génération en cours...");
+  proRun = { startedAt: Date.now(), step: "extract", chars: 0, model: "" };
+  renderProProgress();
+  const ticker = setInterval(renderProProgress, 1000);
   try {
     const response = await chrome.runtime.sendMessage({
       type: "GENERATE_PROMPT_PRO",
+      source: state.source,
+      tabId: pinnedTabId(),
       projectDescription: description,
-      vision: proVisionEnabled()
+      vision: proVisionEnabled(),
+      useBrand: document.getElementById("proUseBrand")?.checked !== false,
+      useBoard: document.getElementById("proUseBoard")?.checked !== false,
+      useSite: document.getElementById("proUseSite")?.checked !== false
     });
-    if (!response || !response.ok) {
-      throw new Error(response?.error || "Génération échouée.");
+    if (!response) {
+      throw new Error("Le service worker Keys_Osi ne répond pas : recharge l'extension (chrome://extensions → ↻).");
     }
-    state.proMarkdown = response.markdown;
+    if (!response.ok) {
+      throw new Error(response.error || "Génération échouée.");
+    }
+    const result = response.pending ? await waitForProResult(response.jobId, proRun.startedAt) : response;
+    state.proMarkdown = result.markdown;
     renderProPreview();
+    const seconds = Math.round((Date.now() - proRun.startedAt) / 1000);
+    const contextNote = result.context?.length ? ` Contexte : ${result.context.map((title) => title.split(" (")[0].toLowerCase()).join(", ")}.` : "";
+    const missingNote = result.missingSections?.length ? ` Sections absentes notées en mémoire : ${result.missingSections.join(", ")}.` : "";
     setProStatus(
-      `Généré via ${response.engine}.${response.warning ? ` ⚠ ${response.warning}` : ""} Télécharge ou copie le résultat.`,
-      Boolean(response.warning)
+      `✓ PROMPT_PRO.md prêt en ${seconds} s via ${result.engine} (${result.markdown.length.toLocaleString("fr-FR")} caractères).${contextNote}${missingNote}${result.warning ? ` ⚠ ${result.warning}` : ""}`,
+      Boolean(result.warning)
     );
+    document.dispatchEvent(new CustomEvent("keysosi:result", { detail: { feature: "pro", model: result.engine } }));
   } finally {
+    clearInterval(ticker);
+    proRun = null;
     setBusy(false);
+  }
+}
+
+// Long AI runs finish in the offscreen document: wait for PRO_DONE, with a
+// storage poll as a safety net if the message is missed.
+function waitForProResult(jobId, startedAt) {
+  return new Promise((resolve) => {
+    const finish = (result) => {
+      chrome.runtime.onMessage.removeListener(onDone);
+      clearInterval(poll);
+      resolve(result);
+    };
+    const onDone = (message) => {
+      if (message?.type === "PRO_DONE" && message.jobId === jobId) finish(message.result);
+    };
+    chrome.runtime.onMessage.addListener(onDone);
+    const poll = setInterval(async () => {
+      const { keysOsiLastPro } = await chrome.storage.local.get("keysOsiLastPro");
+      if (keysOsiLastPro && Date.parse(keysOsiLastPro.at) >= startedAt) finish(keysOsiLastPro);
+    }, 3000);
+  });
+}
+
+// A generation finished while the popup was closed: show it again.
+async function restoreLastPromptPro() {
+  // A generation is still running in the background: resume its progress.
+  const { keysOsiProJob } = await chrome.storage.session.get("keysOsiProJob").catch(() => ({}));
+  if (keysOsiProJob?.jobId && !state.busy) {
+    setBusy(true);
+    proRun = { startedAt: Date.now(), step: "think", chars: 0, model: "" };
+    renderProProgress();
+    const ticker = setInterval(renderProProgress, 1000);
+    waitForProResult(keysOsiProJob.jobId, 0)
+      .then((result) => {
+        state.proMarkdown = result.markdown;
+        renderProPreview();
+        setProStatus(`✓ PROMPT_PRO.md prêt via ${result.engine}.${result.warning ? ` ⚠ ${result.warning}` : ""}`, Boolean(result.warning));
+      })
+      .finally(() => {
+        clearInterval(ticker);
+        proRun = null;
+        setBusy(false);
+      });
+    return;
+  }
+  const { keysOsiLastPro } = await chrome.storage.local.get("keysOsiLastPro");
+  if (!keysOsiLastPro?.markdown || state.proMarkdown) return;
+  state.proMarkdown = keysOsiLastPro.markdown;
+  if (state.mode === "pro") {
+    renderProPreview();
+    setProStatus(`Dernier PROMPT_PRO.md (${new Date(keysOsiLastPro.at).toLocaleString("fr-FR")}, ${keysOsiLastPro.engine}).`);
   }
 }
 
@@ -407,12 +634,56 @@ async function runDownloadAssets() {
 
 init().catch((error) => setStatus(`Init failed: ${toErrorText(error)}`, true));
 
+// Unpacked installs only re-read manifest.json (version, permissions such
+// as webRequest) on reload: when the files on disk are newer than the
+// running extension, reload it so new permissions take effect.
+async function reloadIfManifestChanged() {
+  try {
+    // Only unpacked (developer) installs: store builds update through Chrome.
+    const self = await chrome.management.getSelf();
+    if (self.installType !== "development") return false;
+    const onDisk = await (await fetch(chrome.runtime.getURL("manifest.json"), { cache: "no-store" })).json();
+    if (onDisk.version && onDisk.version !== chrome.runtime.getManifest().version) {
+      setStatus(`Mise à jour Keys_Osi ${chrome.runtime.getManifest().version} → ${onDisk.version} : rechargement…`, false);
+      setTimeout(() => chrome.runtime.reload(), 400);
+      return true;
+    }
+  } catch (error) {}
+  return false;
+}
+
 async function init() {
-  const data = await chrome.storage.local.get(["outputMode"]);
+  if (await reloadIfManifestChanged()) {
+    return;
+  }
+  const versionEl = document.getElementById("appVersion");
+  if (versionEl) versionEl.textContent = `v${chrome.runtime.getManifest().version}`;
+  const data = await chrome.storage.local.get(["outputMode", "keysOsiSource"]);
+  state.source = data.keysOsiSource === "figma" ? "figma" : "site";
   state.mode = ["skill", "json", "motion", "prompt", "pro"].includes(data.outputMode) ? data.outputMode : "design";
   await loadProSettings();
+  await restoreLastPromptPro().catch(() => {});
+  initViews({
+    getSource: () => state.source,
+    setSource: async (source) => {
+      state.source = source === "figma" ? "figma" : "site";
+      await chrome.storage.local.set({ keysOsiSource: state.source });
+      // An extraction may be running (popup opening): regenerate after it.
+      for (let waited = 0; state.busy && waited < 120000; waited += 150) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      }
+      await runExtraction();
+    },
+    getNormalized: () => state.lastResult?.normalized || null,
+    setNormalized: (result) => {
+      state.lastResult = result;
+      setExportButtonsEnabled(!state.busy);
+    }
+  });
   syncModeUi();
   updateQuickInstallUi();
+  initBrandKit({ getDescription: () => document.getElementById("proDescription")?.value || "" });
+  initInsight({ getNormalized: () => state.lastResult?.normalized || null });
   await runExtraction();
 }
 
@@ -457,6 +728,8 @@ async function runExtraction() {
 
     const responsePromise = chrome.runtime.sendMessage({
       type: "RUN_EXTRACTION",
+      source: state.source,
+      tabId: pinnedTabId(),
       mode: state.mode
     });
 
@@ -490,6 +763,10 @@ async function runExtraction() {
 
     renderValidationIssues(response.validation);
     clearStatus();
+    if (response.selfCheck?.length) {
+      setStatus(`Auto-contrôle : ${response.selfCheck.map((issue) => issue.message).join(" · ")} (noté en mémoire).`, true);
+    }
+    document.dispatchEvent(new CustomEvent("keysosi:result", { detail: { feature: state.mode, normalized: response.normalized, source: state.source } }));
     clearQuickInstallResult();
     updateQuickInstallUi();
     if (!helpPanel.hidden) {
@@ -569,7 +846,7 @@ function setBusy(isBusy) {
 }
 
 function setExportButtonsEnabled(enabled) {
-  for (const button of [exportTailwindBtn, exportW3cBtn, diffBtn, mcpBtn]) {
+  for (const button of [exportTailwindBtn, exportW3cBtn, exportCssBtn, exportScssBtn, diffBtn, mcpBtn, platformBtn]) {
     if (button) {
       button.disabled = !enabled;
     }
@@ -589,15 +866,18 @@ async function exportGeneratedTokens(kind) {
     throw new Error(response?.error || "Token export failed.");
   }
 
-  const siteName = String(state.lastResult.normalized.source?.title || "design")
-    .replace(/[^a-z0-9]+/gi, "_")
+  const siteName = String(state.lastResult.normalized.source?.title || "")
     .toLowerCase()
-    .slice(0, 30);
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 30) || "design";
 
-  const download =
-    kind === "tailwind"
-      ? { filename: "tailwind.config.js", text: response.tailwindConfig, mime: "text/javascript" }
-      : { filename: `${siteName}.tokens.json`, text: response.w3cTokens, mime: "application/json" };
+  const download = {
+    tailwind: { filename: "tailwind.config.js", text: response.tailwindConfig, mime: "text/javascript" },
+    css: { filename: "tokens.css", text: response.cssVariables, mime: "text/css" },
+    scss: { filename: "_tokens.scss", text: response.scss, mime: "text/x-scss" },
+    w3c: { filename: `${siteName}.tokens.json`, text: response.w3cTokens, mime: "application/json" }
+  }[kind];
 
   const result = await chrome.runtime.sendMessage({ type: "DOWNLOAD_TEXT", ...download });
   if (!result || !result.ok) {
@@ -642,6 +922,8 @@ async function sendToMcp() {
   if (!designMarkdown) {
     const response = await chrome.runtime.sendMessage({
       type: "RUN_EXTRACTION",
+      source: state.source,
+      tabId: pinnedTabId(),
       mode: "design",
       persistOutputMode: false
     });
@@ -650,6 +932,8 @@ async function sendToMcp() {
   if (!skillMarkdown) {
     const response = await chrome.runtime.sendMessage({
       type: "RUN_EXTRACTION",
+      source: state.source,
+      tabId: pinnedTabId(),
       mode: "skill",
       persistOutputMode: false
     });
@@ -701,7 +985,7 @@ function setStatus(text, isError = false) {
   }
   statusEl.hidden = false;
   statusEl.textContent = value;
-  statusEl.style.color = isError ? "#b91c1c" : "#1f1f1f";
+  statusEl.classList.toggle("is-error", Boolean(isError));
 }
 
 function toErrorText(error) {
@@ -747,8 +1031,7 @@ function renderGenerationExplanation() {
       <p>No extraction result is loaded yet.</p>
       <p>Run extraction and open this panel again for a full breakdown.</p>
       <p>
-        The format is based on the TypeUI DESIGN.md configuration:
-        <a href="https://www.typeui.sh/design-md" target="_blank" rel="noopener noreferrer">https://www.typeui.sh/design-md</a>
+        The format is the Keys_Osi DESIGN.md blueprint (YAML tokens + narrative + agent guide).
       </p>
     `;
     return;
@@ -806,7 +1089,7 @@ function renderGenerationExplanation() {
       ${scoreHtml}
       ${conformanceItem}
     </ol>
-    <p>Format lineage: <a href="https://www.typeui.sh/design-md" target="_blank" rel="noopener noreferrer">TypeUI DESIGN.md</a> structure, <a href="https://github.com/VoltAgent/awesome-design-md" target="_blank" rel="noopener noreferrer">awesome-design-md</a> YAML frontmatter, <a href="https://github.com/adityarajdigital/designmd" target="_blank" rel="noopener noreferrer">designmd</a> narrative sections.</p>
+    <p>Format: Keys_Osi DESIGN.md blueprint — YAML token frontmatter, measured narrative sections and an agent prompt guide.</p>
   `;
 }
 
@@ -866,6 +1149,8 @@ async function installQuick(providerId) {
 async function fetchSkillMarkdownForInstall() {
   const response = await chrome.runtime.sendMessage({
     type: "RUN_EXTRACTION",
+      source: state.source,
+      tabId: pinnedTabId(),
     mode: "skill",
     persistOutputMode: false
   });
@@ -1032,10 +1317,11 @@ async function downloadTokensJson() {
     return;
   }
 
-  const siteName = String(state.lastResult.normalized.source?.title || "design")
-    .replace(/[^a-z0-9]+/gi, "_")
+  const siteName = String(state.lastResult.normalized.source?.title || "")
     .toLowerCase()
-    .slice(0, 30);
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 30) || "design";
 
   const response = await chrome.runtime.sendMessage({
     type: "DOWNLOAD_JSON",
@@ -1048,3 +1334,16 @@ async function downloadTokensJson() {
   }
   clearStatus();
 }
+
+// Card spotlight: feeds the pointer position to the CSS radial highlight.
+document.addEventListener(
+  "pointermove",
+  (event) => {
+    const card = event.target.closest?.(".format, .agent, .asset-card, .model-card");
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+    card.style.setProperty("--my", `${event.clientY - rect.top}px`);
+  },
+  { passive: true }
+);

@@ -3,18 +3,34 @@ import { formatAuditSections, generateDesignMarkdown } from "./lib/generate-desi
 import { generateSkillMarkdown } from "./lib/generate-skill-md.mjs";
 import { validateMarkdownOutput } from "./lib/validate.mjs";
 import { processCssAssets } from "./lib/css-assets.mjs";
-import { generateTailwindConfig, generateW3cTokens } from "./lib/export-tokens.mjs";
+import { generateCssVariables, generateScss, generateTailwindConfig, generateW3cTokens } from "./lib/export-tokens.mjs";
 import { generateDiffMarkdown } from "./lib/diff-tokens.mjs";
 import { generateDesignJson } from "./lib/generate-json-export.mjs";
 import { generateStarterKit } from "./lib/generate-starter-kit.mjs";
 import { generateMotionMarkdown } from "./lib/generate-motion-md.mjs";
 import { generatePromptMarkdown } from "./lib/generate-prompt-md.mjs";
-import { generateAiPromptPro, generateLocalPromptPro } from "./lib/generate-prompt-pro.mjs";
+import { buildAiProRequest, generateLocalPromptPro, wrapAiProOutput } from "./lib/generate-prompt-pro.mjs";
 import { generateComponentCode } from "./lib/generate-code.mjs";
 import { renameTokensWithAI } from "./lib/token-intelligence.mjs";
 import { scoreToGrade } from "./lib/fidelity.mjs";
+import { handle3dMessage } from "./sw-3d.mjs";
+import { figmaNormalized, handleFigmaMessage } from "./sw-figma.mjs";
+import { handleTechMessage, techSeedUrls } from "./sw-tech.mjs";
+import { handleReaMessage } from "./sw-rea.mjs";
+import { applyLessonsToMessages, handleMemoryMessage, memoryAvoidModels, memoryLessons, recordMemoryEvent } from "./sw-memory.mjs";
+import { BRAND_KEY, handleBrandBoardMessage, handlePinContextMenu } from "./sw-brand-board.mjs";
+import { auditExtraction } from "./lib/learning-memory.mjs";
+import { brandKitPromptBlock } from "./lib/brand-kit.mjs";
+import { BOARD_KEY, moodboardPromptBlock } from "./lib/moodboard.mjs";
+import { buildSiteDigest } from "./lib/site-structure.mjs";
+import { missingAnatomySections } from "./lib/generate-prompt-pro.mjs";
+import { contrastRatio, isSaturated } from "./lib/color-science.mjs";
+import { deepSignalsPromptBlock, generateDeepSignalsMarkdown, summarizeDeepSignals } from "./lib/deep-signals.mjs";
+import { allPlatformExports } from "./lib/platform-exports.mjs";
+import { listModels, pickBestModel } from "./lib/ai-client.mjs";
+import { buildSiteStructureFiles, generatePageMarkdown, generateSiteStructureMarkdown } from "./lib/site-structure.mjs";
 
-const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
+const EXTRACTION_MESSAGE = "KEYS_OSI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
 const HISTORY_LIMIT = 15;
 const MCP_BRIDGE_URL = "http://127.0.0.1:8765";
@@ -23,23 +39,51 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     outputMode: "design"
   });
-  chrome.contextMenus.create({
-    id: "keys-osi-extract-element",
-    title: "Extraire ce composant (Keys_Osi)",
-    contexts: ["all"]
+  // Menus survive updates: recreate from scratch to avoid "duplicate id".
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "keys-osi-extract-element",
+      title: "Extraire ce composant (Keys_Osi)",
+      contexts: ["all"]
+    });
+    chrome.contextMenus.create({
+      id: "keys-osi-pin",
+      title: "Épingler dans le moodboard (Keys_Osi)",
+      contexts: ["page", "image", "selection", "link"]
+    });
   });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "keys-osi-pin" && tab?.id) {
+    handlePinContextMenu(info, tab, { runInOffscreen }).catch((error) => {
+      chrome.action.setBadgeText({ tabId: tab.id, text: "ERR" });
+      chrome.action.setTitle({ tabId: tab.id, title: `Keys_Osi : ${stringifyError(error)}` });
+    });
+    return;
+  }
   if (info.menuItemId !== "keys-osi-extract-element" || !tab || !tab.id) {
     return;
   }
-  handleExtractElement(tab).catch(() => {});
+  handleExtractElement(tab, info.frameId || 0).catch((error) => {
+    // No popup is open: surface the failure on the toolbar icon.
+    chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: "#d93025" });
+    chrome.action.setBadgeText({ tabId: tab.id, text: "ERR" });
+    chrome.action.setTitle({ tabId: tab.id, title: `Keys_Osi : ${stringifyError(error)}` });
+  });
 });
 
-async function handleExtractElement(tab) {
-  await injectExtractor(tab.id);
-  const response = await sendTabMessage(tab.id, { type: "TYPEUI_EXTRACT_ELEMENT" });
+async function handleExtractElement(tab, frameId) {
+  // The right-clicked element may live in an iframe: inject there.
+  const target = { tabId: tab.id, frameIds: [frameId] };
+  await chrome.scripting.executeScript({ target, files: ["content-script.js"] });
+  const response = await new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tab.id, { type: "KEYS_OSI_EXTRACT_ELEMENT" }, { frameId }, (reply) => {
+      if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+      else if (!reply || !reply.ok) reject(new Error(reply?.error || "No response from tab."));
+      else resolve(reply);
+    });
+  });
   if (!response.html) {
     return;
   }
@@ -51,9 +95,85 @@ async function handleExtractElement(tab) {
   });
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (!message || !message.type) {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || !message.type || message.target === "offscreen") {
     return;
+  }
+
+  const sideJob =
+    handleReaMessage(message) ||
+    handleMemoryMessage(message) ||
+    handleBrandBoardMessage(message, sender, {
+      buildZip: buildZipViaOffscreen,
+      revokeLater: revokeBlobWhenDownloadSettles,
+      runInOffscreen
+    });
+  if (sideJob) {
+    sideJob
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "PRO_RESULT") {
+    handleProResult(message).catch(() => {});
+    return;
+  }
+
+  if (message.type === "SITE_PROGRESS") {
+    rememberSiteProgress(message);
+    return;
+  }
+
+  if (message.type === "SITE_RESULT") {
+    handleSiteResult(message).catch(() => {});
+    return;
+  }
+
+  const siteJob = {
+    SITE_SCAN_START: handleSiteScanStart,
+    SITE_SCAN_CANCEL: handleSiteScanCancel,
+    SITE_RENDER_PAGE: renderPageForCrawl,
+    SITE_STATE: handleSiteState,
+    SITE_EXPORT: handleSiteExport
+  }[message.type];
+  if (siteJob) {
+    siteJob(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  const job3d = handle3dMessage(message, {
+    buildInOffscreen: runInOffscreen,
+    revokeLater: revokeBlobWhenDownloadSettles
+  });
+  if (job3d) {
+    job3d
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  const figmaJob = handleFigmaMessage(message, {
+    buildZip: buildZipViaOffscreen,
+    revokeLater: revokeBlobWhenDownloadSettles
+  });
+  const techJob = handleTechMessage(message, {
+    buildZip: buildZipViaOffscreen,
+    revokeLater: revokeBlobWhenDownloadSettles
+  });
+  if (techJob) {
+    techJob
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+  if (figmaJob) {
+    figmaJob
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
   }
 
   if (message.type === "RUN_EXTRACTION") {
@@ -133,6 +253,32 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === "COMPARE_TABS") {
+    handleCompareTabs(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "LIST_AI_MODELS") {
+    chrome.storage.local
+      .get(["promptProSettings"])
+      .then(async ({ promptProSettings: settings = {} }) => {
+        const models = await listModels({ provider: settings.provider, apiKey: settings.apiKey, baseUrl: settings.baseUrl, fetchImpl: fetch });
+        const { keysOsiModelStats: stats = {} } = await chrome.storage.local.get("keysOsiModelStats");
+        sendResponse({ ok: true, models, best: pickBestModel(models), stats });
+      })
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
+  if (message.type === "ASSETS_ZIP") {
+    handleAssetsZip(message)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
   if (message.type === "DOWNLOAD_TEXT") {
     handleDownloadText(message)
       .then((downloadId) => sendResponse({ ok: true, downloadId }))
@@ -154,6 +300,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === "PLATFORM_ZIP") {
+    (async () => {
+      if (!message.normalized) throw new Error("Lance d'abord une extraction.");
+      const files = allPlatformExports(message.normalized);
+      const zip = await buildZipViaOffscreen(files);
+      const filename = `${siteSlug(message.normalized.source?.title, "design")}_plateformes.zip`;
+      const { keysOsiSaveAs } = await chrome.storage.local.get("keysOsiSaveAs");
+      const downloadId = await chrome.downloads.download({ url: zip.blobUrl, filename, saveAs: keysOsiSaveAs !== false, conflictAction: "uniquify" });
+      revokeBlobWhenDownloadSettles(downloadId, zip.blobUrl);
+      return { filename, fileCount: zip.fileCount };
+    })()
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
+
   if (message.type === "EXPORT_TOKENS") {
     try {
       const normalized = message.normalized;
@@ -163,7 +325,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({
         ok: true,
         w3cTokens: JSON.stringify(generateW3cTokens(normalized), null, 2),
-        tailwindConfig: generateTailwindConfig(normalized)
+        tailwindConfig: generateTailwindConfig(normalized),
+        cssVariables: generateCssVariables(normalized),
+        scss: generateScss(normalized)
       });
     } catch (error) {
       sendResponse({ ok: false, error: stringifyError(error) });
@@ -172,13 +336,40 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
+/** Normalized design of the chosen source: the imported Figma file or the live tab. */
+async function sourceNormalized(message, tab) {
+  if (message.source === "figma") {
+    const normalized = await figmaNormalized();
+    if (!normalized) throw new Error("Aucun fichier Figma importé : importe-le d'abord (dépli « Figma »).");
+    return normalized;
+  }
+  const target = tab || (message.tabId ? await chrome.tabs.get(Number(message.tabId)) : await getActiveTab());
+  await injectExtractor(target.id);
+  await injectMainWorldInspector(target.id);
+  return normalizeExtractedStyles(await requestExtractionPayload(target.id));
+}
+
+/** Page-level signals read by deep-probe.js; null when the page cannot be probed. */
+async function probeDeepSignals(tabId) {
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({ target: { tabId }, files: ["deep-probe.js"] });
+    return summarizeDeepSignals(result);
+  } catch (error) {
+    return null;
+  }
+}
+
+/** Inserts the deep-signal sections before the DESIGN.md rules. */
+function withDeepSections(markdown, deep) {
+  if (!deep) return markdown;
+  const sections = generateDeepSignalsMarkdown(deep).trim();
+  const anchor = markdown.indexOf("\n## Rules: Do");
+  return anchor === -1 ? `${markdown.trimEnd()}\n\n${sections}\n` : `${markdown.slice(0, anchor)}\n${sections}\n${markdown.slice(anchor)}`;
+}
+
 async function handleExtraction(message) {
   const mode = ["skill", "json", "motion", "prompt"].includes(message.mode) ? message.mode : "design";
-  const tab = await getActiveTab();
-  await injectExtractor(tab.id);
-  await injectMainWorldInspector(tab.id);
-  const payload = await requestExtractionPayload(tab.id);
-  const normalized = normalizeExtractedStyles(payload);
+  const normalized = await sourceNormalized(message);
 
   const context = {
     normalized
@@ -202,6 +393,10 @@ async function handleExtraction(message) {
     filename = "SKILL.md";
   } else {
     markdown = generateDesignMarkdown(context);
+    if (message.source !== "figma") {
+      const tabId = message.tabId ? Number(message.tabId) : (await getActiveTab()).id;
+      markdown = withDeepSections(markdown, await probeDeepSignals(tabId));
+    }
     validation = validateMarkdownOutput(mode, markdown);
     filename = "DESIGN.md";
   }
@@ -212,14 +407,27 @@ async function handleExtraction(message) {
     });
   }
 
-  await saveToHistory(normalized).catch(() => {});
+  if (message.source !== "figma") {
+    await saveToHistory(normalized).catch(() => {});
+  }
+  const selfCheck = auditExtraction(normalized, { design: mode === "design" ? markdown : "", skill: mode === "skill" ? markdown : "" }, { contrastRatio, isSaturated });
+  for (const issue of selfCheck) {
+    await recordMemoryEvent({
+      kind: "extract-anomaly",
+      feature: "extract",
+      message: issue.message,
+      detail: { check: issue.check },
+      scope: { host: safeHostname(normalized.source?.url), url: normalized.source?.url || "", platform: normalized.platformInfo?.platform || "" }
+    }).catch(() => {});
+  }
 
   return {
     mode,
     filename,
     markdown,
     normalized,
-    validation
+    validation,
+    selfCheck
   };
 }
 
@@ -335,7 +543,7 @@ async function handleDownloadText(message) {
   if (!message.text) {
     throw new Error("Cannot download empty content.");
   }
-  const filename = String(message.filename || "export.txt").replace(/[\\/]/g, "").trim();
+  const filename = safeFilename(message.filename, "export.txt");
   const mime = String(message.mime || "text/plain");
   const url = `data:${mime};charset=utf-8,${encodeURIComponent(message.text)}`;
   return chrome.downloads.download({
@@ -366,7 +574,7 @@ async function handleDownloadJson(message) {
     throw new Error("Cannot download empty data.");
   }
 
-  const filename = String(message.filename || "design_tokens.json").replace(/[\\/]/g, "").trim();
+  const filename = safeFilename(message.filename, "design_tokens.json");
   const jsonString = JSON.stringify(message.data, null, 2);
   const url = `data:application/json;charset=utf-8,${encodeURIComponent(jsonString)}`;
   return chrome.downloads.download({
@@ -383,10 +591,13 @@ async function getActiveTab() {
     currentWindow: true
   });
   if (!tab || !tab.id) {
-    throw new Error("No active tab available.");
+    throw new Error("Aucun onglet actif.");
   }
-  if (String(tab.url || "").startsWith("chrome://")) {
-    throw new Error("Extraction is not available on chrome:// pages.");
+  // Chrome forbids scripting chrome://, the Web Store, other extensions and
+  // its PDF viewer: say so instead of surfacing a raw permission error.
+  const url = String(tab.url || "");
+  if (url && (!/^(https?|file):/i.test(url) || /^https:\/\/chromewebstore\.google\.com/i.test(url))) {
+    throw new Error("Keys_Osi analyse les sites web (http/https). Cette page est protégée par Chrome : ouvre le site à extraire puis relance.");
   }
   return tab;
 }
@@ -394,7 +605,7 @@ async function getActiveTab() {
 async function injectExtractor(tabId) {
   try {
     const alreadyInjected = await new Promise((resolve) => {
-      chrome.tabs.sendMessage(tabId, { type: "TYPEUI_PING" }, (response) => {
+      chrome.tabs.sendMessage(tabId, { type: "KEYS_OSI_PING" }, (response) => {
         if (chrome.runtime.lastError || !response || !response.ok) {
           resolve(false);
         } else {
@@ -431,6 +642,16 @@ function requestExtractionPayload(tabId) {
   });
 }
 
+// ASCII slug of a tab title; non-Latin titles fall back instead of "_".
+function siteSlug(title, fallback) {
+  return String(title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 30) || fallback;
+}
+
+// Windows rejects these in chrome.downloads filenames.
+function safeFilename(name, fallback) {
+  return String(name || "").replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_").trim() || fallback;
+}
+
 function stringifyError(error) {
   if (error instanceof Error) {
     return error.message;
@@ -448,7 +669,7 @@ function normalizeMarkdownFilename(inputName, mode) {
     return fallback;
   }
 
-  const name = raw.replace(/[\\/]/g, "").trim();
+  const name = safeFilename(raw, "");
   if (!name) {
     return fallback;
   }
@@ -478,7 +699,7 @@ async function handleCopySite(message) {
   const pageMap = {};
   const crawlTargets = [];
   if (options.crawlPages > 0) {
-    const links = await sendTabMessage(tab.id, { type: "TYPEUI_LIST_LINKS" })
+    const links = await sendTabMessage(tab.id, { type: "KEYS_OSI_LIST_LINKS" })
       .then((response) => response.links || [])
       .catch(() => []);
     const usedSlugs = new Set();
@@ -501,7 +722,7 @@ async function handleCopySite(message) {
 
   // Phase 3: capture the active page.
   const mainPayload = await sendTabMessage(tab.id, {
-    type: "TYPEUI_COPY_SITE",
+    type: "KEYS_OSI_COPY_SITE",
     options: { ...options, currentPagePath: "index.html", pageMap, seedAssets: [] }
   }).then((response) => response.payload);
 
@@ -553,10 +774,7 @@ async function handleCopySite(message) {
   // Phase 6: blueprint + token exports bundled with the clone.
   const blueprint = await buildBlueprintFiles(tab.id, screenshots.length, audit);
 
-  const siteName = String(tab.title || "cloned_site")
-    .replace(/[^a-z0-9]+/gi, "_")
-    .toLowerCase()
-    .slice(0, 30) || "cloned_site";
+  const siteName = siteSlug(tab.title, "cloned_site");
 
   const zipFiles = [
     ...pages.map((page) => ({ path: page.path, content: page.html })),
@@ -608,7 +826,7 @@ async function handleCopySite(message) {
     // ZIP packaging failed (offscreen unavailable, archive too large...):
     // fall back to individual downloads so the user still gets the clone.
     const fileCount = await downloadFilesIndividually(
-      `design_extractor_clones/${siteName}`,
+      `keys_osi_clones/${siteName}`,
       zipFiles
     );
     return {
@@ -616,7 +834,7 @@ async function handleCopySite(message) {
       pageCount: pages.length,
       screenshotCount: screenshots.length,
       skipped: 0,
-      path: `design_extractor_clones/${siteName}`,
+      path: `keys_osi_clones/${siteName}`,
       packaging: "files"
     };
   }
@@ -634,7 +852,7 @@ async function handleDownloadAssets() {
   await injectMainWorldInspector(tab.id);
 
   const payload = await sendTabMessage(tab.id, {
-    type: "TYPEUI_COPY_SITE",
+    type: "KEYS_OSI_COPY_SITE",
     options: { autoScroll: true, staticSnapshot: false, currentPagePath: "index.html" }
   }).then((response) => response.payload);
 
@@ -658,10 +876,7 @@ async function handleDownloadAssets() {
     cssVariables: normalized.cssVariables
   };
 
-  const siteName = String(tab.title || "site")
-    .replace(/[^a-z0-9]+/gi, "_")
-    .toLowerCase()
-    .slice(0, 30) || "site";
+  const siteName = siteSlug(tab.title, "site");
 
   const zipFiles = [
     ...rewrittenCss.map((entry) => ({ path: entry.path, content: entry.text })),
@@ -691,6 +906,32 @@ async function handleDownloadAssets() {
   };
 }
 
+/** Assets panel selection (images, SVG, fonts, media, animations) as one ZIP. */
+async function handleAssetsZip(message) {
+  const files = (Array.isArray(message.files) ? message.files : [])
+    .filter((file) => file && typeof file.path === "string" && !file.path.includes(".."))
+    .map((file) =>
+      typeof file.content === "string"
+        ? { path: file.path, content: file.content }
+        : { path: file.path, url: String(file.url || "") }
+    )
+    .filter((file) => file.content !== undefined || /^(https?|data):/.test(file.url));
+  if (files.length === 0) {
+    throw new Error("Aucun fichier à archiver.");
+  }
+  const name = `${siteSlug(message.title, "site")}_keys_osi_assets.zip`;
+  const zipResult = await buildZipViaOffscreen(files);
+  const { keysOsiSaveAs } = await chrome.storage.local.get("keysOsiSaveAs");
+  const downloadId = await chrome.downloads.download({
+    url: zipResult.blobUrl,
+    filename: name,
+    saveAs: keysOsiSaveAs !== false,
+    conflictAction: "uniquify"
+  });
+  revokeBlobWhenDownloadSettles(downloadId, zipResult.blobUrl);
+  return { path: name, fileCount: zipResult.fileCount, skipped: zipResult.failures?.length || 0 };
+}
+
 /**
  * Design System Starter Kit ZIP: tokens.css + components.css built from
  * the measured specs, a zero-build preview page, and React components.
@@ -703,10 +944,7 @@ async function handleDownloadStarterKit() {
   const payload = await requestExtractionPayload(tab.id);
   const normalized = normalizeExtractedStyles(payload);
 
-  const siteName = String(tab.title || "site")
-    .replace(/[^a-z0-9]+/gi, "_")
-    .toLowerCase()
-    .slice(0, 30) || "site";
+  const siteName = siteSlug(tab.title, "site");
 
   const files = [
     ...generateStarterKit(normalized, { name: normalized.source?.title || siteName }).map((file) => ({
@@ -747,49 +985,167 @@ async function handleGeneratePromptPro(message) {
     throw new Error("Décris ton projet en quelques phrases d'abord (produit, audience, sections voulues).");
   }
 
-  const tab = await getActiveTab();
-  await injectExtractor(tab.id);
-  await injectMainWorldInspector(tab.id);
-  const payload = await requestExtractionPayload(tab.id);
-  const normalized = normalizeExtractedStyles(payload);
+  // Live progress for the popup (it may be closed: errors are ignored).
+  const progress = (step, extra = {}) =>
+    chrome.runtime.sendMessage({ type: "PRO_PROGRESS", step, ...extra }).catch(() => {});
+
+  progress("extract");
+  const tab = message.source === "figma" ? { url: "" } : message.tabId ? await chrome.tabs.get(Number(message.tabId)) : await getActiveTab();
+  const normalized = await sourceNormalized(message, message.source === "figma" ? null : tab);
   const basePrompt = generatePromptMarkdown({ normalized });
 
   const stored = await chrome.storage.local.get(["promptProSettings"]);
   const settings = stored.promptProSettings || {};
+  const context = await buildProContext(message, normalized);
+  if (message.source !== "figma" && tab.id) {
+    const deep = await probeDeepSignals(tab.id);
+    if (deep) context.push({ title: "PAGE SIGNALS (voice, imagery, icons, dark mode, form states of the reference)", text: deepSignalsPromptBlock(deep) });
+  }
 
   // Vision grounding: capture a few section screenshots so the model
   // sees the real composition, not just the numbers.
   let screenshots = null;
-  if (settings.apiKey && message.vision) {
+  if (settings.apiKey && message.vision && tab.id) {
+    progress("vision");
     screenshots = await captureSectionScreenshots(tab).catch(() => []);
   }
 
   if (settings.apiKey) {
-    try {
-      const markdown = await generateAiPromptPro({
-        normalized,
-        basePrompt,
-        description,
-        settings,
-        screenshots,
-        fetchImpl: fetch
-      });
-      const visionNote = screenshots && screenshots.length > 0 ? " + vision" : "";
-      return { markdown, engine: `${settings.provider || "groq"} (IA${visionNote})` };
-    } catch (error) {
-      const markdown = generateLocalPromptPro(normalized, description, basePrompt);
-      return {
-        markdown,
-        engine: "template local (fallback)",
-        warning: `Appel IA échoué : ${stringifyError(error)}`
-      };
+    // Reasoning models can take several minutes; MV3 kills a worker whose
+    // event runs > 5 min. The offscreen document has no such limit: it
+    // streams the answer and reports back with PRO_RESULT.
+    // "Vitesse": no model imposed → the fastest model that already
+    // succeeded here, measured by previous generations.
+    const runSettings = { ...settings };
+    if (!runSettings.model && runSettings.priority === "speed") {
+      runSettings.model = (await fastestModel()) || "";
     }
+    progress("ai", { model: runSettings.model || "auto" });
+    const { messages: baseMessages, archetypes } = buildAiProRequest({ normalized, basePrompt, description, screenshots, context });
+    const lessons = await memoryLessons("pro");
+    const messages = applyLessonsToMessages(baseMessages, lessons);
+    runSettings.avoidModels = await memoryAvoidModels();
+    const jobId = crypto.randomUUID();
+    await chrome.storage.session.set({
+      [PRO_JOB_KEY]: {
+        jobId,
+        normalized,
+        description,
+        basePrompt,
+        archetypes,
+        provider: runSettings.provider || "groq",
+        requestedModel: runSettings.model || "auto",
+        startedAt: Date.now(),
+        vision: Boolean(screenshots && screenshots.length),
+        url: tab.url || "",
+        context,
+        lessons: lessons.length
+      }
+    });
+    await runInOffscreen({ type: "KEYS_OSI_PRO_RUN", jobId, messages, settings: runSettings });
+    return { pending: true, jobId };
   }
 
-  return {
-    markdown: generateLocalPromptPro(normalized, description, basePrompt),
-    engine: "template local (pas de clé API configurée)"
-  };
+  return saveProResult(
+    {
+      markdown: generateLocalPromptPro(normalized, description, basePrompt, context),
+      engine: "moteur local Keys_Osi (pas de clé API configurée)",
+      context: context.map((block) => block.title)
+    },
+    tab.url || ""
+  );
+}
+
+/** User-supplied context for PROMPT_PRO: brand kit, moodboard, scanned structure of the same site. */
+async function buildProContext(message, normalized) {
+  const context = [];
+  const data = await chrome.storage.local.get([BRAND_KEY, BOARD_KEY, "keysOsiLastSite"]);
+  if (message.useBrand !== false && data[BRAND_KEY]?.kit) {
+    context.push({ title: "BRAND KIT (the user's brand — overrides the reference colors and fonts)", text: brandKitPromptBlock(data[BRAND_KEY].kit), brand: true });
+  }
+  if (message.useBoard !== false && Array.isArray(data[BOARD_KEY]) && data[BOARD_KEY].length) {
+    context.push({ title: "MOODBOARD (references pinned by the user)", text: moodboardPromptBlock(data[BOARD_KEY]) });
+  }
+  const site = data.keysOsiLastSite;
+  if (message.useSite !== false && site && normalized.source?.url && safeHostname(site.origin) === safeHostname(normalized.source.url)) {
+    context.push({ title: "SITE STRUCTURE (every page of the reference site)", text: buildSiteDigest(site) });
+  }
+  return context;
+}
+
+const PRO_JOB_KEY = "keysOsiProJob";
+const MODEL_STATS_KEY = "keysOsiModelStats";
+
+// Measured PROMPT_PRO runs per model: { model: { runs, fails, totalMs } }.
+async function recordModelRun(model, ok, durationMs) {
+  if (!model || model === "auto") return;
+  const { [MODEL_STATS_KEY]: stats = {} } = await chrome.storage.local.get(MODEL_STATS_KEY);
+  const entry = stats[model] || { runs: 0, fails: 0, totalMs: 0 };
+  if (ok) {
+    entry.runs += 1;
+    entry.totalMs += durationMs;
+  } else {
+    entry.fails += 1;
+  }
+  stats[model] = entry;
+  await chrome.storage.local.set({ [MODEL_STATS_KEY]: stats });
+}
+
+async function fastestModel() {
+  const { [MODEL_STATS_KEY]: stats = {} } = await chrome.storage.local.get(MODEL_STATS_KEY);
+  return Object.entries(stats)
+    .filter(([, s]) => s.runs > 0 && s.fails <= s.runs)
+    .sort(([, a], [, b]) => a.totalMs / a.runs - b.totalMs / b.runs)[0]?.[0] || null;
+}
+
+// The popup can close during a long generation: keep the result so it
+// reappears the next time the popup opens.
+async function saveProResult(result, url) {
+  await chrome.storage.local
+    .set({ keysOsiLastPro: { ...result, at: new Date().toISOString(), url } })
+    .catch(() => {});
+  chrome.runtime.sendMessage({ type: "PRO_PROGRESS", step: "done" }).catch(() => {});
+  return result;
+}
+
+/** Offscreen runner finished (or failed): build, save and announce the result. */
+async function handleProResult(message) {
+  const { [PRO_JOB_KEY]: job } = await chrome.storage.session.get(PRO_JOB_KEY);
+  if (!job || job.jobId !== message.jobId) {
+    return;
+  }
+  await chrome.storage.session.remove(PRO_JOB_KEY);
+  const result = message.ok
+    ? {
+        markdown: wrapAiProOutput({
+          content: message.content,
+          provider: message.provider || job.provider,
+          model: message.model || "?",
+          sourceUrl: job.normalized.source?.url,
+          archetypes: job.archetypes,
+          vision: job.vision
+        }),
+        engine: `${job.provider} · ${message.model || "IA"}${job.vision ? " + vision" : ""}${job.lessons ? ` · ${job.lessons} leçon(s) appliquée(s)` : ""}`,
+        context: (job.context || []).map((block) => block.title)
+      }
+    : {
+        markdown: generateLocalPromptPro(job.normalized, job.description, job.basePrompt, job.context || []),
+        engine: "moteur local Keys_Osi (repli)",
+        warning: `Appel IA échoué : ${message.error || "erreur inconnue"}`
+      };
+  await recordModelRun(message.ok ? message.model || job.requestedModel : job.requestedModel, message.ok, Date.now() - (job.startedAt || Date.now()));
+  const memoryScope = { model: message.model || job.requestedModel, provider: job.provider, host: safeHostname(job.url), url: job.url };
+  if (!message.ok) {
+    await recordMemoryEvent({ kind: "ai-failure", feature: "pro", message: message.error || "erreur inconnue", scope: memoryScope }).catch(() => {});
+  } else {
+    const missing = missingAnatomySections(message.content);
+    if (missing.length) {
+      await recordMemoryEvent({ kind: "missing-sections", feature: "pro", message: `${missing.length} section(s) absente(s)`, detail: { sections: missing }, scope: memoryScope }).catch(() => {});
+      result.missingSections = missing;
+    }
+  }
+  await saveProResult(result, job.url);
+  chrome.runtime.sendMessage({ type: "PRO_DONE", jobId: job.jobId, result }).catch(() => {});
 }
 
 async function handleGenerateCode(message) {
@@ -819,7 +1175,7 @@ async function handleGenerateCode(message) {
     fetchImpl: fetch
   });
 
-  const siteName = String(tab.title || "site").replace(/[^a-z0-9]+/gi, "_").toLowerCase().slice(0, 30) || "site";
+  const siteName = siteSlug(tab.title, "site");
   const zipResult = await buildZipViaOffscreen(files);
   const downloadId = await chrome.downloads.download({
     url: zipResult.blobUrl,
@@ -868,7 +1224,7 @@ async function handleFidelityCompare() {
   await ensureOffscreenDocument();
   const ssimResult = await chrome.runtime.sendMessage({
     target: "offscreen",
-    type: "TYPEUI_SSIM",
+    type: "KEYS_OSI_SSIM",
     baselineDataUrl: baseline.dataUrl,
     compareDataUrl
   });
@@ -970,7 +1326,7 @@ async function buildBlueprintFiles(tabId, screenshotCount, audit) {
 
 async function captureDisclosureState(tab) {
   try {
-    const openResult = await sendTabMessage(tab.id, { type: "TYPEUI_SAFE_INTERACT_OPEN" });
+    const openResult = await sendTabMessage(tab.id, { type: "KEYS_OSI_SAFE_INTERACT_OPEN" });
     if (!openResult.opened || openResult.opened === 0) {
       return null;
     }
@@ -980,7 +1336,7 @@ async function captureDisclosureState(tab) {
       const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
       screenshotBase64 = String(dataUrl || "").split(",")[1] || null;
     } catch (error) {}
-    await sendTabMessage(tab.id, { type: "TYPEUI_SAFE_INTERACT_CLOSE" }).catch(() => {});
+    await sendTabMessage(tab.id, { type: "KEYS_OSI_SAFE_INTERACT_CLOSE" }).catch(() => {});
     return {
       opened: openResult.opened,
       report: openResult.report || [],
@@ -1115,13 +1471,13 @@ function debuggerCmd(target, method, params) {
 async function captureSectionScreenshots(tab) {
   const shots = [];
   try {
-    const metrics = await sendTabMessage(tab.id, { type: "TYPEUI_PAGE_METRICS" });
+    const metrics = await sendTabMessage(tab.id, { type: "KEYS_OSI_PAGE_METRICS" });
     const viewportHeight = Math.max(200, Number(metrics.viewportHeight) || 800);
     const scrollHeight = Math.max(viewportHeight, Number(metrics.scrollHeight) || viewportHeight);
     const steps = Math.min(12, Math.ceil(scrollHeight / viewportHeight));
 
     for (let i = 0; i < steps; i++) {
-      await sendTabMessage(tab.id, { type: "TYPEUI_SCROLL_TO", y: i * viewportHeight });
+      await sendTabMessage(tab.id, { type: "KEYS_OSI_SCROLL_TO", y: i * viewportHeight });
       // captureVisibleTab is rate-limited to ~2 calls per second.
       await sleep(620);
       const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
@@ -1130,7 +1486,7 @@ async function captureSectionScreenshots(tab) {
         shots.push(base64);
       }
     }
-    await sendTabMessage(tab.id, { type: "TYPEUI_SCROLL_TO", y: 0 }).catch(() => {});
+    await sendTabMessage(tab.id, { type: "KEYS_OSI_SCROLL_TO", y: 0 }).catch(() => {});
   } catch (error) {
     // Screenshots are best-effort; the clone proceeds without them.
   }
@@ -1143,7 +1499,7 @@ async function capturePageInBackgroundTab(url, options) {
     await waitForTabComplete(created.id, 20000);
     await injectExtractor(created.id);
     const response = await sendTabMessage(created.id, {
-      type: "TYPEUI_COPY_SITE",
+      type: "KEYS_OSI_COPY_SITE",
       options
     });
     return response.payload;
@@ -1244,17 +1600,17 @@ async function ensureOffscreenDocument() {
   await creatingOffscreen;
 }
 
-async function buildZipViaOffscreen(files) {
+async function runInOffscreen(message) {
   await ensureOffscreenDocument();
-  const result = await chrome.runtime.sendMessage({
-    target: "offscreen",
-    type: "TYPEUI_BUILD_ZIP",
-    files
-  });
+  const result = await chrome.runtime.sendMessage({ target: "offscreen", ...message });
   if (!result || !result.ok) {
-    throw new Error(result?.error || "ZIP packaging failed.");
+    throw new Error(result?.error || "Offscreen task failed.");
   }
   return result;
+}
+
+function buildZipViaOffscreen(files) {
+  return runInOffscreen({ type: "KEYS_OSI_BUILD_ZIP", files });
 }
 
 function revokeBlobWhenDownloadSettles(downloadId, blobUrl) {
@@ -1265,7 +1621,7 @@ function revokeBlobWhenDownloadSettles(downloadId, blobUrl) {
     if (delta.state.current === "complete" || delta.state.current === "interrupted") {
       chrome.downloads.onChanged.removeListener(onChanged);
       chrome.runtime
-        .sendMessage({ target: "offscreen", type: "TYPEUI_REVOKE_ZIP", blobUrl })
+        .sendMessage({ target: "offscreen", type: "KEYS_OSI_REVOKE_ZIP", blobUrl })
         .catch(() => {});
     }
   };
@@ -1327,4 +1683,237 @@ async function injectMainWorldInspector(tabId) {
   } catch (e) {
     // ignore
   }
+}
+
+/**
+ * Before/after fidelity: captures two tabs (reference and reproduction)
+ * section by section at the same scroll offsets, then scores every pair
+ * (SSIM + differing pixels + heatmap) and downloads an HTML report.
+ */
+async function handleCompareTabs(message) {
+  const [ref, cand] = await Promise.all([chrome.tabs.get(Number(message.refTabId)), chrome.tabs.get(Number(message.candTabId))]);
+  if (ref.id === cand.id) {
+    throw new Error("Choisis deux onglets différents (référence et reproduction).");
+  }
+  for (const tab of [ref, cand]) {
+    if (!/^(https?|file):/i.test(tab.url || "")) {
+      throw new Error(`Onglet non comparable (page protégée) : ${tab.title || tab.url}`);
+    }
+    await injectExtractor(tab.id);
+  }
+  const [refMetrics, candMetrics] = await Promise.all([
+    sendTabMessage(ref.id, { type: "KEYS_OSI_PAGE_METRICS" }),
+    sendTabMessage(cand.id, { type: "KEYS_OSI_PAGE_METRICS" })
+  ]);
+  const viewport = Math.max(200, Number(refMetrics.viewportHeight) || 800);
+  const height = Math.min(Number(refMetrics.scrollHeight) || viewport, Number(candMetrics.scrollHeight) || viewport);
+  const steps = Math.max(1, Math.min(8, Math.ceil(height / viewport)));
+
+  const capture = async (tab, y) => {
+    await chrome.tabs.update(tab.id, { active: true });
+    await sendTabMessage(tab.id, { type: "KEYS_OSI_SCROLL_TO", y });
+    // captureVisibleTab is rate-limited (~2/s) and needs the paint to settle.
+    await sleep(650);
+    return chrome.tabs.captureVisibleTab(tab.windowId, { format: "jpeg", quality: 88 });
+  };
+  const pairs = [];
+  for (let i = 0; i < steps; i++) {
+    const y = i * viewport;
+    pairs.push({ y, ref: await capture(ref, y), cand: await capture(cand, y) });
+  }
+  await sendTabMessage(ref.id, { type: "KEYS_OSI_SCROLL_TO", y: 0 }).catch(() => {});
+  await sendTabMessage(cand.id, { type: "KEYS_OSI_SCROLL_TO", y: 0 }).catch(() => {});
+
+  const result = await runInOffscreen({ type: "KEYS_OSI_COMPARE", pairs, meta: { refUrl: ref.url, candUrl: cand.url } });
+  const { keysOsiSaveAs } = await chrome.storage.local.get("keysOsiSaveAs");
+  const filename = `keys-osi-fidelite-${siteSlug(ref.title, "reference")}.html`;
+  const downloadId = await chrome.downloads.download({ url: result.blobUrl, filename, saveAs: keysOsiSaveAs !== false, conflictAction: "uniquify" });
+  revokeBlobWhenDownloadSettles(downloadId, result.blobUrl);
+  const summary = {
+    overall: result.overall,
+    grade: scoreToGrade(result.overall),
+    sections: result.sections,
+    filename,
+    refUrl: ref.url,
+    candUrl: cand.url,
+    at: new Date().toISOString()
+  };
+  // Switching tabs closes the popup: keep the result for its next opening.
+  await chrome.storage.local.set({ keysOsiLastCompare: summary });
+  return summary;
+}
+
+// ---------------------------------------------------------------- site structure
+
+const SITE_JOB_KEY = "keysOsiSiteJob";
+const SITE_RESULT_KEY = "keysOsiLastSite";
+const renderWindows = new Map();
+let lastProgressWrite = 0;
+
+async function handleSiteScanStart(message) {
+  const { [SITE_JOB_KEY]: running } = await chrome.storage.session.get(SITE_JOB_KEY);
+  if (running && Date.now() - running.startedAt < 30 * 60 * 1000) {
+    throw new Error("Un scan est déjà en cours : attends la fin ou annule-le.");
+  }
+  const tab = message.tabId ? await chrome.tabs.get(Number(message.tabId)) : await getActiveTab();
+  if (!/^https?:/i.test(tab.url || "")) throw new Error("Ouvre le site à scanner (http/https) puis relance.");
+  const jobId = crypto.randomUUID();
+  const options = {
+    maxPages: Number(message.maxPages) || 50,
+    samplePerTemplate: Number(message.samplePerTemplate) || 3,
+    render: message.render !== false,
+    maxRenders: Number(message.maxRenders) || 20
+  };
+  // Routes recovered by the technical decoding are crawled too.
+  const { seeds, tech } = await techSeedUrls(new URL(tab.url).origin);
+  options.seedUrls = seeds;
+  options.tech = tech;
+  await chrome.storage.session.set({ [SITE_JOB_KEY]: { jobId, startUrl: tab.url, startedAt: Date.now(), options, progress: null } });
+  await runInOffscreen({ type: "KEYS_OSI_SITE_CRAWL", jobId, startUrl: tab.url, options });
+  return { pending: true, jobId, startUrl: tab.url };
+}
+
+async function handleSiteScanCancel() {
+  const { [SITE_JOB_KEY]: job } = await chrome.storage.session.get(SITE_JOB_KEY);
+  if (!job) return { cancelled: false };
+  await runInOffscreen({ type: "KEYS_OSI_SITE_CANCEL", jobId: job.jobId }).catch(() => {});
+  return { cancelled: true };
+}
+
+function rememberSiteProgress(message) {
+  // The popup may close mid-scan: keep the latest counters for its reopening.
+  if (Date.now() - lastProgressWrite < 800) return;
+  lastProgressWrite = Date.now();
+  chrome.storage.session
+    .get(SITE_JOB_KEY)
+    .then(({ [SITE_JOB_KEY]: job }) => {
+      if (job && job.jobId === message.jobId) {
+        return chrome.storage.session.set({ [SITE_JOB_KEY]: { ...job, progress: message } });
+      }
+    })
+    .catch(() => {});
+}
+
+/** Live render of a JavaScript-only page, in a minimized window kept per scan. */
+async function renderPageForCrawl({ jobId, url }) {
+  if (!/^https?:/i.test(String(url || ""))) throw new Error("URL invalide.");
+  let windowId = renderWindows.get(jobId);
+  let tabId = null;
+  if (windowId) {
+    try {
+      tabId = (await chrome.tabs.create({ windowId, url, active: false })).id;
+    } catch (error) {
+      windowId = null;
+    }
+  }
+  if (!windowId) {
+    const created = await chrome.windows.create({ url, state: "minimized", focused: false });
+    windowId = created.id;
+    tabId = created.tabs[0].id;
+    renderWindows.set(jobId, windowId);
+  }
+  try {
+    await waitForTabComplete(tabId, 25000);
+    await chrome.scripting.executeScript({ target: { tabId }, files: ["lib/page-model.js"] });
+    // Hydration has settled when the word count stops changing.
+    let model = null;
+    let previous = -1;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const [{ result }] = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => globalThis.KeysOsiPageModel.analyzeDocument(document, { url: location.href, rendered: true })
+      });
+      model = result;
+      if (model && model.wordCount > 30 && model.wordCount === previous) break;
+      previous = model ? model.wordCount : -1;
+      await sleep(600);
+    }
+    return { model };
+  } finally {
+    const tabs = await chrome.tabs.query({ windowId }).catch(() => []);
+    if (tabs.length > 1) {
+      chrome.tabs.remove(tabId).catch(() => {});
+    } else {
+      chrome.tabs.update(tabId, { url: "about:blank" }).catch(() => {});
+    }
+  }
+}
+
+async function handleSiteResult(message) {
+  const { [SITE_JOB_KEY]: job } = await chrome.storage.session.get(SITE_JOB_KEY);
+  if (!job || job.jobId !== message.jobId) return;
+  await chrome.storage.session.remove(SITE_JOB_KEY);
+  const windowId = renderWindows.get(job.jobId);
+  if (windowId) {
+    renderWindows.delete(job.jobId);
+    chrome.windows.remove(windowId).catch(() => {});
+  }
+  if (message.ok && message.site) {
+    await chrome.storage.local.set({ [SITE_RESULT_KEY]: message.site });
+  }
+  chrome.runtime
+    .sendMessage({ type: "SITE_DONE", jobId: job.jobId, ok: Boolean(message.ok), error: message.error || "", summary: message.ok ? siteSummary(message.site) : null })
+    .catch(() => {});
+}
+
+function siteSummary(site) {
+  if (!site) return null;
+  return {
+    siteName: site.siteName,
+    origin: site.origin,
+    crawledAt: site.crawledAt,
+    stats: site.stats,
+    templates: site.templates.map((template) => ({ pattern: template.pattern, type: template.type, count: template.count })),
+    flows: site.flows.length,
+    forms: site.forms.length,
+    pages: site.pages.map((page) => ({
+      path: page.path,
+      type: page.type,
+      pattern: page.pattern,
+      title: page.h1 || page.title,
+      purpose: page.purpose,
+      sections: (page.sections || []).length,
+      rendered: Boolean(page.rendered),
+      file: page.file
+    }))
+  };
+}
+
+async function handleSiteState() {
+  const { [SITE_JOB_KEY]: job } = await chrome.storage.session.get(SITE_JOB_KEY);
+  const { [SITE_RESULT_KEY]: site } = await chrome.storage.local.get(SITE_RESULT_KEY);
+  return { job: job || null, summary: siteSummary(site) };
+}
+
+async function handleSiteExport(message) {
+  const { [SITE_RESULT_KEY]: site } = await chrome.storage.local.get(SITE_RESULT_KEY);
+  if (!site) throw new Error("Lance d'abord un scan de la structure du site.");
+  const slug = siteSlug(site.siteName, "site");
+  const { keysOsiSaveAs } = await chrome.storage.local.get("keysOsiSaveAs");
+  const saveAs = keysOsiSaveAs !== false;
+  if (message.what === "zip") {
+    const zipResult = await buildZipViaOffscreen(buildSiteStructureFiles(site));
+    const filename = `${slug}_structure.zip`;
+    const downloadId = await chrome.downloads.download({ url: zipResult.blobUrl, filename, saveAs, conflictAction: "uniquify" });
+    revokeBlobWhenDownloadSettles(downloadId, zipResult.blobUrl);
+    return { filename, fileCount: zipResult.fileCount };
+  }
+  let text;
+  let filename;
+  let mime = "text/markdown";
+  if (message.what === "json") {
+    text = JSON.stringify(site, null, 2);
+    filename = `${slug}_site-structure.json`;
+    mime = "application/json";
+  } else if (message.what === "page") {
+    const page = site.pages.find((candidate) => candidate.path === message.path);
+    if (!page) throw new Error("Page introuvable dans le dernier scan.");
+    text = generatePageMarkdown(page, site);
+    filename = `${slug}_${page.slug}.md`;
+  } else {
+    text = generateSiteStructureMarkdown(site);
+    filename = `${slug}_SITE_STRUCTURE.md`;
+  }
+  await chrome.downloads.download({ url: `data:${mime};charset=utf-8,${encodeURIComponent(text)}`, filename, saveAs, conflictAction: "uniquify" });
+  return { filename, bytes: text.length };
 }

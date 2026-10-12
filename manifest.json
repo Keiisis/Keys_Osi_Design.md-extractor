@@ -1,16 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Keys_Osi_Design.md-extractor",
-  "description": "Extract page styles and generate DESIGN.md or SKILL.md files and use it with Google Stitch, Claude, Codex, and Cursor.",
-  "version": "0.14.0",
-  "homepage_url": "https://www.typeui.sh",
+  "description": "Keys_Osi: design system, site structure, tech stack, Figma, brand kit, assets and 3D from any site → DESIGN.md, PROMPT_PRO.md, ZIP.",
+  "version": "0.17.0",
+  "homepage_url": "https://github.com/Keiisis/Keys_Osi_Design.md-extractor",
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
     "downloads",
     "offscreen",
-    "contextMenus"
+    "contextMenus",
+    "webRequest",
+    "unlimitedStorage",
+    "nativeMessaging"
   ],
   "optional_permissions": [
     "debugger"
@@ -37,5 +40,30 @@
     "32": "assets/icons/icon32.png",
     "48": "assets/icons/icon48.png",
     "128": "assets/icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "context-target.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "three-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   }
 }

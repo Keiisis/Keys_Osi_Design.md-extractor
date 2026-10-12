@@ -1,0 +1,1745 @@
+{
+ "result": {
+  "browser": {
+   "product": "Chrome/154.0.8037.98",
+   "protocol_version": "1.3",
+   "revision": "537.36 (@b859317bf11f6be47f9b7799ec690a0a42a1fb33)",
+   "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+   "js_version": "15.4.80.20"
+  },
+  "target": {
+   "target_id": "D297851DDB0ADA41BBCC9744A47EC55D",
+   "type": "page",
+   "title": "&lt;/&gt; htmx - high power tools for html",
+   "url": "https://htmx.org/",
+   "origin": "https://htmx.org",
+   "attached": false
+  },
+  "capture_window": {
+   "started_at": "2026-10-12T07:23:03.314Z",
+   "ended_at": "2026-10-12T07:23:03.703Z",
+   "observation_ms": 300
+  },
+  "completeness": {
+   "status": "policy_filtered",
+   "conditions": [
+    "attach_limited",
+    "policy_filtered"
+   ],
+   "policy_filtered_sections": [
+    "accessibility",
+    "console_text",
+    "json_body_shapes",
+    "metadata",
+    "resources",
+    "script_sources",
+    "scripts",
+    "storage_keys",
+    "websocket_shapes",
+    "workers"
+   ],
+   "attach_limited_sections": [
+    "console_events",
+    "metadata",
+    "network_requests",
+    "websocket_connections",
+    "websocket_frames"
+   ],
+   "truncated_sections": [],
+   "unavailable_sections": [],
+   "excluded": [
+    {
+     "section": "accessibility",
+     "reason": "not_approved",
+     "count": 518
+    },
+    {
+     "section": "console_text",
+     "reason": "not_approved",
+     "count": null
+    },
+    {
+     "section": "json_body_shapes",
+     "reason": "not_approved",
+     "count": null
+    },
+    {
+     "section": "metadata",
+     "reason": "disallowed_origin",
+     "count": 55
+    },
+    {
+     "section": "resources",
+     "reason": "disallowed_origin",
+     "count": 1
+    },
+    {
+     "section": "script_sources",
+     "reason": "not_approved",
+     "count": 5
+    },
+    {
+     "section": "scripts",
+     "reason": "disallowed_origin",
+     "count": 1
+    },
+    {
+     "section": "storage_keys",
+     "reason": "not_approved",
+     "count": null
+    },
+    {
+     "section": "websocket_shapes",
+     "reason": "not_approved",
+     "count": null
+    },
+    {
+     "section": "workers",
+     "reason": "out_of_target_scope",
+     "count": 2
+    }
+   ],
+   "dropped_events": {
+    "scripts": 0,
+    "network_requests": 0,
+    "console_events": 0,
+    "websocket_connections": 0,
+    "websocket_frames": 0,
+    "webmcp_tools": 0,
+    "timeline_events": 0,
+    "total": 0
+   }
+  },
+  "frames": [
+   {
+    "frame_id": "D297851DDB0ADA41BBCC9744A47EC55D",
+    "parent_frame_id": null,
+    "url": "https://htmx.org/",
+    "origin": "https://htmx.org"
+   }
+  ],
+  "dom": {
+   "total_nodes": 752,
+   "nodes": [
+    {
+     "index": 0,
+     "parent_index": -1,
+     "node_type": 9,
+     "node_name": "#document",
+     "node_value_length": 0,
+     "attribute_names": []
+    },
+    {
+     "index": 1,
+     "parent_index": 0,
+     "node_type": 10,
+     "node_name": "html",
+     "node_value_length": 0,
+     "attribute_names": []
+    },
+    {
+     "index": 2,
+     "parent_index": 0,
+     "node_type": 1,
+     "node_name": "HTML",
+     "node_value_length": 0,
+     "attribute_names": [
+      "lang"
+     ]
+    },
+    {
+     "index": 3,
+     "parent_index": 2,
+     "node_type": 1,
+     "node_name": "HEAD",
+     "node_value_length": 0,
+     "attribute_names": []
+    },
+    {
+     "index": 4,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 5,
+     "attribute_names": []
+    },
+    {
+     "index": 5,
+     "parent_index": 3,
+     "node_type": 1,
+     "node_name": "META",
+     "node_value_length": 0,
+     "attribute_names": [
+      "charset"
+     ]
+    },
+    {
+     "index": 6,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 5,
+     "attribute_names": []
+    },
+    {
+     "index": 7,
+     "parent_index": 3,
+     "node_type": 1,
+     "node_name": "META",
+     "node_value_length": 0,
+     "attribute_names": [
+      "name",
+      "content"
+     ]
+    },
+    {
+     "index": 8,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 5,
+     "attribute_names": []
+    },
+    {
+     "index": 9,
+     "parent_index": 3,
+     "node_type": 1,
+     "node_name": "META",
+     "node_value_length": 0,
+     "attribute_names": [
+      "name",
+      "content"
+     ]
+    },
+    {
+     "index": 10,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 6,
+     "attribute_names": []
+    },
+    {
+     "index": 11,
+     "parent_index": 3,
+     "node_type": 1,
+     "node_name": "TITLE",
+     "node_value_length": 0,
+     "attribute_names": []
+    },
+    {
+     "index": 12,
+     "parent_index": 11,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 36,
+     "attribute_names": []
+    },
+    {
+     "index": 13,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 6,
+     "attribute_names": []
+    },
+    {
+     "index": 14,
+     "parent_index": 3,
+     "node_type": 1,
+     "node_name": "LINK",
+     "node_value_length": 0,
+     "attribute_names": [
+      "rel",
+      "href"
+     ]
+    },
+    {
+     "index": 15,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 11,
+     "attribute_names": []
+    },
+    {
+     "index": 16,
+     "parent_index": 3,
+     "node_type": 1,
+     "node_name": "LINK",
+     "node_value_length": 0,
+     "attribute_names": [
+      "rel",
+      "type",
+      "title",
+      "href"
+     ]
+    },
+    {
+     "index": 17,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 5,
+     "attribute_names": []
+    },
+    {
+     "index": 18,
+     "parent_index": 3,
+     "node_type": 1,
+     "node_name": "LINK",
+     "node_value_length": 0,
+     "attribute_names": [
+      "rel",
+      "href"
+     ]
+    },
+    {
+     "index": 19,
+     "parent_index": 3,
+     "node_type": 3,
+     "node_name": "#text",
+     "node_value_length": 5,
+     "attribute_names": []
+    }
+   ]
+  },
+  "accessibility": {
+   "total_nodes": 539,
+   "text_capture": {
+    "status": "not_approved",
+    "retained_bytes": 0,
+    "excluded_fields": 518
+   },
+   "nodes": [
+    {
+     "node_id": "1",
+     "parent_id": null,
+     "role": "RootWebArea",
+     "name": null,
+     "description": null,
+     "ignored": false,
+     "states": [
+      {
+       "name": "focusable",
+       "value": true
+      },
+      {
+       "name": "focused",
+       "value": true
+      }
+     ]
+    },
+    {
+     "node_id": "315",
+     "parent_id": "1",
+     "role": "none",
+     "name": null,
+     "description": null,
+     "ignored": true,
+     "states": []
+    },
+    {
+     "node_id": "26",
+     "parent_id": "315",
+     "role": "none",
+     "name": null,
+     "description": null,
+     "ignored": true,
+     "states": []
+    },
+    {
+     "node_id": "27",
+     "parent_id": "26",
+     "role": "banner",
+     "name": null,
+     "description": null,
+     "ignored": false,
+     "states": []
+    },
+    {
+     "node_id": "25",
+     "parent_id": "26",
+     "role": "main",
+     "name": null,
+     "description": null,
+     "ignored": false,
+     "states": []
+    },
+    {
+     "node_id": "288",
+     "parent_id": "26",
+     "role": "contentinfo",
+     "name": null,
+     "description": null,
+     "ignored": false,
+     "states": []
+    },
+    {
+     "node_id": "350",
+     "parent_id": "27",
+     "role": "none",
+     "name": null,
+     "description": null,
+     "ignored": true,
+     "states": []
+    },
+    {
+     "node_id": "352",
+     "parent_id": "350",
+     "role": "none",
+     "name": null,
+     "description": null,
+     "ignored": true,
+     "states": []
+    },
+    {
+     "node_id": "354",
+     "parent_id": "352",
+     "role": "generic",
+     "name": null,
+     "description": null,
+     "ignored": false,
+     "states": []
+    },
+    {
+     "node_id": "369",
+     "parent_id": "352",
+     "role": "generic",
+     "name": null,
+     "description": null,
+     "ignored": false,
+     "states": []
+    }
+   ]
+  },
+  "scripts": {
+   "total": 5,
+   "items": [
+    {
+     "script_key": "scr_13db45e316bfb80c7e26d0def82421a838f53b7cd2f57998c817f68ffc663322",
+     "frame_id": "D297851DDB0ADA41BBCC9744A47EC55D",
+     "url": "https://htmx.org/js/class-tools.js",
+     "origin": "https://htmx.org",
+     "cdp_hash": "a5c0e5079da985cc1227b8e9dbdc8486be04fa82cf714ba9cae62fd0d8949b2f",
+     "length": 3293,
+     "is_module": false,
+     "language": "JavaScript",
+     "source_map_url": null,
+     "resource_reconciliation": {
+      "status": "exact",
+      "resource_key": "res_d4321c0f8e2013f2fcd9e17cc100b9e1923e3dc4a33819e70f2761e907d66e0c"
+     },
+     "source": {
+      "included": false,
+      "reason": "source capture was not selected"
+     }
+    },
+    {
+     "script_key": "scr_3cdf1df7a552478f65b2c33c731270989cf8a0d3140fb128b9da1cee88d2c224",
+     "frame_id": "D297851DDB0ADA41BBCC9744A47EC55D",
+     "url": "https://htmx.org/",
+     "origin": "https://htmx.org",
+     "cdp_hash": "b348b95ac1af81d682b5c9bfb9e0a3600df05674fe0ecce1f63840ba801dc625",
+     "length": 287,
+     "is_module": false,
+     "language": "JavaScript",
+     "source_map_url": null,
+     "resource_reconciliation": {
+      "status": "unmatched",
+      "reason": "no_exact_sanitized_url"
+     },
+     "source": {
+      "included": false,
+      "reason": "source capture was not selected"
+     }
+    },
+    {
+     "script_key": "scr_866078dd80ed284c09d9419215d09f6af0f09167b33b84d8afe72431550e6b80",
+     "frame_id": "D297851DDB0ADA41BBCC9744A47EC55D",
+     "url": "https://htmx.org/js/htmx.js",
+     "origin": "https://htmx.org",
+     "cdp_hash": "30612ca7e3d3baf407481f1798281c4481dcb93390a9722d328ce07290250426",
+     "length": 171360,
+     "is_module": false,
+     "language": "JavaScript",
+     "source_map_url": null,
+     "resource_reconciliation": {
+      "status": "exact",
+      "resource_key": "res_9cdaa9843a1a5f1d713ff86eb18500242e6832944a51e6cde64ba149ad545c88"
+     },
+     "source": {
+      "included": false,
+      "reason": "source capture was not selected"
+     }
+    },
+    {
+     "script_key": "scr_c594d61dca134e47c29473972ffe1b7d85fe0e8e143a4058b502cc0fa48b8633",
+     "frame_id": "D297851DDB0ADA41BBCC9744A47EC55D",
+     "url": "https://htmx.org/js/preload.js",
+     "origin": "https://htmx.org",
+     "cdp_hash": "5a1c0b17b1139d0aed897998ae2af96e30887a91e03a27672d355b06ed953530",
+     "length": 4752,
+     "is_module": false,
+     "language": "JavaScript",
+     "source_map_url": null,
+     "resource_reconciliation": {
+      "status": "exact",
+      "resource_key": "res_60c4c2adbc99062098ad06107e46522511b2baee21ba7399ab9fc36c99800332"
+     },
+     "source": {
+      "included": false,
+      "reason": "source capture was not selected"
+     }
+    },
+    {
+     "script_key": "scr_f1d808e9ac48673cb072071961871981fa6f0e3a3ac0cac8f53eb3ce432173fe",
+     "frame_id": "D297851DDB0ADA41BBCC9744A47EC55D",
+     "url": "https://htmx.org/js/_hyperscript.js",
+     "origin": "https://htmx.org",
+     "cdp_hash": "b2d5290125eaa818034cc4e36179475419aec52225d93b99a4cf0156aecb643d",
+     "length": 101285,
+     "is_module": false,
+     "language": "JavaScript",
+     "source_map_url": null,
+     "resource_reconciliation": {
+      "status": "exact",
+      "resource_key": "res_a7c014bd8da75af2a371eb37b48f734ce36b95edd34e66f79652a388e58899a1"
+     },
+     "source": {
+      "included": false,
+      "reason": "source capture was not selected"
+     }
+    }
+   ]
+  },
+  "resources": [
+   {
+    "resource_key": "res_0027442fea35e60c4a2d0a2aec20fdf111601e963cd44416a0e321f5c2fa111f",
+    "url": "https://htmx.org/img/commspace.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 5395
+   },
+   {
+    "resource_key": "res_0576db5c2d6f4e7f4c4be5c230b7e745a58de1f5154a612fd52d0ca59bf9eea5",
+    "url": "https://htmx.org/img/hypermedia-systems.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 116476
+   },
+   {
+    "resource_key": "res_08a549eefb6921df306adecd292d8c55aab920e3a29e86066f24fee3dc4376f4",
+    "url": "https://htmx.org/img/rxdb.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 43634
+   },
+   {
+    "resource_key": "res_0a320658f490cdfa78a38695ded669a77ccaf04841aaa20ba16db0acfe61a159",
+    "url": "https://htmx.org/img/pullapprove-logo-dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 8665
+   },
+   {
+    "resource_key": "res_0a553b47a1bac23be7773a51b03379832ef20cedbd884ccb4339fb9f1f336261",
+    "url": "https://htmx.org/img/stake.jpeg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/jpeg",
+    "content_size": 24459
+   },
+   {
+    "resource_key": "res_169d9db6d34bd9f51300969f8219f7313648e43e598ffab603dc9885655e671f",
+    "url": "https://htmx.org/img/das-filter.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 2334
+   },
+   {
+    "resource_key": "res_1c385568f5ecc72ee41c2e872c0d3643b36ae72a9d268c85d7e83f0335c9337b",
+    "url": "https://htmx.org/img/BroadbandMapLogo2LineLightMode.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 20933
+   },
+   {
+    "resource_key": "res_2a6505d6eb52ae5b88a6e5256cb179641711184c3bd0389397dc88252e369c50",
+    "url": "https://htmx.org/img/commspace-dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 5394
+   },
+   {
+    "resource_key": "res_39d891a02628d547466e4c9860766b36b05915e9017e57db70daedf4998fb8fb",
+    "url": "https://htmx.org/img/bss_bars.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 9482
+   },
+   {
+    "resource_key": "res_3df54ff9749a541229bb8508bc6b9db749a6610f9bb25aced70659af595902a2",
+    "url": "https://htmx.org/img/blackhost-logo.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 2419
+   },
+   {
+    "resource_key": "res_3fa394f7344d35776153fa0df31cb6415d00952675e78600c7e5c7719784947a",
+    "url": "https://htmx.org/img/Cased_Logo_Beige-01.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 4949
+   },
+   {
+    "resource_key": "res_3ff826bae256b496fe704e05f113d695dcb91275f383a0fe8eeee690ee61f7d7",
+    "url": "https://htmx.org/img/vps-server-logo-dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 7399
+   },
+   {
+    "resource_key": "res_414f26f633b7bdccc6ed05e52d589642314c0605e97f7e1dedfe08c1c204db67",
+    "url": "https://htmx.org/img/sekun-doggo.jpg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/jpeg",
+    "content_size": 14392
+   },
+   {
+    "resource_key": "res_456f4f16f7580d3fdb02f93a8c71562c85722e397eb59ee5d6b22f92c7bd7702",
+    "url": "https://htmx.org/img/topo.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 91598
+   },
+   {
+    "resource_key": "res_457c196573c5af02dfb5f401a212e5f29b1785c81951dd80b01de0beb618ffa4",
+    "url": "https://htmx.org/img/ads_top.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 45993
+   },
+   {
+    "resource_key": "res_4b1371485223005ddbcc2d98280870a0150058e058bd3007dc039d9fab3f99dd",
+    "url": "https://htmx.org/img/rsz_instant_famous.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 11207
+   },
+   {
+    "resource_key": "res_4ce1d48c2951c6c634b1c3e599a7088b1418f943eb8b0922576575780fb74360",
+    "url": "https://htmx.org/img/butter-cms.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 3920
+   },
+   {
+    "resource_key": "res_548fed579bc6a698e56fe357ee27b5812babe9fe7995645b9fc77d12b8dffd8e",
+    "url": "https://htmx.org/img/tracebit-logo.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 97179
+   },
+   {
+    "resource_key": "res_561ba468a5fc3a164265f7f5d93df1cbae870b1645fd85afe96da30f5c7560d4",
+    "url": "https://htmx.org/img/ablogcms_logo.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 3279
+   },
+   {
+    "resource_key": "res_5ebee59a7830bd38a77e62e5624e0c058b4189e0881168881d0dd0fbecbd3774",
+    "url": "https://htmx.org/img/BroadbandMapLogo2LineDarkMode.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 16073
+   },
+   {
+    "resource_key": "res_5fa1b684a3fc283086b6ec526b9d588a4dcfb6e939ac48926a7be9dfdf673327",
+    "url": "https://htmx.org/img/follower_dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 5846
+   },
+   {
+    "resource_key": "res_60c4c2adbc99062098ad06107e46522511b2baee21ba7399ab9fc36c99800332",
+    "url": "https://htmx.org/js/preload.js",
+    "origin": "https://htmx.org",
+    "type": "Script",
+    "mime_type": "application/javascript",
+    "content_size": 4752
+   },
+   {
+    "resource_key": "res_62b8b31a4e383e441663934f6809d9566aa1af6eab9953b053e21e4655c16de8",
+    "url": "https://htmx.org/img/Github_Logo.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 13001
+   },
+   {
+    "resource_key": "res_66e9d15e61eca55d8a9eb8481389adf44af18b8994e6a6574d0af2d0f988a874",
+    "url": "https://htmx.org/img/pullapprove-logo.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 8695
+   },
+   {
+    "resource_key": "res_6a05a2b66f2cb36a979d82117d382a0c35f84030dd099ee7aea6f607b9f2f9f3",
+    "url": "https://htmx.org/img/logo-craft-cms.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 4128
+   },
+   {
+    "resource_key": "res_6a103a72b817efd403ca46dd6504778fd3284b0213dbc8d826ef27d253a4dc5d",
+    "url": "https://htmx.org/img/ohne-makler.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 6376
+   },
+   {
+    "resource_key": "res_6dd1a61ac317407c370db0f9106b00df46b76b3685cb882f07cbf83c473175c7",
+    "url": "https://htmx.org/img/v7n-logo-dark.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 5741
+   },
+   {
+    "resource_key": "res_6f880321106c31dc5ccb61b4f44eb1359a30c1333e253cff94cf62579734cd8b",
+    "url": "https://htmx.org/img/logo-craft-cms-dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 4097
+   },
+   {
+    "resource_key": "res_7183aeabc2898af57cadf30054e18d37064cb18f63e7ad878d5df0d724852ddd",
+    "url": "https://htmx.org/img/serpapi-dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 7290
+   },
+   {
+    "resource_key": "res_7c5601e8d55bd6ba15c9a589a4d65df60dbe220c62b5a337f09d9eb9ea4b5bc0",
+    "url": "https://htmx.org/img/ui-bakery.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 3292
+   },
+   {
+    "resource_key": "res_7d22b3cfc413f7bc21f523201fa0acf7651096ae55e78419108925355658d9ea",
+    "url": "https://htmx.org/img/Cased_Logo_DarkBlue.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 4949
+   },
+   {
+    "resource_key": "res_89aa83953d4804435613ea8b6fed8b666701570acc38885d2fab42a3af577e9d",
+    "url": "https://htmx.org/img/v7n-logo.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 5149
+   },
+   {
+    "resource_key": "res_8cb6180162c452fa668517b6ab5804380e705bbc85649196e85fadcd255d93f9",
+    "url": "https://htmx.org/img/llc-org.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 6335
+   },
+   {
+    "resource_key": "res_8fb65af0ad857bb1c88fa9c2791487812198fb855a75a7b6247e995b8aeb2b49",
+    "url": "https://htmx.org/img/prospex.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 9722
+   },
+   {
+    "resource_key": "res_91d3931602a2e5171a3a48ec5ba3a0aade4fd1018686085d7b2751101111e094",
+    "url": "https://htmx.org/img/vps-server-logo.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 7545
+   },
+   {
+    "resource_key": "res_98db3e6a3ac738df345627df8dda7fb37deb20c9bcee1c079169d2b98fc88e6b",
+    "url": "https://htmx.org/img/exchange-rate-api.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 3979
+   },
+   {
+    "resource_key": "res_99405f94535c23d40b0a697a3d8a1c19b94c6f43b10f64204e4fee82bae65856",
+    "url": "https://htmx.org/css/site.css",
+    "origin": "https://htmx.org",
+    "type": "Stylesheet",
+    "mime_type": "text/css",
+    "content_size": 8768
+   },
+   {
+    "resource_key": "res_9cdaa9843a1a5f1d713ff86eb18500242e6832944a51e6cde64ba149ad545c88",
+    "url": "https://htmx.org/js/htmx.js",
+    "origin": "https://htmx.org",
+    "type": "Script",
+    "mime_type": "application/javascript",
+    "content_size": 171362
+   },
+   {
+    "resource_key": "res_a7c014bd8da75af2a371eb37b48f734ce36b95edd34e66f79652a388e58899a1",
+    "url": "https://htmx.org/js/_hyperscript.js",
+    "origin": "https://htmx.org",
+    "type": "Script",
+    "mime_type": "application/javascript",
+    "content_size": 101285
+   },
+   {
+    "resource_key": "res_ab6cbdec2800f45d63557948bae919409eb9c3c2ca262291f5f3a87ee94c2320",
+    "url": "https://htmx.org/img/das-filter-dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 2250
+   },
+   {
+    "resource_key": "res_bde604a7e17b64696d556a1b21652b3339e984f51308d37ebe4d42357a5cf1df",
+    "url": "https://htmx.org/img/follower_light.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 5879
+   },
+   {
+    "resource_key": "res_bed496548154ee3d8f6ed405b7b7772fb9a556f5f51b98ee8994db05e1c9570d",
+    "url": "https://htmx.org/img/ui-bakery-dark.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 3290
+   },
+   {
+    "resource_key": "res_d4321c0f8e2013f2fcd9e17cc100b9e1923e3dc4a33819e70f2761e907d66e0c",
+    "url": "https://htmx.org/js/class-tools.js",
+    "origin": "https://htmx.org",
+    "type": "Script",
+    "mime_type": "application/javascript",
+    "content_size": 3293
+   },
+   {
+    "resource_key": "res_db3a08922f31e6d2dd15f3bdd56cef23e04f466eafeb7e94c4b47004ce99121c",
+    "url": "https://htmx.org/img/jetbrains.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 3921
+   },
+   {
+    "resource_key": "res_e325a01e1260a132dbbd6d5723afb5cfb3e6b626926d030d8d5a48ec243c172a",
+    "url": "https://htmx.org/img/wuw.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 71270
+   },
+   {
+    "resource_key": "res_e3547c8837947e668d39d3a9dc5f75ba0a39cf000385ce7165eb2e83509c3579",
+    "url": "https://htmx.org/img/ads_bottom.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 47759
+   },
+   {
+    "resource_key": "res_e5a12db96101a47e8a320ba9bb375e308e00b08de7721c4f52135fa532ed45f2",
+    "url": "https://htmx.org/img/serpapi.svg",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/svg+xml",
+    "content_size": 7290
+   },
+   {
+    "resource_key": "res_ed81f7a66a0d5566d44b22596722f22ac7ace381a1077def22ed28a7a70f2df3",
+    "url": "https://htmx.org/img/exchange-rate-api-dark.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 7608
+   },
+   {
+    "resource_key": "res_f517631e19cfa53d2310f8a1f67fb90d4e0f8e27dab083481b11accd0cc31677",
+    "url": "https://htmx.org/img/kawaii.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 53679
+   },
+   {
+    "resource_key": "res_fb534114159b1dc51f49227d30f2aec02fbfe164a0879c61846937f7ab4853f5",
+    "url": "https://htmx.org/img/tracebit-logo-dark.png",
+    "origin": "https://htmx.org",
+    "type": "Image",
+    "mime_type": "image/png",
+    "content_size": 77709
+   }
+  ],
+  "network": {
+   "requests": [],
+   "websocket_events": [],
+   "coverage_started_at": "2026-10-12T07:23:03.314Z",
+   "prior_activity_available": false
+  },
+  "console": {
+   "events": [],
+   "coverage_started_at": "2026-10-12T07:23:03.314Z",
+   "prior_activity_available": false
+  },
+  "workers": [],
+  "metadata": {
+   "responses": [],
+   "dom_urls": [
+    {
+     "node_index": 14,
+     "attribute": "href",
+     "url": "https://htmx.org/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 16,
+     "attribute": "href",
+     "url": "https://htmx.org/atom.xml",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 18,
+     "attribute": "href",
+     "url": "https://htmx.org/css/site.css",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 20,
+     "attribute": "href",
+     "url": "https://htmx.org/favicon.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 22,
+     "attribute": "src",
+     "url": "https://htmx.org/js/htmx.js",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 24,
+     "attribute": "src",
+     "url": "https://htmx.org/js/class-tools.js",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 26,
+     "attribute": "src",
+     "url": "https://htmx.org/js/preload.js",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 28,
+     "attribute": "src",
+     "url": "https://htmx.org/js/_hyperscript.js",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 45,
+     "attribute": "href",
+     "url": "https://htmx.org/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 68,
+     "attribute": "href",
+     "url": "https://htmx.org/docs/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 72,
+     "attribute": "href",
+     "url": "https://htmx.org/reference/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 76,
+     "attribute": "href",
+     "url": "https://htmx.org/examples/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 80,
+     "attribute": "href",
+     "url": "https://htmx.org/talk/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 84,
+     "attribute": "href",
+     "url": "https://htmx.org/essays/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 89,
+     "attribute": "action",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 111,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 117,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 137,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 139,
+     "attribute": "src",
+     "url": "https://htmx.org/img/ads_top.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 164,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 166,
+     "attribute": "src",
+     "url": "https://htmx.org/img/wuw.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 172,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 174,
+     "attribute": "src",
+     "url": "https://htmx.org/img/kawaii.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 181,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 183,
+     "attribute": "src",
+     "url": "https://htmx.org/img/ads_bottom.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 192,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 201,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 210,
+     "attribute": "href",
+     "url": "https://htmx.org/docs/#ajax",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 213,
+     "attribute": "href",
+     "url": "https://htmx.org/docs/#css_transitions",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 216,
+     "attribute": "href",
+     "url": "https://htmx.org/docs/#websockets-and-sse",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 219,
+     "attribute": "href",
+     "url": "https://htmx.org/docs/#websockets-and-sse",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 222,
+     "attribute": "href",
+     "url": "https://htmx.org/reference/#attributes",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 225,
+     "attribute": "href",
+     "url": "https://htmx.org/examples/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 228,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 231,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 237,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 240,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 243,
+     "attribute": "href",
+     "url": "https://htmx.org/extensions",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 249,
+     "attribute": "href",
+     "url": "https://htmx.org/essays/a-real-world-react-to-htmx-port/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 260,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 264,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 272,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 276,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 284,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 288,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 292,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 306,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 379,
+     "attribute": "href",
+     "url": "https://htmx.org/attributes/hx-post/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 383,
+     "attribute": "href",
+     "url": "https://htmx.org/attributes/hx-swap/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 396,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 401,
+     "attribute": "href",
+     "url": "https://htmx.org/docs/#introduction",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 407,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 417,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 420,
+     "attribute": "href",
+     "url": "https://htmx.org/essays/hypermedia-driven-applications/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 426,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 427,
+     "attribute": "src",
+     "url": "https://htmx.org/img/hypermedia-systems.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 432,
+     "attribute": "src",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 436,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 441,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 457,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 459,
+     "attribute": "src",
+     "url": "https://htmx.org/img/commspace.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 461,
+     "attribute": "src",
+     "url": "https://htmx.org/img/commspace-dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 473,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 475,
+     "attribute": "src",
+     "url": "https://htmx.org/img/serpapi.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 477,
+     "attribute": "src",
+     "url": "https://htmx.org/img/serpapi-dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 483,
+     "attribute": "href",
+     "url": "https://htmx.org/#silver-sponsors",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 493,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 494,
+     "attribute": "src",
+     "url": "https://htmx.org/img/jetbrains.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 499,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 500,
+     "attribute": "src",
+     "url": "https://htmx.org/img/Github_Logo.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 505,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 507,
+     "attribute": "src",
+     "url": "https://htmx.org/img/logo-craft-cms.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 509,
+     "attribute": "src",
+     "url": "https://htmx.org/img/logo-craft-cms-dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 515,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 517,
+     "attribute": "src",
+     "url": "https://htmx.org/img/butter-cms.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 523,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 525,
+     "attribute": "src",
+     "url": "https://htmx.org/img/blackhost-logo.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 531,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 533,
+     "attribute": "src",
+     "url": "https://htmx.org/img/v7n-logo.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 535,
+     "attribute": "src",
+     "url": "https://htmx.org/img/v7n-logo-dark.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 541,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 542,
+     "attribute": "src",
+     "url": "https://htmx.org/img/sekun-doggo.jpg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 547,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 549,
+     "attribute": "src",
+     "url": "https://htmx.org/img/das-filter.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 551,
+     "attribute": "src",
+     "url": "https://htmx.org/img/das-filter-dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 557,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 559,
+     "attribute": "src",
+     "url": "https://htmx.org/img/pullapprove-logo.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 561,
+     "attribute": "src",
+     "url": "https://htmx.org/img/pullapprove-logo-dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 567,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 569,
+     "attribute": "src",
+     "url": "https://htmx.org/img/ui-bakery.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 571,
+     "attribute": "src",
+     "url": "https://htmx.org/img/ui-bakery-dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 576,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 578,
+     "attribute": "src",
+     "url": "https://htmx.org/img/tracebit-logo.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 580,
+     "attribute": "src",
+     "url": "https://htmx.org/img/tracebit-logo-dark.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 586,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 588,
+     "attribute": "src",
+     "url": "https://htmx.org/img/rxdb.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 593,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 594,
+     "attribute": "src",
+     "url": "https://htmx.org/img/ohne-makler.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 599,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 601,
+     "attribute": "src",
+     "url": "https://htmx.org/img/Cased_Logo_DarkBlue.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 603,
+     "attribute": "src",
+     "url": "https://htmx.org/img/Cased_Logo_Beige-01.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 609,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 611,
+     "attribute": "src",
+     "url": "https://htmx.org/img/llc-org.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 617,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 619,
+     "attribute": "src",
+     "url": "https://htmx.org/img/vps-server-logo.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 621,
+     "attribute": "src",
+     "url": "https://htmx.org/img/vps-server-logo-dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 627,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 629,
+     "attribute": "src",
+     "url": "https://htmx.org/img/ablogcms_logo.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 635,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 637,
+     "attribute": "src",
+     "url": "https://htmx.org/img/BroadbandMapLogo2LineLightMode.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 639,
+     "attribute": "src",
+     "url": "https://htmx.org/img/BroadbandMapLogo2LineDarkMode.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 645,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 647,
+     "attribute": "src",
+     "url": "https://htmx.org/img/follower_light.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 649,
+     "attribute": "src",
+     "url": "https://htmx.org/img/follower_dark.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 655,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 657,
+     "attribute": "src",
+     "url": "https://htmx.org/img/exchange-rate-api.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 659,
+     "attribute": "src",
+     "url": "https://htmx.org/img/exchange-rate-api-dark.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 665,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 667,
+     "attribute": "src",
+     "url": "https://htmx.org/img/rsz_instant_famous.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 673,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 675,
+     "attribute": "src",
+     "url": "https://htmx.org/img/stake.jpeg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 681,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 683,
+     "attribute": "src",
+     "url": "https://htmx.org/img/prospex.svg",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 715,
+     "attribute": "href",
+     "url": "https://htmx.org/docs/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 719,
+     "attribute": "href",
+     "url": "https://htmx.org/reference/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 723,
+     "attribute": "href",
+     "url": "https://htmx.org/examples/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 727,
+     "attribute": "href",
+     "url": "https://htmx.org/talk/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 731,
+     "attribute": "href",
+     "url": "https://htmx.org/essays/",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 735,
+     "attribute": "href",
+     "url": null,
+     "destination_scope": "outside_policy"
+    },
+    {
+     "node_index": 744,
+     "attribute": "src",
+     "url": "https://htmx.org/img/bss_bars.png",
+     "destination_scope": "approved"
+    },
+    {
+     "node_index": 750,
+     "attribute": "src",
+     "url": null,
+     "destination_scope": "outside_policy"
+    }
+   ],
+   "agent_hints": [],
+   "excluded_dom_urls": 55,
+   "headers_allowlisted": true
+  },
+  "storage": {
+   "origin": "https://htmx.org",
+   "usage_bytes": 0,
+   "quota_bytes": 306618509721,
+   "local_storage_keys": [],
+   "session_storage_keys": [],
+   "indexed_db_names": [],
+   "cache_names": [],
+   "content_fingerprints": [],
+   "fingerprint_algorithm": "sha256",
+   "fingerprints_complete": false,
+   "values_redacted": true
+  },
+  "limitations": [
+   "Observation starts when REA attaches; prior network and console activity is unavailable.",
+   "Raw network headers, bodies, cookies, storage values, console objects, and WebSocket payloads are never retained; explicitly requested primitive console text is retained verbatim, while payload captures retain value-free shapes.",
+   "Source maps are reported only as declarative URLs and are not fetched.",
+   "URL-less scripts and console events without an allowed source URL are excluded because their origin cannot be proven."
+  ]
+ },
+ "evidence_id": "ev_f4aa7a4627e0201697351d23a5dc75245721a6379db8f43a3d67c021f7671226"
+}

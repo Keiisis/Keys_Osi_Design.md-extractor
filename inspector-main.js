@@ -7,7 +7,7 @@
  * Results are written as JSON onto a hidden DOM node that the content
  * script reads back.
  */
-(function typeuiMainWorldInspector() {
+(function keysOsiMainWorldInspector() {
   const data = {
     gsap: { detected: false, version: null, timelines: [] },
     scrollTriggers: [],
@@ -100,7 +100,12 @@
   /* ---- WebGL & animation library globals ---- */
   const addLib = (name, evidence) => data.animationLibs.push({ name, evidence });
   try {
-    if (window.THREE) addLib("Three.js", `r${window.THREE.REVISION || "?"} (WebGL)`);
+    // Bundled three.js has no window.THREE but always sets __THREE__ = REVISION.
+    if (window.THREE || window.__THREE__) {
+      addLib("Three.js", `r${(window.THREE && window.THREE.REVISION) || window.__THREE__ || "?"} (WebGL)`);
+    }
+    if (customElements.get("spline-viewer") || document.querySelector("spline-viewer")) addLib("Spline", "3D scene viewer");
+    if (customElements.get("model-viewer") || document.querySelector("model-viewer")) addLib("model-viewer", "glTF viewer web component");
     if (window.PIXI) addLib("PixiJS", `v${(window.PIXI.VERSION || "?")} (WebGL)`);
     if (window.BABYLON) addLib("Babylon.js", `v${(window.BABYLON.Engine && window.BABYLON.Engine.Version) || "?"} (WebGL)`);
     if (window.VANTA) addLib("Vanta.js", "animated WebGL backgrounds");
@@ -142,10 +147,10 @@
     if (window.htmx) addFramework("htmx", "window.htmx");
   } catch (e) {}
 
-  let meta = document.getElementById("__typeui_gsap_data");
+  let meta = document.getElementById("__keys_osi_inspector_data");
   if (!meta) {
     meta = document.createElement("div");
-    meta.id = "__typeui_gsap_data";
+    meta.id = "__keys_osi_inspector_data";
     meta.style.display = "none";
     (document.body || document.documentElement).appendChild(meta);
   }

@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Keys_Osi Import</title>
+<style>
+  :root {
+    --bg: var(--figma-color-bg, #ffffff);
+    --text: var(--figma-color-text, #1e1e1e);
+    --muted: var(--figma-color-text-secondary, #6b6b6b);
+    --border: var(--figma-color-border, #e5e5e5);
+    --brand: var(--figma-color-bg-brand, #0d99ff);
+    --on-brand: var(--figma-color-text-onbrand, #ffffff);
+    --danger: var(--figma-color-text-danger, #d1293d);
+    --success: var(--figma-color-text-success, #14ae5c);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font: 12px/1.5 Inter, system-ui, sans-serif; }
+  h1 { margin: 0 0 4px; font-size: 14px; }
+  p { margin: 0 0 12px; color: var(--muted); }
+  #drop { display: block; border: 1.5px dashed var(--border); border-radius: 8px; padding: 18px 12px; text-align: center; cursor: pointer; color: var(--muted); }
+  #drop.over { border-color: var(--brand); color: var(--text); }
+  #file { display: none; }
+  textarea { width: 100%; height: 110px; margin-top: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text); font: 11px/1.4 ui-monospace, monospace; resize: vertical; }
+  button { margin-top: 10px; width: 100%; padding: 8px; border: 0; border-radius: 6px; background: var(--brand); color: var(--on-brand); font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #progress { display: none; margin-top: 14px; }
+  #bar { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+  #bar span { display: block; height: 100%; width: 0; background: var(--brand); transition: width 0.15s; }
+  #label { margin-top: 6px; color: var(--muted); }
+  #result { margin-top: 14px; }
+  #result ul { margin: 6px 0 0; padding-left: 18px; }
+  .ok { color: var(--success); font-weight: 600; }
+  .err { color: var(--danger); font-weight: 600; }
+  .warn { margin-top: 8px; }
+</style>
+</head>
+<body>
+  <h1>Keys_Osi Import</h1>
+  <p>Importez une capture de page Keys_Osi (calques éditables) ou un fichier de tokens Keys_Osi (variables et styles).</p>
+  <label id="drop" for="file">Déposez un fichier JSON ici ou cliquez pour le choisir</label>
+  <input id="file" type="file" accept=".json,application/json">
+  <textarea id="paste" placeholder="… ou collez le JSON ici" spellcheck="false"></textarea>
+  <button id="import" type="button">Importer</button>
+  <div id="progress"><div id="bar"><span></span></div><div id="label"></div></div>
+  <div id="result" aria-live="polite"></div>
+<script>
+(function () {
+  "use strict";
+  var drop = document.getElementById("drop");
+  var fileInput = document.getElementById("file");
+  var paste = document.getElementById("paste");
+  var button = document.getElementById("import");
+  var progressBox = document.getElementById("progress");
+  var bar = document.querySelector("#bar span");
+  var label = document.getElementById("label");
+  var result = document.getElementById("result");
+  var MAX_SIDE = 4096;
+
+  function send(message) {
+    parent.postMessage({ pluginMessage: message }, "*");
+  }
+
+  function setProgress(text, done, total) {
+    progressBox.style.display = "block";
+    label.textContent = text + (total ? " " + done + "/" + total : "");
+    bar.style.width = total ? Math.round((done / total) * 100) + "%" : "100%";
+  }
+
+  function showError(message) {
+    progressBox.style.display = "none";
+    button.disabled = false;
+    result.innerHTML = "";
+    var p = document.createElement("div");
+    p.className = "err";
+    p.textContent = "Erreur : " + message;
+    result.appendChild(p);
+  }
+
+  function list(title, items) {
+    var box = document.createElement("div");
+    box.className = "warn";
+    box.textContent = title;
+    var ul = document.createElement("ul");
+    items.slice(0, 12).forEach(function (item) {
+      var li = document.createElement("li");
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+    if (items.length > 12) {
+      var more = document.createElement("li");
+      more.textContent = "… et " + (items.length - 12) + " autre(s)";
+      ul.appendChild(more);
+    }
+    box.appendChild(ul);
+    return box;
+  }
+
+  function showSummary(kind, s) {
+    button.disabled = false;
+    setProgress("Terminé", 1, 1);
+    result.innerHTML = "";
+    var head = document.createElement("div");
+    head.className = "ok";
+    var lines = [];
+    if (kind === "capture") {
+      head.textContent = "Page « " + s.title + " » importée.";
+      lines = [
+        s.nodes + " calques, dont " + s.frames + " cadres et " + s.texts + " textes",
+        s.images + " images, " + s.svgs + " SVG",
+        s.components + " composant(s), " + s.instances + " instance(s)"
+      ];
+      if (s.truncated) lines.push("Capture tronquée : limite de calques atteinte côté extension.");
+    } else {
+      head.textContent = "Tokens importés dans la collection « " + s.collection + " ».";
+      lines = [
+        s.created + " variable(s) créée(s), " + s.updated + " mise(s) à jour",
+        s.colors + " couleur(s), " + s.floats + " valeur(s) numérique(s)",
+        s.textStyles + " style(s) de texte, " + s.effectStyles + " style(s) d'effet"
+      ];
+    }
+    result.appendChild(head);
+    result.appendChild(list("Résumé :", lines));
+    if (s.missingFonts && s.missingFonts.length) result.appendChild(list("Polices absentes de Figma (remplacées) :", s.missingFonts));
+    if (s.failedImages && s.failedImages.length) result.appendChild(list("Images non récupérées (remplacées par un aplat) :", s.failedImages));
+    if (s.failedSvgs) result.appendChild(list("SVG non convertis :", [s.failedSvgs + " élément(s)"]));
+    if (s.skipped && s.skipped.length) result.appendChild(list("Tokens ignorés (pas d'équivalent en variable) :", s.skipped));
+  }
+
+  function looksLikeTokens(doc, depth) {
+    if (!doc || typeof doc !== "object" || depth > 6) return false;
+    if (Object.prototype.hasOwnProperty.call(doc, "$value")) return true;
+    return Object.keys(doc).some(function (k) {
+      return k.charAt(0) !== "$" && looksLikeTokens(doc[k], depth + 1);
+    });
+  }
+
+  function isFigmaRaster(b) {
+    var png = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+    var jpg = b[0] === 0xff && b[1] === 0xd8;
+    var gif = b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46;
+    return png || jpg || gif;
+  }
+
+  function decode(blob) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(blob);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        resolve(img);
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error("image illisible"));
+      };
+      img.src = url;
+    });
+  }
+
+  // Figma takes PNG/JPEG/GIF up to 4096px: anything else (WebP, AVIF, SVG)
+  // or bigger is re-encoded as PNG through a canvas.
+  async function toFigmaBytes(src) {
+    var res = await fetch(src);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var blob = await res.blob();
+    var bytes = new Uint8Array(await blob.arrayBuffer());
+    var img = await decode(blob);
+    var w = img.naturalWidth || 512;
+    var h = img.naturalHeight || 512;
+    if (isFigmaRaster(bytes) && w <= MAX_SIDE && h <= MAX_SIDE) return bytes;
+    var scale = Math.min(1, MAX_SIDE / Math.max(w, h));
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    var png = await new Promise(function (resolve) { canvas.toBlob(resolve, "image/png"); });
+    return new Uint8Array(await png.arrayBuffer());
+  }
+
+  async function fetchImages(images) {
+    var out = {};
+    var done = 0;
+    var queue = images.slice();
+    async function worker() {
+      while (queue.length) {
+        var img = queue.shift();
+        try {
+          out[img.id] = await toFigmaBytes(img.dataUrl || img.url);
+        } catch (err) {
+          // the main thread retries with its own fetch, then reports it
+        }
+        done++;
+        setProgress("Téléchargement des images…", done, images.length);
+      }
+    }
+    var workers = [];
+    for (var i = 0; i < Math.min(6, images.length); i++) workers.push(worker());
+    await Promise.all(workers);
+    return out;
+  }
+
+  async function importText(text) {
+    var doc;
+    try {
+      doc = JSON.parse(text);
+    } catch (err) {
+      showError("JSON invalide.");
+      return;
+    }
+    button.disabled = true;
+    result.innerHTML = "";
+    if (doc && doc.format === "keys-osi-figma") {
+      setProgress("Préparation…", 0, 0);
+      var images = await fetchImages(Array.isArray(doc.images) ? doc.images : []);
+      send({ type: "import-capture", doc: doc, images: images });
+    } else if (looksLikeTokens(doc, 0)) {
+      setProgress("Import des tokens…", 0, 0);
+      send({ type: "import-tokens", tokens: doc });
+    } else {
+      showError("Format non reconnu : attendu une capture Keys_Osi ou un fichier de tokens.");
+    }
+  }
+
+  function readFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      paste.value = String(reader.result || "");
+      importText(paste.value);
+    };
+    reader.readAsText(file);
+  }
+
+  fileInput.addEventListener("change", function () {
+    readFile(fileInput.files[0]);
+  });
+  ["dragenter", "dragover"].forEach(function (type) {
+    drop.addEventListener(type, function (e) {
+      e.preventDefault();
+      drop.classList.add("over");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (type) {
+    drop.addEventListener(type, function () {
+      drop.classList.remove("over");
+    });
+  });
+  drop.addEventListener("drop", function (e) {
+    e.preventDefault();
+    readFile(e.dataTransfer.files[0]);
+  });
+  button.addEventListener("click", function () {
+    if (paste.value.trim()) importText(paste.value);
+    else showError("Collez un JSON ou déposez un fichier.");
+  });
+
+  window.onmessage = function (event) {
+    var msg = event.data && event.data.pluginMessage;
+    if (!msg) return;
+    if (msg.type === "progress") setProgress(msg.label, msg.done, msg.total);
+    else if (msg.type === "done") showSummary(msg.kind, msg.summary);
+    else if (msg.type === "error") showError(msg.message);
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+{
+  "https://stripe.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#e3ecf7",
+      "color.surface.raised": "#e2e4ff",
+      "color.surface.brand": "#533afd",
+      "color.text.primary": "#061b31",
+      "color.text.secondary": "#50617a",
+      "color.text.muted": "#7d8ba4",
+      "color.text.inverse": "#ffffff",
+      "color.brand.primary": "#533afd",
+      "color.brand.secondary": "#061b31",
+      "color.border.default": "#b9b9f9",
+      "color.border.muted": "#e5edf5",
+      "color.border.strong": "#7f71e6"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://linear.app": {
+    "roles": {
+      "color.surface.base": "#08090a",
+      "color.surface.muted": "#0f1011",
+      "color.surface.raised": "#161718",
+      "color.surface.inverse": "#e5e5e6",
+      "color.surface.brand": "#5e6ad2",
+      "color.text.primary": "#f7f8f8",
+      "color.text.secondary": "#8a8f98",
+      "color.text.muted": "#62666d",
+      "color.text.inverse": "#08090a",
+      "color.brand.primary": "#5e6ad2",
+      "color.brand.secondary": "#e4f222",
+      "color.border.default": "#1c1d1e",
+      "color.border.strong": "#e5e5e6"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.notion.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#f9f9f8",
+      "color.surface.raised": "#f2f2f2",
+      "color.surface.brand": "#0075de",
+      "color.text.primary": "#000000",
+      "color.text.secondary": "#615d59",
+      "color.text.muted": "#757575",
+      "color.text.inverse": "#ffffff",
+      "color.brand.primary": "#0075de",
+      "color.border.default": "#e6e6e6"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.figma.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#f5f5f5",
+      "color.surface.inverse": "#000000",
+      "color.text.primary": "#000000",
+      "color.text.secondary": "#757575",
+      "color.text.inverse": "#ffffff"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.apple.com/fr/": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#f7f7f9",
+      "color.surface.raised": "#e2e2e5",
+      "color.surface.inverse": "#000000",
+      "color.surface.brand": "#0071e3",
+      "color.text.primary": "#474747",
+      "color.text.secondary": "#1d1d1f",
+      "color.text.muted": "#707070",
+      "color.text.inverse": "#f5f5f7",
+      "color.brand.primary": "#0071e3",
+      "color.border.default": "#2997ff"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://mailchimp.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#f5f5f5",
+      "color.surface.inverse": "#231e15",
+      "color.surface.brand": "#ffe01b",
+      "color.text.primary": "#231e15",
+      "color.text.secondary": "#000000",
+      "color.text.muted": "#403b3b",
+      "color.text.inverse": "#ffffff",
+      "color.brand.primary": "#ffe01b",
+      "color.brand.secondary": "#004e56",
+      "color.border.default": "#dbd9d2"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://vercel.com": {
+    "roles": {
+      "color.surface.base": "#fafafa",
+      "color.surface.muted": "#ffffff",
+      "color.surface.inverse": "#171717",
+      "color.text.primary": "#171717",
+      "color.text.secondary": "#4d4d4d",
+      "color.text.muted": "#666666",
+      "color.text.inverse": "#c9c9c9",
+      "color.brand.primary": "#0072f5"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://github.com": {
+    "roles": {
+      "color.surface.base": "#0d1117",
+      "color.surface.muted": "#2a2e33",
+      "color.surface.raised": "#0f1511",
+      "color.surface.brand": "#08872b",
+      "color.text.primary": "#ffffff",
+      "color.text.secondary": "#a4aea6",
+      "color.text.inverse": "#22272d",
+      "color.brand.primary": "#a2daff",
+      "color.brand.secondary": "#08872b",
+      "color.border.default": "#191f1b",
+      "color.border.strong": "#ffffff"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.airbnb.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#f2f2f2",
+      "color.text.primary": "#222222",
+      "color.text.secondary": "#6c6c6c"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://open.spotify.com": {
+    "roles": {
+      "color.surface.base": "#121212",
+      "color.surface.muted": "#1f1f1f",
+      "color.surface.raised": "#292929",
+      "color.surface.inverse": "#ffffff",
+      "color.text.primary": "#b3b3b3",
+      "color.text.secondary": "#ffffff",
+      "color.text.inverse": "#000000",
+      "color.border.default": "#7c7c7c"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.shopify.com": {
+    "roles": {
+      "color.surface.base": "#000000",
+      "color.surface.muted": "#02090a",
+      "color.surface.raised": "#000a1e",
+      "color.surface.inverse": "#ffffff",
+      "color.text.primary": "#ffffff",
+      "color.text.secondary": "#a1a1aa",
+      "color.text.muted": "#9797a2",
+      "color.text.inverse": "#000000",
+      "color.brand.primary": "#36f4a4",
+      "color.border.default": "#ffffff",
+      "color.border.muted": "#11352d"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.framer.com": {
+    "roles": {
+      "color.surface.base": "#000000",
+      "color.text.primary": "#ffffff",
+      "color.text.secondary": "#999999",
+      "color.text.muted": "#666666",
+      "color.text.inverse": "#050505",
+      "color.brand.primary": "#00bb88",
+      "color.brand.secondary": "#0099ff"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://webflow.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.inverse": "#080808",
+      "color.surface.brand": "#146ef5",
+      "color.text.primary": "#080808",
+      "color.text.inverse": "#ffffff",
+      "color.brand.primary": "#146ef5",
+      "color.border.default": "#d8d8d8"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://dribbble.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#ecebf0",
+      "color.surface.inverse": "#3a3546",
+      "color.surface.brand": "#b8509a",
+      "color.text.primary": "#0d0c22",
+      "color.text.secondary": "#524b63",
+      "color.text.muted": "#6e6d7a",
+      "color.text.inverse": "#ffffff",
+      "color.brand.primary": "#ea4c89",
+      "color.border.default": "#e7e7e9",
+      "color.border.strong": "#0d0c22"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.booking.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#f5f5f5",
+      "color.surface.brand": "#003b95",
+      "color.text.primary": "#1a1a1a",
+      "color.text.secondary": "#595959",
+      "color.text.inverse": "#ffffff",
+      "color.brand.primary": "#003b95",
+      "color.border.default": "#006ce4",
+      "color.border.muted": "#e7e7e7",
+      "color.border.strong": "#000000"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.ikea.com/fr/fr/": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.muted": "#f5f5f5",
+      "color.surface.brand": "#e00751",
+      "color.text.primary": "#111111",
+      "color.text.secondary": "#484848",
+      "color.text.inverse": "#ffffff",
+      "color.brand.primary": "#e00751"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.pizza-amici.nl/": {
+    "roles": {
+      "color.surface.base": "#f2ede9",
+      "color.surface.muted": "#eae1da",
+      "color.surface.raised": "#ffffff",
+      "color.surface.brand": "#0f2c56",
+      "color.text.primary": "#0f2c56",
+      "color.text.secondary": "#4f3c2c",
+      "color.brand.primary": "#0f2c56",
+      "color.border.default": "#c0deee"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  },
+  "https://www.duolingo.com": {
+    "roles": {
+      "color.surface.base": "#ffffff",
+      "color.surface.brand": "#100f3e",
+      "color.text.primary": "#4b4b4b",
+      "color.text.secondary": "#777777",
+      "color.brand.primary": "#a5ed6e",
+      "color.brand.secondary": "#100f3e"
+    },
+    "checks": {
+      "canvas": true,
+      "noPhantomBlack": true,
+      "coreContrast": true,
+      "brand": true,
+      "noLeaks": true,
+      "frontmatter": true,
+      "tables": true,
+      "skillMarkers": true,
+      "varsExist": true
+    }
+  }
+}

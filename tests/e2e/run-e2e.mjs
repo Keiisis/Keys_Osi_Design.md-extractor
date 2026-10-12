@@ -187,12 +187,12 @@ async function main() {
     // Stub the chrome extension API surface the content script uses,
     // then inject content-script.js exactly as the extension would.
     await page.evaluate(() => {
-      window.__typeuiHandlers = [];
+      window.__keysOsiHandlers = [];
       window.chrome = {
         runtime: {
           onMessage: {
             addListener(fn) {
-              window.__typeuiHandlers.push(fn);
+              window.__keysOsiHandlers.push(fn);
             }
           }
         }
@@ -209,7 +209,7 @@ async function main() {
       page.evaluate(
         (msg) =>
           new Promise((resolve) => {
-            const keepAlive = window.__typeuiHandlers[0](msg, null, resolve);
+            const keepAlive = window.__keysOsiHandlers[0](msg, null, resolve);
             if (!keepAlive) {
               // synchronous handlers resolve via sendResponse already
             }
@@ -218,7 +218,7 @@ async function main() {
       );
 
     /* ---------------- extraction ---------------- */
-    const extraction = await dispatch({ type: "TYPEUI_EXTRACT_STYLES" });
+    const extraction = await dispatch({ type: "KEYS_OSI_EXTRACT_STYLES" });
     assert.ok(extraction.ok, `extraction failed: ${extraction.error}`);
     const p = extraction.payload;
 
@@ -317,7 +317,7 @@ async function main() {
     );
 
     /* ---------------- copy site ---------------- */
-    const copy = await dispatch({ type: "TYPEUI_COPY_SITE", options: { autoScroll: false, staticSnapshot: true } });
+    const copy = await dispatch({ type: "KEYS_OSI_COPY_SITE", options: { autoScroll: false, staticSnapshot: true } });
     assert.ok(copy.ok, `copy failed: ${copy.error}`);
     const c = copy.payload;
 
@@ -332,7 +332,7 @@ async function main() {
     check("emits site-meta.json", c.generatedFiles.some((f) => f.path === "meta/site-meta.json"));
 
     /* ---------------- extract element ---------------- */
-    const component = await dispatch({ type: "TYPEUI_EXTRACT_ELEMENT", selector: ".hero" });
+    const component = await dispatch({ type: "KEYS_OSI_EXTRACT_ELEMENT", selector: ".hero" });
     assert.ok(component.ok, `element extraction failed: ${component.error}`);
 
     console.log("Extract-element payload:");

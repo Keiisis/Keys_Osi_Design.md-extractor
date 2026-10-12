@@ -84,7 +84,19 @@ async function resolveExtraction(id) {
  * ---------------------------------------------------------------- */
 
 const httpServer = createServer(async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // Only the extension (or a local non-browser client, no Origin header)
+  // may talk to the bridge: a web page must not be able to plant an
+  // "extraction" that later reaches the coding agent, nor list history.
+  const origin = req.headers.origin || "";
+  if (origin && !origin.startsWith("chrome-extension://")) {
+    res.writeHead(403, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: false, error: "Origin not allowed" }));
+    return;
+  }
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 

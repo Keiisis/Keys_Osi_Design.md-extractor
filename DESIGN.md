@@ -23,7 +23,7 @@ description: Creates implementation-ready design-system guidance with tokens, co
 ---
 
 <!-- OPTIONAL MANAGED BLOCK MARKERS -->
-<!-- TYPEUI_SH_MANAGED_START -->
+<!-- KEYS_OSI_MANAGED_START -->
 
 # [Design System Name]
 
@@ -89,7 +89,7 @@ concise, confident, implementation-focused
 - Every accessibility rule is testable in implementation.
 - Prefer system consistency over local visual exceptions.
 
-<!-- TYPEUI_SH_MANAGED_END -->
+<!-- KEYS_OSI_MANAGED_END -->
 ```
 
 ## Repo-Specific Variables To Replace

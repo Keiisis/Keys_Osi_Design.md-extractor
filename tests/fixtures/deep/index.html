@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maison Lumière | Restaurant gastronomique</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)">
+<meta property="og:site_name" content="Maison Lumière">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<!-- Cross-origin sheet: the probe must count it without throwing. -->
+<link rel="stylesheet" href="{{XORIGIN}}/remote.css">
+<style>
+  @layer reset, base;
+  @layer reset { * { box-sizing: border-box; } }
+  @property --angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  :root {
+    --bg: #ffffff;
+    --fg: #111111;
+    --accent: #2563eb;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0b0b0c; --fg: #f5f5f5; }
+  }
+  [data-theme="dark"] { --accent: #8ab4ff; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none; } }
+  body { margin: 0; font-family: Georgia, serif; background: var(--bg); color: var(--fg); }
+  h1 { font-size: clamp(2rem, 5vw, 4rem); text-wrap: balance; }
+  h2 { text-transform: uppercase; letter-spacing: .08em; }
+  .site-header { position: sticky; top: 0; z-index: 50; display: flex; gap: 24px; padding: 16px; backdrop-filter: blur(12px); background: color-mix(in srgb, white 80%, transparent); }
+  .dropdown { position: absolute; z-index: 1000; top: 60px; left: 400px; width: 120px; height: 20px; }
+  .modal { position: fixed; z-index: 9999; bottom: 0; right: 0; width: 10px; height: 10px; }
+  .toast { position: fixed; z-index: 99999; bottom: 0; left: 0; width: 10px; height: 10px; }
+  .accent { color: oklch(62% 0.19 260); border-color: color(display-p3 0.2 0.4 0.9); }
+  .card-wrap { container-type: inline-size; }
+  @container (min-width: 400px) { .card { display: grid; } }
+  .grid:has(> img) { gap: 16px; }
+  .sub { display: grid; grid-template-columns: subgrid; }
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root) { animation-duration: .3s; }
+  .nest { color: var(--fg); & span { color: var(--accent); } }
+  .reveal { animation: fade linear both; animation-timeline: view(); }
+  @starting-style { .pop { opacity: 0; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .photo { width: 320px; height: 200px; object-fit: cover; border-radius: 16px; }
+  .photo.mono { filter: grayscale(1); }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
+  .clipped { width: 200px; height: 200px; clip-path: polygon(0 0, 100% 0, 100% 80%, 0 100%); }
+  .illus { width: 300px; height: 200px; }
+  .dots { width: 300px; height: 120px; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 16px 16px; }
+  .lines { width: 300px; height: 120px; background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px); background-size: 24px 24px; }
+  .mesh { width: 300px; height: 120px; background-image: radial-gradient(at 20% 30%, #f0abfc 0, transparent 50%), radial-gradient(at 80% 10%, #93c5fd 0, transparent 50%); }
+  .noise { width: 300px; height: 120px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .fa { font-family: "Font Awesome 6 Free"; font-style: normal; font-size: 18px; }
+  .fa-star::before { content: "\f005"; }
+  input:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+  input:invalid, input[aria-invalid="true"] { border-color: #dc2626; }
+  input:disabled { opacity: .5; cursor: not-allowed; }
+  input::placeholder { color: #9ca3af; }
+  input[type="checkbox"] { accent-color: #2563eb; }
+  .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; background: var(--accent); color: #fff; }
+  .btn:focus-visible { outline: 3px solid #93c5fd; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a href="/" class="logo" aria-label="Maison Lumière — accueil">
+    <svg width="120" height="32" viewBox="0 0 120 32" role="img" aria-label="Maison Lumière"><rect width="32" height="32" rx="6" fill="#0f2c56"/><text x="40" y="22" fill="#0f2c56" font-size="16">Lumière</text></svg>
+  </a>
+  <nav><a href="/carte">La carte</a> <a href="/reservation">Réservation</a> <a href="/contact">Contact</a></nav>
+  <button type="button" aria-label="Basculer le thème sombre">◐</button>
+  <div class="dropdown"></div>
+</header>
+<main>
+  <h1>Une cuisine de saison, pensée pour vous</h1>
+  <p>Nous sélectionnons chaque matin les meilleurs produits de nos maraîchers. Notre chef compose un menu qui évolue avec les saisons. Vous découvrirez des saveurs franches et généreuses.</p>
+  <p>Réservez votre table en quelques secondes. Notre équipe vous accueille du mardi au samedi, midi et soir. Nous adaptons volontiers nos plats à vos allergies ✨</p>
+  <p>Votre soirée commence dès l'apéritif : cocktails maison, vins nature et petites assiettes à partager. Nous vous attendons avec plaisir 🍷</p>
+  <a class="btn" href="/reservation">Réservez une table</a>
+  <a class="btn" href="/carte">Découvrez la carte</a>
+  <button class="btn" type="button">Réservez une table</button>
+  <h2>Nos engagements</h2>
+  <h3>Produits locaux et de saison</h3>
+  <ul>
+    <li><svg class="lucide lucide-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Producteurs à moins de cinquante kilomètres de notre cuisine.</li>
+    <li><svg class="lucide lucide-leaf" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg> Une carte courte, renouvelée chaque semaine selon les arrivages.</li>
+    <li><svg class="lucide lucide-clock" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Service continu le samedi, de midi à vingt-trois heures.</li>
+    <li><svg class="lucide lucide-map-pin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Au cœur du vieux Lyon, à deux pas de la cathédrale.</li>
+    <li><svg class="lucide lucide-phone" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg> Réservation par téléphone pour les groupes de plus de huit personnes.</li>
+  </ul>
+  <i class="fa fa-star"></i>
+  <section class="grid">
+    <img id="p1" class="photo" alt="Salle du restaurant">
+    <img id="p2" class="photo mono" alt="Le chef en cuisine">
+    <img id="p3" class="avatar" alt="Portrait de la cheffe">
+    <img id="p4" class="clipped" alt="Assiette de saison">
+    <img class="illus" alt="Illustration de la façade" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%23fde68a'/%3E%3Ccircle cx='150' cy='100' r='60' fill='%230f2c56'/%3E%3Crect x='0' y='150' width='300' height='50' fill='%2310b981'/%3E%3C/svg%3E">
+  </section>
+  <div class="card-wrap"><div class="card sub nest accent reveal pop"><span>Carte</span></div></div>
+  <div class="dots"></div>
+  <div class="lines"></div>
+  <div class="mesh"></div>
+  <div class="noise"></div>
+  <form>
+    <label>Courriel <input type="email" placeholder="vous@exemple.fr" required></label>
+    <label><input type="checkbox" checked> Recevoir la lettre</label>
+    <input type="text" disabled value="Indisponible">
+    <button type="submit">Envoyer</button>
+  </form>
+  <div class="modal"></div>
+  <div class="toast"></div>
+</main>
+<script>
+  // Photo stand-ins: random noise has photo-like pixel statistics (many
+  // colors, few identical neighbours). Seeded so every run is identical.
+  let seed = 7;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (const id of ["p1", "p2", "p3", "p4"]) {
+    const c = document.createElement("canvas");
+    c.width = 160;
+    c.height = 100;
+    const ctx = c.getContext("2d");
+    const img = ctx.createImageData(160, 100);
+    for (let i = 0; i < img.data.length; i += 4) {
+      img.data[i] = rand() * 255;
+      img.data[i + 1] = rand() * 255;
+      img.data[i + 2] = rand() * 255;
+      img.data[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    document.getElementById(id).src = c.toDataURL("image/jpeg", 0.9);
+  }
+</script>
+</body>
+</html>
