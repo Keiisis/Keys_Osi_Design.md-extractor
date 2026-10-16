@@ -1,3 +1,4 @@
+import "./panel.js";
 import { computeDesignScore } from "../lib/generate-design-md.mjs";
 import { initViews } from "./views.js";
 import { initBrandKit } from "./brand.js";

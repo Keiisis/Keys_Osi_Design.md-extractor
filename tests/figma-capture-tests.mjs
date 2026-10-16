@@ -607,7 +607,8 @@ assert.equal(figma.shownWith.themeColors, true);
 
 {
   // Tokens: mockPayload from tests/run-tests.mjs -> normalize -> W3C tokens.
-  const src = await readFile(join(ROOT, "tests", "run-tests.mjs"), "utf8");
+  // Line endings depend on the checkout (core.autocrlf): match on LF.
+  const src = (await readFile(join(ROOT, "tests", "run-tests.mjs"), "utf8")).replace(/\r\n/g, "\n");
   const start = src.indexOf("const mockPayload = {");
   const end = src.indexOf("\n};\n", start);
   assert.ok(start > 0 && end > start, "mockPayload found in run-tests.mjs");

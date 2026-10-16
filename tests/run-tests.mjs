@@ -801,7 +801,12 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   assert.ok(localPro.indexOf("— Menu") < localPro.indexOf("— Réservation / booking"), "user-named sections keep their order");
   assert.ok(/blur\(10px\)→blur\(0\).*0\.6s/.test(localPro), "motion recipes carry numbers");
   assert.ok(localPro.includes("prefers-reduced-motion"), "reduced motion is mandatory");
-  assert.ok(localPro.includes("## 10. Dependencies") && localPro.includes("npm i react"), "dependencies are listed");
+  assert.ok(localPro.includes("## 10. Dependencies") && localPro.includes("No package manager, no build step"), "no framework named: vanilla build, nothing to install");
+  const proBody = localPro.slice(0, localPro.indexOf("# Reference design system"));
+  assert.ok(proBody.includes("index.html, styles.css, script.js") && !/npm i |React \+ Vite|tailwind\.config/.test(proBody), "no framework named: no React/Tailwind slipped in");
+  assert.ok(localPro.includes("Its stack section describes the reference site, not this build"), "the appended reference cannot override the build stack");
+  const reactPro = generateLocalPromptPro(normalized, "Site vitrine en React et Tailwind pour mon food-truck", basePrompt);
+  assert.ok(reactPro.includes("npm i react react-dom motion tailwindcss") && reactPro.includes("Tailwind theme colors"), "a framework the user names is honoured");
   assert.ok(localPro.includes("- [ ] Lighthouse accessibility ≥ 95"), "definition of done is checkable");
   assert.ok(localPro.includes("  --text-primary: #111827;"), "color system becomes CSS variables");
   assert.ok(localPro.includes("# Reference design system (measured — inherit verbatim)"), "local PRO should append the base prompt");
@@ -813,6 +818,9 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   assert.ok(messages[1].text.includes("=== USER PROJECT ==="), "user message should carry the project");
   assert.ok(messages[1].text.includes("=== PLAYBOOK ===") && messages[1].text.includes("REQUIRED DOCUMENT ANATOMY"), "AI gets the playbook");
   assert.ok(messages[0].text.includes("prefers-reduced-motion"), "system prompt enforces a11y + reduced motion");
+  assert.ok(messages[0].text.includes("never switch to React, Next.js, Tailwind") && messages[1].text.includes("BUILD STACK: Plain HTML + CSS + vanilla JavaScript"), "AI is held to the vanilla default");
+  assert.ok(messages[0].text.includes("never invent an asset URL") && messages[0].text.includes("visible where at a given viewport"), "AI locks scope and ends with an observable acceptance check");
+  assert.ok(localPro.includes("nothing beyond this document was added") && localPro.includes("the content is still visible"), "local definition of done locks scope and fails safe");
 
   const openAiFetch = () => async (url, options) => ({
     ok: true,
@@ -1123,7 +1131,13 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
 
 // PROMPT PRO playbook
 {
-  const { detectArchetypes, detectLanguage, buildPlaybookBrief, ARCHETYPES, MOTION_RECIPES, PROMPT_ANATOMY } = await import("../lib/prompt-pro-playbook.mjs");
+  const { detectArchetypes, detectLanguage, detectStack, buildPlaybookBrief, ARCHETYPES, MOTION_RECIPES, PROMPT_ANATOMY } = await import("../lib/prompt-pro-playbook.mjs");
+  assert.equal(detectStack("Site pour mon restaurant avec une vue sur la mer").vanilla, true, "French 'vue' is not Vue.js");
+  assert.equal(detectStack("Next steps: a landing for my app").vanilla, true, "'next' alone is not Next.js");
+  assert.deepEqual(detectStack("Landing en Next.js avec Tailwind").named, ["Next.js", "Tailwind CSS"]);
+  const mostar = buildPlaybookBrief({ description: "Récit cinématique au scroll pour la ville de Mostar, destination de voyage" });
+  assert.equal(mostar.archetypes[0].id, "travel");
+  assert.ok(mostar.recipes.includes("scrollStage") && mostar.recipes.includes("loopCarousel") && mostar.stack.vanilla, "Mostar-like brief gets the stage, the looping carousel and a vanilla stack");
   assert.equal(detectArchetypes("Agence de branding et studio créatif à Paris")[0].id, "agency");
   assert.equal(detectArchetypes("SaaS B2B de facturation avec dashboard analytics")[0].id, "saas");
   assert.equal(detectArchetypes("Portfolio de photographe freelance")[0].id, "portfolio");
@@ -1133,7 +1147,19 @@ assert.ok(skillMd.includes("## Page Anatomy"), "SKILL.md should include the page
   const brief = buildPlaybookBrief({ description: "Lancement d'une voiture électrique, site immersif 3D", normalized: { scrollTriggers: [{}] } });
   assert.ok(brief.recipes.includes("scrollScrub") && brief.recipes.includes("three") && brief.recipes.includes("reducedMotion"));
   assert.ok(brief.text.includes("REQUIRED DOCUMENT ANATOMY") && brief.text.includes("QUALITY BAR"));
-  assert.ok(ARCHETYPES.length >= 10 && Object.keys(MOTION_RECIPES).length >= 18 && PROMPT_ANATOMY.length === 13);
+  assert.ok(ARCHETYPES.length >= 15 && Object.keys(MOTION_RECIPES).length >= 27 && PROMPT_ANATOMY.length === 13);
+  assert.equal(detectArchetypes("Page 404 pour mon hébergeur cloud")[0].id, "notFound");
+  assert.equal(detectArchetypes("Page de connexion et inscription avec vidéo")[0].id, "auth");
+  assert.equal(detectArchetypes("Magazine éditorial avec storytelling vidéo au scroll")[0].id, "editorial");
+  assert.equal(detectArchetypes("Site de voyage : destinations et itinéraires")[0].id, "travel");
+  assert.equal(detectArchetypes("Logistique et fret ferroviaire, supply chain")[0].id, "industrial");
+  for (const key of ["liquidGlass", "videoSwitcher", "maskFade", "cursorScrubVideo", "scrollScrubVideo", "unitScaling", "imageTextMask", "typewriter", "scrollStage", "loopCarousel", "failSafeEntrance", "glassWordmark", "portalWindow", "sphereGallery"]) assert.ok(MOTION_RECIPES[key], `recette ${key}`);
+  assert.ok(buildPlaybookBrief({ description: "Portfolio de photographe animalier" }).recipes.includes("sphereGallery"), "photographer portfolio gets the sphere gallery");
+  assert.ok(buildPlaybookBrief({ description: "Site immersif 3D de voyage spatial" }).recipes.includes("portalWindow"), "immersive brief gets the portal window");
+  assert.ok(/getAnimations\(\)/.test(MOTION_RECIPES.failSafeEntrance) && /no -webkit-text-stroke, because/.test(MOTION_RECIPES.glassWordmark), "recipes carry the fail-safe and the trap with its reason");
+  const quality = buildPlaybookBrief({ description: "SaaS de facturation" }).text;
+  assert.ok(quality.includes("never invents an asset URL") && quality.includes("do not … because …") && quality.includes("timeout and an error path") && quality.includes("No instruction contradicts another"), "quality bar locks scope, names traps, forbids blank pages and contradictions");
+  for (const archetype of ARCHETYPES) for (const key of archetype.motion) assert.ok(MOTION_RECIPES[key], `${archetype.id} cite une recette inconnue : ${key}`);
   for (const recipe of Object.values(MOTION_RECIPES)) assert.ok(/\d/.test(recipe), "every motion recipe carries numbers");
 }
 
@@ -1176,5 +1202,7 @@ await import("./figma-offline-tests.mjs");
 await import("./native-host-tests.mjs");
 await import("./brand-kit-tests.mjs");
 await import("./platform-exports-tests.mjs");
+await import("./responsive-tests.mjs");
+await import("./code-clone-tests.mjs");
 
 console.log("All tests passed.");

@@ -31,7 +31,7 @@
       <button type="button" class="view-tab" data-view="site">Site</button>
       <button type="button" class="view-tab" data-view="assets">Assets</button>
       <button type="button" class="view-tab" data-view="models">3D <span id="modelBadge" class="tab-badge" hidden></span></button>
-      <button type="button" class="view-tab" data-view="board">Moodboard <span id="boardBadge" class="tab-badge" hidden></span></button>
+      <button type="button" class="view-tab" data-view="board"><span class="view-tab__long">Moodboard</span><span class="view-tab__short">Board</span> <span id="boardBadge" class="tab-badge" hidden></span></button>
     </nav>
 
     <!-- ===================== SITE ===================== -->
@@ -442,7 +442,31 @@
               </select>
             </label>
           </div>
+          <div class="code-clone">
+            <p class="eyebrow">Clone en code</p>
+            <p class="site-head__hint">Projet React + Tailwind prêt à lancer : chaque classe vient des styles mesurés à 375 px et à chaque breakpoint du site. Sections en composants, blocs répétés en données, images et polices incluses.</p>
+            <button id="codeCloneBtn" type="button" class="btn btn--line btn--block">Générer le projet React + Tailwind</button>
+            <p id="codeCloneStatus" class="pane-status" hidden></p>
+          </div>
         </section>
+      </details>
+
+      <details id="responsiveFold" class="fold">
+        <summary><span>Responsive</span><span class="fold__meta">375 · 768 · 1024 · 1440</span></summary>
+        <div class="responsive">
+          <p class="site-head__hint">Simule quatre largeurs d'écran sur cet onglet et mesure ce qui change : breakpoints du CSS, navigation, colonnes, tailles de texte, éléments masqués, débordements. Chrome demande l'accès « debugger » au premier lancement.</p>
+          <button id="respBtn" type="button" class="btn btn--line btn--block">Capturer les 4 largeurs</button>
+          <p id="respStatus" class="pane-status" hidden></p>
+          <div id="respResult" class="responsive__result" hidden>
+            <div id="respBreakpoints" class="chips" aria-label="Breakpoints du CSS"></div>
+            <div id="respShots" class="resp-shots"></div>
+            <ol id="respChanges" class="resp-changes"></ol>
+            <div class="exports">
+              <button id="respMdBtn" type="button" class="export">RESPONSIVE.md</button>
+              <button id="respZipBtn" type="button" class="export">ZIP + captures</button>
+            </div>
+          </div>
+        </div>
       </details>
 
       <details id="compareFold" class="fold">

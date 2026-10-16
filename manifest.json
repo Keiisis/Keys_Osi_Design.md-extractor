@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Keys_Osi_Design.md-extractor",
   "description": "Keys_Osi: design system, site structure, tech stack, Figma, brand kit, assets and 3D from any site → DESIGN.md, PROMPT_PRO.md, ZIP.",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "homepage_url": "https://github.com/Keiisis/Keys_Osi_Design.md-extractor",
   "permissions": [
     "activeTab",
@@ -13,7 +13,8 @@
     "contextMenus",
     "webRequest",
     "unlimitedStorage",
-    "nativeMessaging"
+    "nativeMessaging",
+    "sidePanel"
   ],
   "optional_permissions": [
     "debugger"
@@ -23,13 +24,15 @@
   ],
   "action": {
     "default_title": "Keys_Osi_Design.md-extractor",
-    "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "assets/icons/icon16.png",
       "32": "assets/icons/icon32.png",
       "48": "assets/icons/icon48.png",
       "128": "assets/icons/icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "popup/popup.html"
   },
   "background": {
     "service_worker": "service-worker.js",

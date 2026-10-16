@@ -278,7 +278,6 @@ export function createBoardView() {
   $("boardLensBtn").addEventListener("click", async () => {
     const tabId = await targetTabId();
     await chrome.scripting.executeScript({ target: { tabId }, files: ["lens.js"] });
-    if (!new URLSearchParams(location.search).get("tab")) window.close();
   });
   $("boardExportBtn").addEventListener("click", async () => {
     try {

@@ -1,20 +1,24 @@
 {
   "name": "keys-osi-design-md-extractor",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "private": true,
   "type": "module",
   "description": "Chrome extension that extracts design systems from any site: DESIGN.md / SKILL.md / JSON, ZIP site cloning, measured audits, and a local MCP server.",
   "scripts": {
     "test": "node tests/run-tests.mjs",
     "test:e2e": "node tests/e2e/run-e2e.mjs",
-    "test:all": "node tests/run-tests.mjs && npm run test:browser && node tests/e2e/run-e2e.mjs && node tests/e2e/run-extension-e2e.mjs && node tests/e2e/run-site-e2e.mjs && node tests/e2e/run-features-e2e.mjs && node tests/e2e/run-update-e2e.mjs",
+    "test:all": "node tests/run-tests.mjs && npm run test:browser && node tests/e2e/run-e2e.mjs && node tests/e2e/run-extension-e2e.mjs && node tests/e2e/run-site-e2e.mjs && node tests/e2e/run-features-e2e.mjs && node tests/e2e/run-update-e2e.mjs && node tests/e2e/run-panel-e2e.mjs && node tests/e2e/run-responsive-e2e.mjs && node tests/e2e/run-clone-e2e.mjs",
     "test:ext": "node tests/e2e/run-extension-e2e.mjs",
     "test:update": "node tests/e2e/run-update-e2e.mjs",
     "test:browser": "node tests/vectorize-tests.mjs && node tests/figma-capture-tests.mjs && node tests/deep-signals-tests.mjs",
     "test:site": "node tests/e2e/run-site-e2e.mjs",
     "test:features": "node tests/e2e/run-features-e2e.mjs",
     "test:rea": "node tests/e2e/run-rea-e2e.mjs",
-    "install-host": "node native-host/install.mjs"
+    "install-host": "node native-host/install.mjs",
+    "study:prompts": "node scripts/study-prompt-corpus.mjs",
+    "test:panel": "node tests/e2e/run-panel-e2e.mjs",
+    "test:responsive": "node tests/e2e/run-responsive-e2e.mjs",
+    "test:clone": "node tests/e2e/run-clone-e2e.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.49.0",

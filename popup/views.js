@@ -7,6 +7,7 @@
 import { mountModelViewer } from "./model-viewer.js";
 import { createBoardView } from "./insight.js";
 import { importFigFile, importFigmaClipboard } from "../lib/figma-offline.mjs";
+import { describeChange } from "../lib/responsive.mjs";
 
 const $ = (id) => document.getElementById(id);
 
@@ -99,14 +100,15 @@ export function initViews({ getNormalized, setNormalized, getSource, setSource }
   };
   for (const tab of tabs) tab.addEventListener("click", () => show(tab.dataset.view));
 
-  // Lens: on-page inspector; the popup closes so the page is usable.
+  // Lens: on-page inspector; the side panel stays open beside the page.
   $("lensBtn")?.addEventListener("click", async () => {
     const tabId = await activeTabId();
     await chrome.scripting.executeScript({ target: { tabId }, files: ["lens.js"] });
-    if (!new URLSearchParams(location.search).get("tab")) window.close();
   });
 
   initCompare();
+  initResponsive();
+  initCodeClone();
   initFigma({ getNormalized, getSource, setSource });
 
   // Header chip: which site the popup is working on.
@@ -1245,6 +1247,131 @@ function initFigma({ getNormalized, getSource, setSource }) {
     })
   );
   if (getSource() === "figma") bar.hidden = false;
+}
+
+/* ============================ CODE CLONE ============================ */
+
+function initCodeClone() {
+  const button = $("codeCloneBtn");
+  if (!button) return;
+  const status = $("codeCloneStatus");
+  const describe = (record) =>
+    `${record.filename} : ${record.stats.sections} section${record.stats.sections > 1 ? "s" : ""} en composants, ${record.stats.repeated} bloc${record.stats.repeated > 1 ? "s" : ""} répété${record.stats.repeated > 1 ? "s" : ""} en données, ${record.stats.elements} éléments, breakpoints ${record.stats.screens.join(" · ")}, ${record.stats.assets}/${record.stats.assetsTried} fichiers inclus, ${record.stats.fonts} police${record.stats.fonts > 1 ? "s" : ""}. Lancer : npm install puis npm run dev.`;
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === "CODE_CLONE_PROGRESS" && message.message && button.disabled) setPaneStatus(status, message.message);
+  });
+  send({ type: "CODE_CLONE_LAST" })
+    .then(async ({ record }) => {
+      const tab = await chrome.tabs.get(await activeTabId());
+      if (record && tab?.url && new URL(record.url).origin === new URL(tab.url).origin) setPaneStatus(status, `Dernier clone — ${describe(record)}`);
+    })
+    .catch(() => {});
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      // Optional permission: asked here, from the click.
+      const granted = await chrome.permissions.request({ permissions: ["debugger"] });
+      if (!granted) throw new Error("Accès « debugger » refusé : il sert à mesurer la page à plusieurs largeurs.");
+      setPaneStatus(status, "Mesure de la page à chaque breakpoint du site… (Chrome affiche un bandeau de débogage pendant la mesure)");
+      const record = await send({ type: "CODE_CLONE", tabId: await activeTabId() });
+      setPaneStatus(status, describe(record));
+    } catch (error) {
+      setPaneStatus(status, error.message, true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
+/* ============================ RESPONSIVE ============================ */
+
+function initResponsive() {
+  const fold = $("responsiveFold");
+  if (!fold) return;
+  const status = $("respStatus");
+  const result = $("respResult");
+
+  const render = ({ summary, screenshots = [] }) => {
+    if (!summary) return;
+    result.hidden = false;
+    const bps = summary.breakpoints.all;
+    $("respBreakpoints").replaceChildren(
+      ...(bps.length
+        ? bps.map((entry) => el("span", { class: "chip", title: `${entry.count} media queries` }, [`${entry.px}px`, el("span", { class: "count", text: String(entry.count) })]))
+        : [el("span", { class: "chip", text: "aucun breakpoint dans le CSS" })])
+    );
+    $("respShots").replaceChildren(
+      ...screenshots.map((shot) =>
+        el("figure", { class: "resp-shot" }, [
+          el("img", { src: `data:image/jpeg;base64,${shot.data}`, alt: `Premier écran à ${shot.width}px`, loading: "lazy" }),
+          el("figcaption", { text: `${shot.width}px` })
+        ])
+      )
+    );
+    $("respChanges").replaceChildren(
+      ...summary.transitions.map((step) =>
+        el("li", { class: "resp-step" }, [
+          el("div", { class: "resp-step__head", text: `${step.from} → ${step.to} px${step.breakpoints.length ? ` · breakpoint ${step.breakpoints.join(", ")}` : ""}` }),
+          el(
+            "ul",
+            {},
+            step.changes.length
+              ? step.changes.map((change) => el("li", { text: describeChange(change, "fr") }))
+              : [el("li", { class: "resp-step__none", text: "Aucun changement de structure." })]
+          )
+        ])
+      )
+    );
+    const overflow = summary.viewports.filter((vp) => vp.overflow?.px > 0).map((vp) => `${vp.width}px (+${vp.overflow.px}px)`);
+    const narrow = summary.viewports.filter((vp) => vp.layoutWidth !== vp.width).map((vp) => vp.width);
+    setPaneStatus(
+      status,
+      [
+        `${summary.breakpoints.all.length} breakpoint${summary.breakpoints.all.length > 1 ? "s" : ""} dans le CSS, ${summary.transitions.reduce((n, step) => n + step.changes.length, 0)} changements mesurés.`,
+        overflow.length ? `Débordement horizontal à ${overflow.join(", ")}.` : "",
+        narrow.length ? `Pas de balise viewport : à ${narrow.join(", ")}px la page s'affiche en largeur bureau.` : ""
+      ].filter(Boolean).join(" ")
+    );
+  };
+
+  const restore = async () => {
+    const last = await send({ type: "RESPONSIVE_LAST" });
+    const tab = await chrome.tabs.get(await activeTabId());
+    if (last.summary && tab?.url && new URL(last.summary.url).origin === new URL(tab.url).origin) render(last);
+  };
+  fold.addEventListener("toggle", () => fold.open && restore().catch(() => {}));
+  if (fold.open) restore().catch(() => {});
+
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === "RESPONSIVE_PROGRESS" && message.message) setPaneStatus(status, message.message);
+  });
+
+  $("respBtn").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      // Optional permission: asked here, from the click.
+      const granted = await chrome.permissions.request({ permissions: ["debugger"] });
+      if (!granted) throw new Error("Accès « debugger » refusé : il sert à simuler les largeurs d'écran.");
+      setPaneStatus(status, "Simulation des largeurs… (Chrome affiche un bandeau de débogage pendant la mesure)");
+      render(await send({ type: "RESPONSIVE_CAPTURE", tabId: await activeTabId() }));
+    } catch (error) {
+      setPaneStatus(status, error.message, true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  for (const [id, what] of [["respMdBtn", "md"], ["respZipBtn", "zip"]]) {
+    $(id).addEventListener("click", async () => {
+      try {
+        const response = await send({ type: "RESPONSIVE_EXPORT", what });
+        setPaneStatus(status, `Téléchargé : ${response.filename}${response.fileCount ? ` (${response.fileCount} fichiers)` : ""}`);
+      } catch (error) {
+        setPaneStatus(status, error.message, true);
+      }
+    });
+  }
 }
 
 function initCompare() {

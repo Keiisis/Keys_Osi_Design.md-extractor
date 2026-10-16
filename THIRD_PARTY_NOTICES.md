@@ -132,3 +132,10 @@ generated BRAND.md.
 
 The Keys_Osi native host runs the REA engine (`rea-agents`, MIT License)
 through `npx` on the user's machine. REA is not bundled with the extension.
+
+## awesome-web-prompts (corpus d'étude, non embarqué dans les sorties)
+
+- Source : https://github.com/DexZane/awesome-web-prompts (commit bb853b73, 2026-10-15)
+- Licence : MIT, Copyright (c) 2026 DexZane — texte complet dans `corpus/awesome-web-prompts/LICENSE`
+- Usage : les fichiers `prompt.md` et `README.md` sont mesurés par `scripts/study-prompt-corpus.mjs`. Le playbook n'en reprend que des statistiques et des valeurs médianes, formulées dans nos propres mots.
+

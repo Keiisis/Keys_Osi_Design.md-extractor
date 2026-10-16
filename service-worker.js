@@ -17,6 +17,9 @@ import { handle3dMessage } from "./sw-3d.mjs";
 import { figmaNormalized, handleFigmaMessage } from "./sw-figma.mjs";
 import { handleTechMessage, techSeedUrls } from "./sw-tech.mjs";
 import { handleReaMessage } from "./sw-rea.mjs";
+import { handleResponsiveMessage, responsiveFor, responsiveSectionFor } from "./sw-responsive.mjs";
+import { handleCloneMessage } from "./sw-clone.mjs";
+import { responsivePromptBlock } from "./lib/responsive.mjs";
 import { applyLessonsToMessages, handleMemoryMessage, memoryAvoidModels, memoryLessons, recordMemoryEvent } from "./sw-memory.mjs";
 import { BRAND_KEY, handleBrandBoardMessage, handlePinContextMenu } from "./sw-brand-board.mjs";
 import { auditExtraction } from "./lib/learning-memory.mjs";
@@ -34,6 +37,9 @@ const EXTRACTION_MESSAGE = "KEYS_OSI_EXTRACT_STYLES";
 const HISTORY_KEY = "extractionHistory";
 const HISTORY_LIMIT = 15;
 const MCP_BRIDGE_URL = "http://127.0.0.1:8765";
+
+// The toolbar icon opens the side panel (the workspace stays open while browsing).
+chrome.sidePanel?.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
@@ -107,7 +113,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       buildZip: buildZipViaOffscreen,
       revokeLater: revokeBlobWhenDownloadSettles,
       runInOffscreen
-    });
+    }) ||
+    handleResponsiveMessage(message, { buildZip: buildZipViaOffscreen, revokeLater: revokeBlobWhenDownloadSettles }) ||
+    handleCloneMessage(message, { buildZip: buildZipViaOffscreen, revokeLater: revokeBlobWhenDownloadSettles });
   if (sideJob) {
     sideJob
       .then((result) => sendResponse({ ok: true, ...result }))
@@ -361,8 +369,12 @@ async function probeDeepSignals(tabId) {
 
 /** Inserts the deep-signal sections before the DESIGN.md rules. */
 function withDeepSections(markdown, deep) {
-  if (!deep) return markdown;
-  const sections = generateDeepSignalsMarkdown(deep).trim();
+  return deep ? withSectionsBeforeRules(markdown, generateDeepSignalsMarkdown(deep)) : markdown;
+}
+
+function withSectionsBeforeRules(markdown, text) {
+  const sections = String(text || "").trim();
+  if (!sections) return markdown;
   const anchor = markdown.indexOf("\n## Rules: Do");
   return anchor === -1 ? `${markdown.trimEnd()}\n\n${sections}\n` : `${markdown.slice(0, anchor)}\n${sections}\n${markdown.slice(anchor)}`;
 }
@@ -396,6 +408,7 @@ async function handleExtraction(message) {
     if (message.source !== "figma") {
       const tabId = message.tabId ? Number(message.tabId) : (await getActiveTab()).id;
       markdown = withDeepSections(markdown, await probeDeepSignals(tabId));
+      markdown = withSectionsBeforeRules(markdown, await responsiveSectionFor(normalized.source?.url || ""));
     }
     validation = validateMarkdownOutput(mode, markdown);
     filename = "DESIGN.md";
@@ -1000,6 +1013,8 @@ async function handleGeneratePromptPro(message) {
   if (message.source !== "figma" && tab.id) {
     const deep = await probeDeepSignals(tab.id);
     if (deep) context.push({ title: "PAGE SIGNALS (voice, imagery, icons, dark mode, form states of the reference)", text: deepSignalsPromptBlock(deep) });
+    const responsive = await responsiveFor(tab.url || "");
+    if (responsive) context.push({ title: "RESPONSIVE BEHAVIOR (measured at 375/768/1024/1440: breakpoints, navigation, columns, type)", text: responsivePromptBlock(responsive) });
   }
 
   // Vision grounding: capture a few section screenshots so the model

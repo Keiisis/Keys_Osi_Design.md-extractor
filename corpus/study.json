@@ -1,0 +1,1720 @@
+{
+  "measuredAt": "2026-10-16",
+  "sources": [
+    {
+      "name": "awesome-web-prompts",
+      "label": "DexZane/awesome-web-prompts (MIT)",
+      "files": [
+        "awesome-web-prompts/prompts/components/animated-cards/prompt.md",
+        "awesome-web-prompts/prompts/components/scroll-expansion-hero/prompt.md",
+        "awesome-web-prompts/prompts/pages/3d/space-planet/prompt.md",
+        "awesome-web-prompts/prompts/pages/404/404-planet/prompt.md",
+        "awesome-web-prompts/prompts/pages/404/fun-404-page/prompt.md",
+        "awesome-web-prompts/prompts/pages/404/nexto-404/prompt.md",
+        "awesome-web-prompts/prompts/pages/404/skybridge-404/prompt.md",
+        "awesome-web-prompts/prompts/pages/agency/playful-idea/prompt.md",
+        "awesome-web-prompts/prompts/pages/agency/talent-collective/prompt.md",
+        "awesome-web-prompts/prompts/pages/ai/agent-wave/prompt.md",
+        "awesome-web-prompts/prompts/pages/ai/ai-runtime/prompt.md",
+        "awesome-web-prompts/prompts/pages/ai/fastshot/prompt.md",
+        "awesome-web-prompts/prompts/pages/app/adhd-planner/prompt.md",
+        "awesome-web-prompts/prompts/pages/art/atrium-mtl/prompt.md",
+        "awesome-web-prompts/prompts/pages/auth/aurora-onboard/prompt.md",
+        "awesome-web-prompts/prompts/pages/auth/real-time-alerts/prompt.md",
+        "awesome-web-prompts/prompts/pages/automotive/veyra-electric/prompt.md",
+        "awesome-web-prompts/prompts/pages/creative/sparkform/prompt.md",
+        "awesome-web-prompts/prompts/pages/cybersecurity/cyber-layer/prompt.md",
+        "awesome-web-prompts/prompts/pages/data-intelligence/quantum-core/prompt.md",
+        "awesome-web-prompts/prompts/pages/ecommerce/vertex/prompt.md",
+        "awesome-web-prompts/prompts/pages/editorial/vectrus-energy/prompt.md",
+        "awesome-web-prompts/prompts/pages/environmental/true-earth/prompt.md",
+        "awesome-web-prompts/prompts/pages/fintech/remit-race/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/3d-story/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/ai-designer-portfolio/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/health-portal/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/innovation/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/orbis-nft/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/prisma-creative-studio/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/skyelite-private-jets/prompt.md",
+        "awesome-web-prompts/prompts/pages/landing-page/usd-halo/prompt.md",
+        "awesome-web-prompts/prompts/pages/manufacturing/cordex/prompt.md",
+        "awesome-web-prompts/prompts/pages/motion/consentinel/prompt.md",
+        "awesome-web-prompts/prompts/pages/photography/nature-portfolio/prompt.md",
+        "awesome-web-prompts/prompts/pages/portfolio/3d-portfolio/prompt.md",
+        "awesome-web-prompts/prompts/pages/portfolio/digital-director/prompt.md",
+        "awesome-web-prompts/prompts/pages/portfolio/gold-standard/prompt.md",
+        "awesome-web-prompts/prompts/pages/portfolio/parallax/prompt.md",
+        "awesome-web-prompts/prompts/pages/portfolio/portfolio-cosmic/prompt.md",
+        "awesome-web-prompts/prompts/pages/saas/intelligent-performance/prompt.md",
+        "awesome-web-prompts/prompts/pages/space/nebula-hero/prompt.md",
+        "awesome-web-prompts/prompts/pages/supply/logistics-freight/prompt.md",
+        "awesome-web-prompts/prompts/pages/technology/cyber-ronin/prompt.md",
+        "awesome-web-prompts/prompts/pages/technology/signal-id/prompt.md",
+        "awesome-web-prompts/prompts/pages/travel/ai-trip-planner/prompt.md",
+        "awesome-web-prompts/prompts/pages/website/neo-museum/prompt.md",
+        "awesome-web-prompts/prompts/sections/contact/build-with-us/prompt.md",
+        "awesome-web-prompts/prompts/sections/footer/heritage-grove/prompt.md",
+        "awesome-web-prompts/prompts/sections/footer/tenlas-footer/prompt.md",
+        "awesome-web-prompts/prompts/sections/footer/wayfinder/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/bio-age-dashboard/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/bold-studio/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/contact-cybernetic/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/cozy-paws/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/creative-portfolio/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/immersive-ocean/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/intelligent-x/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/interactive-discovery/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/luxury-hero/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/organic-odyssey/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/portal/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/retro-futurist/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/securify-data-security/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/stillmind/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/techforward/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/vault-shield-hero/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/vex-venture/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/vision-reveal/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/wellbeing-os/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/wellness-balance/prompt.md",
+        "awesome-web-prompts/prompts/sections/hero/wellness-devicex/prompt.md"
+      ],
+      "prompts": 72,
+      "chars": {
+        "median": 8631,
+        "p90": 27913,
+        "min": 438,
+        "max": 52286
+      },
+      "signalsPct": {
+        "tailwind": 65,
+        "react": 69,
+        "plainHtml": 51,
+        "videoBackdrop": 82,
+        "lucide": 50,
+        "glass": 64,
+        "liquidGlass": 15,
+        "stagger": 51,
+        "webgl3d": 4,
+        "gsap": 4,
+        "framerMotion": 17,
+        "reducedMotion": 35,
+        "ariaOrAlt": 40,
+        "cursorInteraction": 13,
+        "typewriter": 4,
+        "marqueeTicker": 14,
+        "cssMask": 22,
+        "videoSwitcher": 11,
+        "wordReveal": 6,
+        "countUp": 7,
+        "parallax": 10,
+        "canvas2d": 19,
+        "darkMode": 54,
+        "negativeScope": 40,
+        "exactAssets": 28,
+        "exactDom": 11,
+        "acceptanceCheck": 11,
+        "backstop": 24
+      },
+      "fonts": [
+        {
+          "font": "Inter",
+          "pct": 32
+        },
+        {
+          "font": "Instrument Serif",
+          "pct": 10
+        },
+        {
+          "font": "Poppins",
+          "pct": 6
+        },
+        {
+          "font": "JetBrains Mono",
+          "pct": 4
+        },
+        {
+          "font": "Segoe UI",
+          "pct": 4
+        },
+        {
+          "font": "Geist",
+          "pct": 4
+        },
+        {
+          "font": "Playfair Display",
+          "pct": 3
+        },
+        {
+          "font": "Times New Roman",
+          "pct": 3
+        },
+        {
+          "font": "Helvetica Now Var",
+          "pct": 1
+        },
+        {
+          "font": "BubbledotICG",
+          "pct": 1
+        },
+        {
+          "font": "Geist Pixel Circle",
+          "pct": 1
+        },
+        {
+          "font": "Eloquia",
+          "pct": 1
+        },
+        {
+          "font": "Bamboly Demo",
+          "pct": 1
+        },
+        {
+          "font": "Suisse Int",
+          "pct": 1
+        },
+        {
+          "font": "Helvetica Neue ME",
+          "pct": 1
+        }
+      ],
+      "recipeEvidence": {
+        "liquidGlass": {
+          "prompts": 11,
+          "medianDurationS": 0.7,
+          "p25DurationS": 0.3,
+          "p75DurationS": 1,
+          "medianBlurPx": 4,
+          "medianStaggerS": 0.15,
+          "medianScale": 1.03,
+          "samples": 57
+        },
+        "wordReveal": {
+          "prompts": 3,
+          "medianDurationS": 1.2,
+          "p25DurationS": 1,
+          "p75DurationS": 1.2,
+          "medianBlurPx": 10,
+          "medianStaggerS": null,
+          "medianScale": 1.5,
+          "samples": 2
+        },
+        "videoSwitcher": {
+          "prompts": 7,
+          "medianDurationS": 0.55,
+          "p25DurationS": 0.3,
+          "p75DurationS": 0.7,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 15
+        },
+        "cssMask": {
+          "prompts": 5,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": 1.18,
+          "samples": 0
+        },
+        "typewriter": {
+          "prompts": 3,
+          "medianDurationS": 0.4,
+          "p25DurationS": 0.4,
+          "p75DurationS": 0.6,
+          "medianBlurPx": 4,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 8
+        },
+        "marqueeTicker": {
+          "prompts": 8,
+          "medianDurationS": 1,
+          "p25DurationS": 0.6,
+          "p75DurationS": 12,
+          "medianBlurPx": null,
+          "medianStaggerS": 0.1,
+          "medianScale": null,
+          "samples": 36
+        },
+        "cursorInteraction": {
+          "prompts": 21,
+          "medianDurationS": 0.6,
+          "p25DurationS": 0.4,
+          "p75DurationS": 1,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 17
+        },
+        "stagger": {
+          "prompts": 37,
+          "medianDurationS": 0.7,
+          "p25DurationS": 0.3,
+          "p75DurationS": 2,
+          "medianBlurPx": 10,
+          "medianStaggerS": 0.085,
+          "medianScale": 0.9,
+          "samples": 231
+        },
+        "fadeUp": {
+          "prompts": 47,
+          "medianDurationS": 0.745,
+          "p25DurationS": 0.4,
+          "p75DurationS": 1,
+          "medianBlurPx": 8,
+          "medianStaggerS": 0.1,
+          "medianScale": 0.96,
+          "samples": 772
+        },
+        "scrollStage": {
+          "prompts": 1,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "loopCarousel": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        }
+      }
+    },
+    {
+      "name": "winter-motionsites-prompts",
+      "label": "winter-motionsites-prompts (motionsites.ai, no license)",
+      "files": [
+        "winter-motionsites-prompts/prompts/3d-collectible-hero.md",
+        "winter-motionsites-prompts/prompts/3d-jack-portfolio-hero.md",
+        "winter-motionsites-prompts/prompts/404.md",
+        "winter-motionsites-prompts/prompts/Aethera_Studio.md",
+        "winter-motionsites-prompts/prompts/aetheris-voyage-hero.md",
+        "winter-motionsites-prompts/prompts/ai-image-generator-ui.md",
+        "winter-motionsites-prompts/prompts/ai-workflow.md",
+        "winter-motionsites-prompts/prompts/AI_Automation_Hero.md",
+        "winter-motionsites-prompts/prompts/AI_Designer_Agency.md",
+        "winter-motionsites-prompts/prompts/AI_Designer_Portfolio.md",
+        "winter-motionsites-prompts/prompts/AKOR_Security.md",
+        "winter-motionsites-prompts/prompts/Apex_SaaS.md",
+        "winter-motionsites-prompts/prompts/Asme.md",
+        "winter-motionsites-prompts/prompts/aurora-onboard.md",
+        "winter-motionsites-prompts/prompts/Automation_Machines.md",
+        "winter-motionsites-prompts/prompts/Bionova_Biotech.md",
+        "winter-motionsites-prompts/prompts/blog-showcase.md",
+        "winter-motionsites-prompts/prompts/Bloom_AI.md",
+        "winter-motionsites-prompts/prompts/Bold_Portfolio_Hero.md",
+        "winter-motionsites-prompts/prompts/Buzzentic_Agency.md",
+        "winter-motionsites-prompts/prompts/celestia-hero.md",
+        "winter-motionsites-prompts/prompts/ClearInvoice_SaaS_Hero.md",
+        "winter-motionsites-prompts/prompts/ClubX_Investors.md",
+        "winter-motionsites-prompts/prompts/CodeNest_Coding_Platform.md",
+        "winter-motionsites-prompts/prompts/convix-software-hero.md",
+        "winter-motionsites-prompts/prompts/creative-studio.md",
+        "winter-motionsites-prompts/prompts/cybersecurity-hero.md",
+        "winter-motionsites-prompts/prompts/Dark_Portfolio_Hero.md",
+        "winter-motionsites-prompts/prompts/Datacore_Booking.md",
+        "winter-motionsites-prompts/prompts/Datacore_SaaS_Hero.md",
+        "winter-motionsites-prompts/prompts/design-rocket-email-hero.md",
+        "winter-motionsites-prompts/prompts/DesignPro_Academy.md",
+        "winter-motionsites-prompts/prompts/digital-epoch-hero.md",
+        "winter-motionsites-prompts/prompts/Digitwist_AI_Builder.md",
+        "winter-motionsites-prompts/prompts/dot-hero.md",
+        "winter-motionsites-prompts/prompts/duolingo-styleguide-hero.md",
+        "winter-motionsites-prompts/prompts/E-commerce_Website.md",
+        "winter-motionsites-prompts/prompts/email-landing-page.md",
+        "winter-motionsites-prompts/prompts/equilibrium.md",
+        "winter-motionsites-prompts/prompts/EVR_Ventures.md",
+        "winter-motionsites-prompts/prompts/faq-cta.md",
+        "winter-motionsites-prompts/prompts/Finlytic_AI_Agent.md",
+        "winter-motionsites-prompts/prompts/Framelix_3D_Studios.md",
+        "winter-motionsites-prompts/prompts/Glassmorphism_Agency_Hero.md",
+        "winter-motionsites-prompts/prompts/glow-features.md",
+        "winter-motionsites-prompts/prompts/Grow_AI_Talent_Platform.md",
+        "winter-motionsites-prompts/prompts/halo-usd-landing.md",
+        "winter-motionsites-prompts/prompts/haul-footer.md",
+        "winter-motionsites-prompts/prompts/HR_SaaS_Hero.md",
+        "winter-motionsites-prompts/prompts/innovation-landing.md",
+        "winter-motionsites-prompts/prompts/Investor_Deck.md",
+        "winter-motionsites-prompts/prompts/kresna-footer.md",
+        "winter-motionsites-prompts/prompts/Liquid_Glass_Agency.md",
+        "winter-motionsites-prompts/prompts/Loader_Animation.md",
+        "winter-motionsites-prompts/prompts/Logoisum_Video_Agency.md",
+        "winter-motionsites-prompts/prompts/lumina-footer.md",
+        "winter-motionsites-prompts/prompts/luminex-hero.md",
+        "winter-motionsites-prompts/prompts/max-reed-portfolio.md",
+        "winter-motionsites-prompts/prompts/Mindloop.md",
+        "winter-motionsites-prompts/prompts/Mindloop_Landing.md",
+        "winter-motionsites-prompts/prompts/modern-agency.md",
+        "winter-motionsites-prompts/prompts/mythic-naturecore.md",
+        "winter-motionsites-prompts/prompts/neo-museum.md",
+        "winter-motionsites-prompts/prompts/NeoVision.md",
+        "winter-motionsites-prompts/prompts/Neuralyn.md",
+        "winter-motionsites-prompts/prompts/New_Era_Automotive_Hero.md",
+        "winter-motionsites-prompts/prompts/New_Era_Bold_Hero.md",
+        "winter-motionsites-prompts/prompts/Nexora_Automation.md",
+        "winter-motionsites-prompts/prompts/Nexus_IT_Solutions.md",
+        "winter-motionsites-prompts/prompts/Nickel_Payments.md",
+        "winter-motionsites-prompts/prompts/no-code-waitlist.md",
+        "winter-motionsites-prompts/prompts/NOVA_Space_Systems.md",
+        "winter-motionsites-prompts/prompts/Orbis_NFT.md",
+        "winter-motionsites-prompts/prompts/Orbit_Engineers.md",
+        "winter-motionsites-prompts/prompts/Orbit_Web3.md",
+        "winter-motionsites-prompts/prompts/Planet_Orbit.md",
+        "winter-motionsites-prompts/prompts/portal-hero.md",
+        "winter-motionsites-prompts/prompts/Portfolio_Cosmic.md",
+        "winter-motionsites-prompts/prompts/Power_AI.md",
+        "winter-motionsites-prompts/prompts/premium/liquid-glass-agency.md",
+        "winter-motionsites-prompts/prompts/Price_Calculator.md",
+        "winter-motionsites-prompts/prompts/prisma-landing.md",
+        "winter-motionsites-prompts/prompts/prosthetics-hero.md",
+        "winter-motionsites-prompts/prompts/Railroad.ai.md",
+        "winter-motionsites-prompts/prompts/retro-futurist.md",
+        "winter-motionsites-prompts/prompts/rivr-hero.md",
+        "winter-motionsites-prompts/prompts/securify-hero.md",
+        "winter-motionsites-prompts/prompts/sentinel-ai-hero.md",
+        "winter-motionsites-prompts/prompts/SkyElite_Private_Jets.md",
+        "winter-motionsites-prompts/prompts/Space_Voyage.md",
+        "winter-motionsites-prompts/prompts/Stellar_AI.md",
+        "winter-motionsites-prompts/prompts/Synapse_Dark_Hero.md",
+        "winter-motionsites-prompts/prompts/Sync_AI.md",
+        "winter-motionsites-prompts/prompts/Targo_Logistics_Hero.md",
+        "winter-motionsites-prompts/prompts/Taskly.md",
+        "winter-motionsites-prompts/prompts/Taskora_SaaS_Hero.md",
+        "winter-motionsites-prompts/prompts/Terra_Geo_Map.md",
+        "winter-motionsites-prompts/prompts/Transform_Data.md",
+        "winter-motionsites-prompts/prompts/vaultshield.md",
+        "winter-motionsites-prompts/prompts/Velorah.md",
+        "winter-motionsites-prompts/prompts/vex-ventures-hero.md",
+        "winter-motionsites-prompts/prompts/Viktor_Portfolio.md",
+        "winter-motionsites-prompts/prompts/visual-hero.md",
+        "winter-motionsites-prompts/prompts/vize-footer.md",
+        "winter-motionsites-prompts/prompts/wanderful-hero.md",
+        "winter-motionsites-prompts/prompts/Wealth_Video_Hero.md",
+        "winter-motionsites-prompts/prompts/Web3_EOS_Hero.md",
+        "winter-motionsites-prompts/prompts/Weblex_Dark_Hero.md",
+        "winter-motionsites-prompts/prompts/xPortfolio_Hero.md"
+      ],
+      "prompts": 109,
+      "chars": {
+        "median": 4612,
+        "p90": 9573,
+        "min": 267,
+        "max": 19682
+      },
+      "signalsPct": {
+        "tailwind": 79,
+        "react": 85,
+        "plainHtml": 18,
+        "videoBackdrop": 83,
+        "lucide": 60,
+        "glass": 57,
+        "liquidGlass": 31,
+        "stagger": 31,
+        "webgl3d": 3,
+        "gsap": 4,
+        "framerMotion": 39,
+        "reducedMotion": 1,
+        "ariaOrAlt": 4,
+        "cursorInteraction": 3,
+        "typewriter": 2,
+        "marqueeTicker": 15,
+        "cssMask": 28,
+        "videoSwitcher": 4,
+        "wordReveal": 10,
+        "countUp": 7,
+        "parallax": 8,
+        "canvas2d": 5,
+        "darkMode": 52,
+        "negativeScope": 8,
+        "exactAssets": 3,
+        "exactDom": 2,
+        "acceptanceCheck": 2,
+        "backstop": 3
+      },
+      "fonts": [
+        {
+          "font": "Inter",
+          "pct": 20
+        },
+        {
+          "font": "Instrument Serif",
+          "pct": 19
+        },
+        {
+          "font": "Barlow",
+          "pct": 7
+        },
+        {
+          "font": "Anton",
+          "pct": 2
+        },
+        {
+          "font": "Segoe UI",
+          "pct": 2
+        },
+        {
+          "font": "Space Grotesk",
+          "pct": 2
+        },
+        {
+          "font": "JetBrains Mono",
+          "pct": 2
+        },
+        {
+          "font": "Geist",
+          "pct": 2
+        },
+        {
+          "font": "Kanit",
+          "pct": 1
+        },
+        {
+          "font": "Neue Haas Grotesk Text Pro",
+          "pct": 1
+        },
+        {
+          "font": "Neue Haas Grotesk Display Pro ",
+          "pct": 1
+        },
+        {
+          "font": "PP Mondwest",
+          "pct": 1
+        },
+        {
+          "font": "Orbitron",
+          "pct": 1
+        },
+        {
+          "font": "Outfit",
+          "pct": 1
+        },
+        {
+          "font": "Instrument Sans",
+          "pct": 1
+        }
+      ],
+      "recipeEvidence": {
+        "liquidGlass": {
+          "prompts": 34,
+          "medianDurationS": 0.8,
+          "p25DurationS": 0.4,
+          "p75DurationS": 1.1,
+          "medianBlurPx": 4,
+          "medianStaggerS": 0.1,
+          "medianScale": 1.03,
+          "samples": 73
+        },
+        "wordReveal": {
+          "prompts": 8,
+          "medianDurationS": 0.6,
+          "p25DurationS": 0.1,
+          "p75DurationS": 0.8,
+          "medianBlurPx": 5,
+          "medianStaggerS": 0.1,
+          "medianScale": null,
+          "samples": 14
+        },
+        "videoSwitcher": {
+          "prompts": 4,
+          "medianDurationS": 0.5,
+          "p25DurationS": 0.5,
+          "p75DurationS": 0.55,
+          "medianBlurPx": 50,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 5
+        },
+        "cssMask": {
+          "prompts": 4,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "typewriter": {
+          "prompts": 2,
+          "medianDurationS": 0.4,
+          "p25DurationS": 0.06,
+          "p75DurationS": 0.4,
+          "medianBlurPx": 4,
+          "medianStaggerS": null,
+          "medianScale": 0.95,
+          "samples": 9
+        },
+        "marqueeTicker": {
+          "prompts": 15,
+          "medianDurationS": 20,
+          "p25DurationS": 20,
+          "p75DurationS": 20,
+          "medianBlurPx": 4,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 24
+        },
+        "cursorInteraction": {
+          "prompts": 19,
+          "medianDurationS": 0.6,
+          "p25DurationS": 0.3,
+          "p75DurationS": 0.8,
+          "medianBlurPx": 4,
+          "medianStaggerS": null,
+          "medianScale": 1.02,
+          "samples": 21
+        },
+        "stagger": {
+          "prompts": 34,
+          "medianDurationS": 0.4,
+          "p25DurationS": 0.15,
+          "p75DurationS": 0.6,
+          "medianBlurPx": 5,
+          "medianStaggerS": 0.1,
+          "medianScale": null,
+          "samples": 86
+        },
+        "fadeUp": {
+          "prompts": 56,
+          "medianDurationS": 0.6,
+          "p25DurationS": 0.35,
+          "p75DurationS": 0.8,
+          "medianBlurPx": 5,
+          "medianStaggerS": 0.1,
+          "medianScale": 0.96,
+          "samples": 481
+        },
+        "scrollStage": {
+          "prompts": 1,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "loopCarousel": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        }
+      }
+    },
+    {
+      "name": "ajouts-manuels",
+      "label": "prompts added by the user",
+      "files": [
+        "ajouts-manuels/driftbar-meadow-footer.md",
+        "ajouts-manuels/ethan-vale-wildlife-archive.md",
+        "ajouts-manuels/mostar-city.md",
+        "ajouts-manuels/planet-jumping-portal.md"
+      ],
+      "prompts": 4,
+      "chars": {
+        "median": 23850,
+        "p90": 27475,
+        "min": 11141,
+        "max": 27475
+      },
+      "signalsPct": {
+        "tailwind": 0,
+        "react": 0,
+        "plainHtml": 75,
+        "videoBackdrop": 75,
+        "lucide": 0,
+        "glass": 100,
+        "liquidGlass": 0,
+        "stagger": 25,
+        "webgl3d": 0,
+        "gsap": 0,
+        "framerMotion": 0,
+        "reducedMotion": 75,
+        "ariaOrAlt": 100,
+        "cursorInteraction": 50,
+        "typewriter": 0,
+        "marqueeTicker": 0,
+        "cssMask": 0,
+        "videoSwitcher": 0,
+        "wordReveal": 0,
+        "countUp": 75,
+        "parallax": 50,
+        "canvas2d": 75,
+        "darkMode": 75,
+        "negativeScope": 75,
+        "exactAssets": 100,
+        "exactDom": 100,
+        "acceptanceCheck": 75,
+        "backstop": 50
+      },
+      "fonts": [
+        {
+          "font": "Inter",
+          "pct": 50
+        },
+        {
+          "font": "Playfair Display",
+          "pct": 25
+        },
+        {
+          "font": "Times New Roman",
+          "pct": 25
+        },
+        {
+          "font": "Segoe UI",
+          "pct": 25
+        },
+        {
+          "font": "Arial Narrow",
+          "pct": 25
+        }
+      ],
+      "recipeEvidence": {
+        "liquidGlass": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "wordReveal": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "videoSwitcher": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "cssMask": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "typewriter": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "marqueeTicker": {
+          "prompts": 0,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "cursorInteraction": {
+          "prompts": 3,
+          "medianDurationS": 2,
+          "p25DurationS": 2,
+          "p75DurationS": 3,
+          "medianBlurPx": 7,
+          "medianStaggerS": null,
+          "medianScale": 1.16,
+          "samples": 24
+        },
+        "stagger": {
+          "prompts": 1,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "fadeUp": {
+          "prompts": 3,
+          "medianDurationS": 3,
+          "p25DurationS": 2,
+          "p75DurationS": 9,
+          "medianBlurPx": 8,
+          "medianStaggerS": null,
+          "medianScale": 0.86,
+          "samples": 36
+        },
+        "scrollStage": {
+          "prompts": 1,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        },
+        "loopCarousel": {
+          "prompts": 1,
+          "medianDurationS": null,
+          "p25DurationS": null,
+          "p75DurationS": null,
+          "medianBlurPx": null,
+          "medianStaggerS": null,
+          "medianScale": null,
+          "samples": 0
+        }
+      }
+    }
+  ],
+  "combined": {
+    "prompts": 185,
+    "chars": {
+      "median": 6053,
+      "p90": 17133,
+      "min": 267,
+      "max": 52286
+    },
+    "signalsPct": {
+      "tailwind": 72,
+      "react": 77,
+      "plainHtml": 32,
+      "videoBackdrop": 83,
+      "lucide": 55,
+      "glass": 61,
+      "liquidGlass": 24,
+      "stagger": 39,
+      "webgl3d": 3,
+      "gsap": 4,
+      "framerMotion": 29,
+      "reducedMotion": 16,
+      "ariaOrAlt": 20,
+      "cursorInteraction": 8,
+      "typewriter": 3,
+      "marqueeTicker": 14,
+      "cssMask": 25,
+      "videoSwitcher": 6,
+      "wordReveal": 8,
+      "countUp": 9,
+      "parallax": 10,
+      "canvas2d": 12,
+      "darkMode": 54,
+      "negativeScope": 22,
+      "exactAssets": 15,
+      "exactDom": 8,
+      "acceptanceCheck": 7,
+      "backstop": 12
+    },
+    "fonts": [
+      {
+        "font": "Inter",
+        "pct": 25
+      },
+      {
+        "font": "Instrument Serif",
+        "pct": 15
+      },
+      {
+        "font": "Barlow",
+        "pct": 4
+      },
+      {
+        "font": "Segoe UI",
+        "pct": 3
+      },
+      {
+        "font": "JetBrains Mono",
+        "pct": 3
+      },
+      {
+        "font": "Geist",
+        "pct": 3
+      },
+      {
+        "font": "Poppins",
+        "pct": 2
+      },
+      {
+        "font": "Playfair Display",
+        "pct": 2
+      },
+      {
+        "font": "Anton",
+        "pct": 2
+      },
+      {
+        "font": "Times New Roman",
+        "pct": 2
+      },
+      {
+        "font": "Condiment",
+        "pct": 1
+      },
+      {
+        "font": "Cantarell",
+        "pct": 1
+      },
+      {
+        "font": "Kanit",
+        "pct": 1
+      },
+      {
+        "font": "Orbitron",
+        "pct": 1
+      },
+      {
+        "font": "Arial Narrow",
+        "pct": 1
+      }
+    ],
+    "recipeEvidence": {
+      "liquidGlass": {
+        "prompts": 45,
+        "medianDurationS": 0.8,
+        "p25DurationS": 0.35,
+        "p75DurationS": 1.1,
+        "medianBlurPx": 4,
+        "medianStaggerS": 0.1,
+        "medianScale": 1.03,
+        "samples": 130
+      },
+      "wordReveal": {
+        "prompts": 11,
+        "medianDurationS": 0.8,
+        "p25DurationS": 0.1,
+        "p75DurationS": 0.8,
+        "medianBlurPx": 10,
+        "medianStaggerS": 0.1,
+        "medianScale": 1.5,
+        "samples": 16
+      },
+      "videoSwitcher": {
+        "prompts": 11,
+        "medianDurationS": 0.55,
+        "p25DurationS": 0.5,
+        "p75DurationS": 0.7,
+        "medianBlurPx": 50,
+        "medianStaggerS": null,
+        "medianScale": null,
+        "samples": 20
+      },
+      "cssMask": {
+        "prompts": 9,
+        "medianDurationS": null,
+        "p25DurationS": null,
+        "p75DurationS": null,
+        "medianBlurPx": null,
+        "medianStaggerS": null,
+        "medianScale": 1.18,
+        "samples": 0
+      },
+      "typewriter": {
+        "prompts": 5,
+        "medianDurationS": 0.4,
+        "p25DurationS": 0.06,
+        "p75DurationS": 0.6,
+        "medianBlurPx": 4,
+        "medianStaggerS": null,
+        "medianScale": 0.95,
+        "samples": 17
+      },
+      "marqueeTicker": {
+        "prompts": 23,
+        "medianDurationS": 10,
+        "p25DurationS": 0.8,
+        "p75DurationS": 20,
+        "medianBlurPx": 4,
+        "medianStaggerS": 0.1,
+        "medianScale": null,
+        "samples": 60
+      },
+      "cursorInteraction": {
+        "prompts": 43,
+        "medianDurationS": 1,
+        "p25DurationS": 0.4,
+        "p75DurationS": 2,
+        "medianBlurPx": 4,
+        "medianStaggerS": null,
+        "medianScale": 1.16,
+        "samples": 62
+      },
+      "stagger": {
+        "prompts": 72,
+        "medianDurationS": 0.6,
+        "p25DurationS": 0.2,
+        "p75DurationS": 1.2,
+        "medianBlurPx": 8,
+        "medianStaggerS": 0.085,
+        "medianScale": 0.9,
+        "samples": 317
+      },
+      "fadeUp": {
+        "prompts": 106,
+        "medianDurationS": 0.62,
+        "p25DurationS": 0.4,
+        "p75DurationS": 0.9,
+        "medianBlurPx": 7,
+        "medianStaggerS": 0.1,
+        "medianScale": 0.96,
+        "samples": 1289
+      },
+      "scrollStage": {
+        "prompts": 3,
+        "medianDurationS": null,
+        "p25DurationS": null,
+        "p75DurationS": null,
+        "medianBlurPx": null,
+        "medianStaggerS": null,
+        "medianScale": null,
+        "samples": 0
+      },
+      "loopCarousel": {
+        "prompts": 1,
+        "medianDurationS": null,
+        "p25DurationS": null,
+        "p75DurationS": null,
+        "medianBlurPx": null,
+        "medianStaggerS": null,
+        "medianScale": null,
+        "samples": 0
+      }
+    },
+    "byStack": {
+      "vanilla": {
+        "prompts": 20,
+        "chars": {
+          "median": 20393,
+          "p90": 31685,
+          "min": 438,
+          "max": 52286
+        },
+        "signalsPct": {
+          "tailwind": 5,
+          "react": 0,
+          "plainHtml": 100,
+          "videoBackdrop": 80,
+          "lucide": 0,
+          "glass": 70,
+          "liquidGlass": 5,
+          "stagger": 25,
+          "webgl3d": 5,
+          "gsap": 0,
+          "framerMotion": 0,
+          "reducedMotion": 75,
+          "ariaOrAlt": 90,
+          "cursorInteraction": 10,
+          "typewriter": 0,
+          "marqueeTicker": 0,
+          "cssMask": 20,
+          "videoSwitcher": 10,
+          "wordReveal": 5,
+          "countUp": 15,
+          "parallax": 5,
+          "canvas2d": 30,
+          "darkMode": 50,
+          "negativeScope": 70,
+          "exactAssets": 65,
+          "exactDom": 55,
+          "acceptanceCheck": 35,
+          "backstop": 55
+        }
+      },
+      "react": {
+        "prompts": 103,
+        "chars": {
+          "median": 5597,
+          "p90": 12120,
+          "min": 267,
+          "max": 36297
+        },
+        "signalsPct": {
+          "tailwind": 89,
+          "react": 100,
+          "plainHtml": 0,
+          "videoBackdrop": 83,
+          "lucide": 65,
+          "glass": 61,
+          "liquidGlass": 24,
+          "stagger": 36,
+          "webgl3d": 3,
+          "gsap": 4,
+          "framerMotion": 41,
+          "reducedMotion": 4,
+          "ariaOrAlt": 6,
+          "cursorInteraction": 6,
+          "typewriter": 2,
+          "marqueeTicker": 18,
+          "cssMask": 25,
+          "videoSwitcher": 4,
+          "wordReveal": 9,
+          "countUp": 7,
+          "parallax": 10,
+          "canvas2d": 6,
+          "darkMode": 59,
+          "negativeScope": 13,
+          "exactAssets": 7,
+          "exactDom": 1,
+          "acceptanceCheck": 1,
+          "backstop": 5
+        }
+      }
+    },
+    "categories": [
+      [
+        "winter-motionsites-prompts/hero section",
+        24
+      ],
+      [
+        "awesome-web-prompts/sections/hero",
+        21
+      ],
+      [
+        "winter-motionsites-prompts/saas",
+        21
+      ],
+      [
+        "winter-motionsites-prompts/landing page",
+        20
+      ],
+      [
+        "winter-motionsites-prompts/agency",
+        9
+      ],
+      [
+        "awesome-web-prompts/pages/landing-page",
+        8
+      ],
+      [
+        "winter-motionsites-prompts/hero",
+        7
+      ],
+      [
+        "awesome-web-prompts/pages/portfolio",
+        5
+      ],
+      [
+        "winter-motionsites-prompts/portfolio",
+        5
+      ],
+      [
+        "awesome-web-prompts/pages/404",
+        4
+      ],
+      [
+        "winter-motionsites-prompts/footer section",
+        4
+      ],
+      [
+        "ajouts-manuels/manual",
+        4
+      ],
+      [
+        "awesome-web-prompts/pages/ai",
+        3
+      ],
+      [
+        "awesome-web-prompts/sections/footer",
+        3
+      ],
+      [
+        "awesome-web-prompts/components/components",
+        2
+      ],
+      [
+        "awesome-web-prompts/pages/agency",
+        2
+      ],
+      [
+        "awesome-web-prompts/pages/auth",
+        2
+      ],
+      [
+        "awesome-web-prompts/pages/technology",
+        2
+      ],
+      [
+        "winter-motionsites-prompts/web3",
+        2
+      ],
+      [
+        "awesome-web-prompts/pages/3d",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/app",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/art",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/automotive",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/creative",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/cybersecurity",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/data-intelligence",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/ecommerce",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/editorial",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/environmental",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/fintech",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/manufacturing",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/motion",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/photography",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/saas",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/space",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/supply",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/travel",
+        1
+      ],
+      [
+        "awesome-web-prompts/pages/website",
+        1
+      ],
+      [
+        "awesome-web-prompts/sections/contact",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/3d website",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/404",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/ai",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/ai / saas",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/signup",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/blog",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/email marketing",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/cta",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/features section",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/investor presentations",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/component",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/features",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/website",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/automotive",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/waitlist",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/travel",
+        1
+      ],
+      [
+        "winter-motionsites-prompts/fintech",
+        1
+      ]
+    ],
+    "tags": [
+      [
+        "Hero",
+        29
+      ],
+      [
+        "Video Background",
+        18
+      ],
+      [
+        "Landing Page",
+        15
+      ],
+      [
+        "Portfolio",
+        9
+      ],
+      [
+        "Liquid Glass",
+        8
+      ],
+      [
+        "Responsive",
+        7
+      ],
+      [
+        "Dark Mode",
+        7
+      ],
+      [
+        "Keyframes Animation",
+        5
+      ],
+      [
+        "404",
+        4
+      ],
+      [
+        "Full Viewport",
+        4
+      ],
+      [
+        "Single Viewport",
+        4
+      ],
+      [
+        "Self-contained",
+        4
+      ],
+      [
+        "Glassmorphism",
+        4
+      ],
+      [
+        "SaaS",
+        4
+      ],
+      [
+        "Framer Motion",
+        3
+      ],
+      [
+        "3D",
+        3
+      ],
+      [
+        "Agency",
+        3
+      ],
+      [
+        "AI",
+        3
+      ],
+      [
+        "Footer",
+        3
+      ],
+      [
+        "Component",
+        2
+      ],
+      [
+        "Space",
+        2
+      ],
+      [
+        "Video Scrubbing",
+        2
+      ],
+      [
+        "Pixel Perfect",
+        2
+      ],
+      [
+        "Museum",
+        2
+      ],
+      [
+        "WAAPI",
+        2
+      ],
+      [
+        "Auth",
+        2
+      ],
+      [
+        "Marquee",
+        2
+      ],
+      [
+        "Cybersecurity",
+        2
+      ],
+      [
+        "Cinematic",
+        2
+      ],
+      [
+        "Typography",
+        2
+      ]
+    ],
+    "byCategory": {
+      "404": [
+        "Locked 100vh cloud hosting error page with looping video background, liquid glass button, and glowing 404 text",
+        "Dynamically scaled giant background text + handcrafted staggered drawer menu, bright children's brand 404",
+        "Locked 100vh viewport + layered spaceship background + slow float animation, sci-fi error page",
+        "Minimalist precision 404 error page with full-viewport 100% opacity video background, pixel SVG logo, and gradient 404 numerals",
+        "Nexto 404"
+      ],
+      "hero": [
+        "Slow rotating aura + infinite ticker ruler + expandable hover cards; health data dashboard hero",
+        "Full-screen video bg + three-line impact headline + stat counters; creative agency landing",
+        "Mouse-scrub video interaction + spring-animated multi-select pills; cybernetic contact hero",
+        "Bouncy overshoot word pop animation + responsive 3-panel footer image parallax, cozy pet store hero",
+        "3-video crossfade switcher + precise responsive typography; personal creative hero",
+        "Cinematic deep ocean video background + responsive collapsible nav + staggered fade-up text animations; Foldcraft studio hero",
+        "Giant typography mixed with inline pill visual elements + deep masked video, minimalist glassmorphic medical hero",
+        "Cursor-following spotlight reveals a second image; dark geology brand hero",
+        "Scroll-scrubbed background video + GSAP parallax glass panel; luxury experience hero",
+        "Cinematic microscopic background + precise liquid glass button; nature aesthetic hero",
+        "CSS Mask bottom blur fade + Liquid Glass + 10-level staggered entrance, cinematic full-screen hero",
+        "Mouse-scrub interactive video background + custom typewriter effect; retro-futurist agency hero",
+        "Giant staggered typography + floating stats + background video; data security SaaS hero",
+        "4-video switcher + Liquid Glass UI + floating PNG overlay; mindfulness app fullscreen hero",
+        "Minimal black-and-white video hero + Framer Motion animations + plain CSS; neuro-tech brand",
+        "Responsive fullscreen hero section for a password manager app, featuring a background video, Framer Motion animations, and a custom SVG logo",
+        "Minimalist venture hero page; raw video background + precise native staggered animations",
+        "Tile split entrance + cursor spotlight reveal; pure HTML/CSS/JS creative studio hero",
+        "High-end Liquid Glass borders + responsive hover-triggered dropdown menu + smooth sliding mobile drawer, flowpath wellness SaaS hero",
+        "Word-by-word reveal typography + asymmetric grid footer with auto-carousel, minimalist wellness supplement hero",
+        "5-layer Z-index architecture + Canvas dynamic spotlight video mask, cinematic dark mode wearable hero",
+        "AI Workflow Hero",
+        "Cybersecurity Hero",
+        "Equilibrium",
+        "Prosthetics Hero",
+        "Retro-Futurist",
+        "VaultShield",
+        "Visual Hero"
+      ],
+      "hero section": [
+        "Aethera Studio",
+        "Aetheris Voyage",
+        "Asme",
+        "Automation Machines",
+        "Bloom AI",
+        "Celestia",
+        "DesignPro Academy",
+        "Digital Epoch",
+        "Dot",
+        "Duolingo Styleguide",
+        "EVR Ventures",
+        "Luminex",
+        "Nexus IT Solutions",
+        "Portal",
+        "Power AI",
+        "Railroad.ai",
+        "RIVR",
+        "Sentinel AI",
+        "Stellar AI",
+        "Sync AI",
+        "Taskly",
+        "Transform Data",
+        "VEX Ventures",
+        "xPortfolio Hero"
+      ],
+      "saas": [
+        "Single-file zero-dependency SaaS marketing stage, responsive dual CloudFront video backgrounds, LED dot matrix font generator, and three 429x554 glass metric cards",
+        "Apex SaaS",
+        "Bionova Biotech",
+        "ClearInvoice SaaS Hero",
+        "SAAS Software",
+        "Datacore Booking",
+        "Datacore SaaS Hero",
+        "Digitwist AI Builder",
+        "Finlytic AI Agent",
+        "Grow AI Talent Platform",
+        "HR SaaS Hero",
+        "Mindloop",
+        "Neuralyn",
+        "Nexora Automation",
+        "Nickel Payments",
+        "Planet Orbit",
+        "Price Calculator",
+        "Securify Data Security",
+        "Synapse Dark Hero",
+        "Targo Logistics Hero",
+        "Taskora SaaS Hero",
+        "Terra Geo Map"
+      ],
+      "landing page": [
+        "AI Designer Agency",
+        "AI Designer Portfolio",
+        "AKOR Security",
+        "ClubX Investors",
+        "CodeNest Coding Platform",
+        "E-commerce Website",
+        "Email Landing Page",
+        "USD Halo",
+        "Innovation",
+        "Liquid Glass Agency",
+        "Mindloop Landing",
+        "Mythic Naturecore",
+        "NeoVision",
+        "NOVA Space Systems",
+        "Orbis NFT",
+        "Liquid Glass Agency",
+        "Prisma Creative Studio",
+        "SkyElite Private Jets",
+        "Space Voyage",
+        "Weblex Dark Hero"
+      ],
+      "agency": [
+        "Single-page creative studio footer with lavender character video background, pointer gaze scrubbing interaction, and 3-column minimalist layout",
+        "Minimalist fullscreen creative studio talent showcase featuring seamlessly transitioning background portraits, subtle gradients, and pure CSS interactions.",
+        "Buzzentic Agency",
+        "Creative Studio",
+        "Framelix 3D Studios",
+        "Glassmorphism Agency Hero",
+        "Logoisum Video Agency",
+        "Modern Agency",
+        "New Era Bold Hero",
+        "Orbit Engineers",
+        "Velorah"
+      ],
+      "portfolio": [
+        "3D creator portfolio with magnetic hover, infinite marquee, and sticky stacking cards",
+        "Pixel-perfect full-viewport portfolio landing page for Digital Director Adam Roberts with basis33 bitmap font, background video, and award chips",
+        "SOSCALE gold standard full-viewport hero landing page featuring SVG evenodd text cutout video mask, rigid 1280 --u scaling system, focal-point video positioning algorithm, and Web Animations API choreographed entrance",
+        "PARALLAX full-viewport portfolio landing page featuring 1280x800 dual scale system (--sc / --u), 12 precision SVG arc ring lines, choreographed WAAPI entrance timeline, and responsive micro-interactions",
+        "Premium dark portfolio with HLS background and complex GSAP scroll parallax",
+        "3D Jack Portfolio",
+        "Bold Portfolio Hero",
+        "Dark Portfolio Hero",
+        "Portfolio Cosmic",
+        "Viktor Portfolio"
+      ],
+      "landing-page": [
+        "Scroll-driven video frame scrubbing + particle system + card reveal; immersive 3D framework marketing page",
+        "Mouse-trail GIF particles + parallax image + auto-scrolling testimonial carousel; designer portfolio landing",
+        "Masked cards mosaic effect + staggered reveals; single-page dental medical landing page",
+        "Advanced liquid glass + vanilla JS seamless video crossfade to black; 5-section enterprise landing page",
+        "Advanced liquid glass effect + global texture overlay + deep space video grid, dark mode NFT landing page",
+        "Cinematic dark mode + SVG noise background + words pull-up animation; 3-section creative studio landing page",
+        "Premium private jet landing page with video background and overlapping typography",
+        "Fintech stablecoin landing page, rounded video Hero + brand font marquee"
+      ],
+      "ai": [
+        "Single-file dependency-free pure black single-viewport AI landing page with liquid metal navigation pills, Instrument Serif typography, and responsive stats footer.",
+        "Single-viewport immersive video background AI landing page featuring retro dot-matrix typography and animated stat counters.",
+        "Self-contained single-viewport AI app builder Fastshot landing page with dawn video background, pixel-precise composer card, and 3-tier responsive architecture.",
+        "AI Image Generator UI"
+      ],
+      "footer section": [
+        "HAUL!",
+        "Kresna Footer",
+        "Lumina",
+        "Vize Footer"
+      ],
+      "manual": [
+        "Prompt: Recreate the Driftbar Meadow Footer (exact spec)",
+        "PROMPT — Recreate \"Mostar city\" cinematic scroll page exactly",
+        "Build: \"Planet Jumping\" — single-page immersive space portal experience"
+      ],
+      "footer": [
+        "Single-file zero-dependency elegant teal ink landscape full-viewport footer, Cormorant Garamond wordmark, and 5 responsive breakpoints",
+        "Dark mode CTA + premium footer with staggered fade-up animations and responsive flush SVG brand text",
+        "Meridian single-screen vintage engraved illustration full-viewport footer featuring dark green viaduct & stagecoach looping video, multiply blend mode paper integration, Fraunces serif wordmark, compass SVG mark, and responsive nav grid"
+      ],
+      "components": [
+        "3D horizontal cylinder card carousel with mouse parallax tilt, volumetric thickness layers, and dual-face flip",
+        "Wheel and touch-driven immersive scroll-expanding media hero with smooth video/image expansion, text blend parallax, and dual-mode toggle"
+      ],
+      "auth": [
+        "Split-screen layout + unmasked pure video hero + staggered entrance animations, minimalist B&W sign up",
+        "Self-contained dependency-free single HTML/CSS/JS login page with diving peregrine falcon video hero, pixel-calibrated 3-mode responsive engine, and WAAPI entrance timeline."
+      ],
+      "automotive": [
+        "Interactive electric concept car landing page featuring 1672:941 shared image plane, multi-video off-DOM canvas decoding, and paint/wheel appearance dock",
+        "New Era Automotive Hero"
+      ],
+      "fintech": [
+        "Dark competition-style mobile mockup with 3D globe video + layered countdown bar",
+        "Wealth Video Hero"
+      ],
+      "technology": [
+        "Self-contained full-viewport cyberpunk hero section featuring cursor spotlight dual-image reveal, word-pull-up typography, and 6-tier responsive architecture.",
+        "A full-viewport dark hero landing page for a technology brand, featuring a right-aligned signup form and a cinematic background video."
+      ],
+      "travel": [
+        "Full-viewport AI travel hero page for Wandor with video background, frosted glass prompt card, and Special Elite branding",
+        "Wanderful Hero"
+      ],
+      "website": [
+        "Immersive Natural History Museum (NHM) multi-section website featuring SVG polygon letter entrance, SVG filter sand-dissolve chapter transitions, and dark/light section flow.",
+        "Neo Museum"
+      ],
+      "web3": [
+        "Orbit Web3",
+        "Web3 EOS Hero"
+      ],
+      "3d": [
+        "Single-file zero-dependency immersive space hero with seamless 3-planet video switching, --u reference unit scaling, and interactive planet cut-outs"
+      ],
+      "app": [
+        "Calm and ADHD-friendly planner app Drift landing page with fullscreen video hero, warm cream About section, and sticky scroll-linked feature cards."
+      ],
+      "art": [
+        "ATRIUM MTL Montreal brutalist architecture and photography archive full-viewport hero featuring floating white header card, oversized typography text-mask reveal, 6-column staggered seamless infinite mosaic marquee, and choreographed WAAPI handoff"
+      ],
+      "creative": [
+        "A highly creative landing page featuring stacked 3D text effects, scroll-driven typography animations, and an infinite marquee."
+      ],
+      "cybersecurity": [
+        "Self-contained single-viewport cybersecurity dark landing page with dual color-graded LUT video background, Space Grotesk typography, and choreographed WAAPI entrance timeline."
+      ],
+      "data-intelligence": [
+        "Deep space nebula video background + glassmorphic revenue growth card + pure CSS bar grow animation, Apogee data intelligence hero landing page"
+      ],
+      "ecommerce": [
+        "Single-file zero-dependency e-commerce SaaS hero with 1172x657 scaled canvas, 37-card 3D perspective cylinder ring, and bottom-glow buttons"
+      ],
+      "editorial": [
+        "Cinematic scroll-driven video storytelling website with WebCodecs + MP4Box frame-bank decoding for smooth scrubbing, Helvetica Neue ME typography, and a 500vh narrative scroll track."
+      ],
+      "environmental": [
+        "Single-file zero-dependency ocean conservation nonprofit hero, aerial reef video card, image-filled headline highlight, and frosted glass nav sheet"
+      ],
+      "manufacturing": [
+        "Single-file zero-dependency industrial cable protection landing page featuring All-Intra video scroll-scrubbing and multi-scene spec card linkage"
+      ],
+      "motion": [
+        "Single-file zero-dependency digital security hero featuring --u reference unit scaling, WAAPI entrance choreography, and aspect-ratio driven responsive geometry"
+      ],
+      "photography": [
+        "Wildlife photography archive with Fibonacci photo sphere, 16vh scroll dolly, FLIP lightbox, flat grid, fullscreen menu, and custom cursor"
+      ],
+      "space": [
+        "Orbit space product full-viewport hero landing page featuring a rigid 1563×1006 --u scaling system, ringed planet vector SVG, 9s looping nebula video, dual-line text mask reveal, and a 1.7s choreographed entrance timeline"
+      ],
+      "supply": [
+        "Logistics Freight modern supply chain full-viewport hero landing page featuring aerial freight train video background, @font-face font-metric overrides, train-axis mirrored dual feature layout, and 1.8s single entrance animation"
+      ],
+      "contact": [
+        "Full-screen video background + physical card layout + service tags multi-select + submit success state transition"
+      ],
+      "3d website": [
+        "3D Collectible Hero"
+      ],
+      "ai / saas": [
+        "AI Automation Hero"
+      ],
+      "signup": [
+        "Aurora Onboard"
+      ],
+      "blog": [
+        "Blog Showcase"
+      ],
+      "email marketing": [
+        "Email Marketing"
+      ],
+      "cta": [
+        "FAQ CTA"
+      ],
+      "features section": [
+        "Glow Features"
+      ],
+      "investor presentations": [
+        "Investor Deck"
+      ],
+      "component": [
+        "Loader Animation"
+      ],
+      "features": [
+        "Max Reed Portfolio"
+      ],
+      "waitlist": [
+        "No-Code Waitlist"
+      ]
+    }
+  }
+}
