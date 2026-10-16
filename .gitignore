@@ -10,3 +10,7 @@ graphify-out/
 native-host/keys-osi-host.bat
 native-host/keys-osi-host.sh
 native-host/com.keysosi.host.json
+
+# Prompt corpora without a clear license: kept local (see corpus/README.md)
+corpus/winter-motionsites-prompts/
+corpus/ajouts-manuels/
