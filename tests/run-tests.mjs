@@ -1204,5 +1204,7 @@ await import("./brand-kit-tests.mjs");
 await import("./platform-exports-tests.mjs");
 await import("./responsive-tests.mjs");
 await import("./code-clone-tests.mjs");
+await import("./prompt-export-tests.mjs");
+await import("./har-prompts-tests.mjs");
 
 console.log("All tests passed.");

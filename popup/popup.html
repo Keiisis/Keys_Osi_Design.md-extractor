@@ -31,6 +31,7 @@
       <button type="button" class="view-tab" data-view="site">Site</button>
       <button type="button" class="view-tab" data-view="assets">Assets</button>
       <button type="button" class="view-tab" data-view="models">3D <span id="modelBadge" class="tab-badge" hidden></span></button>
+      <button type="button" class="view-tab" data-view="prompts">Prompts <span id="promptBadge" class="tab-badge" hidden></span></button>
       <button type="button" class="view-tab" data-view="board"><span class="view-tab__long">Moodboard</span><span class="view-tab__short">Board</span> <span id="boardBadge" class="tab-badge" hidden></span></button>
     </nav>
 
@@ -218,9 +219,39 @@
           </select>
           <input id="netMinKb" class="field field--narrow" type="number" min="0" placeholder="min Ko" />
           <label class="switch"><input type="checkbox" id="netFlagged" /><span>Marqués</span></label>
+          <label class="switch" title="Intercepte fetch/XHR dans la page pour enregistrer les corps des requêtes POST (non re-téléchargeables par URL)"><input type="checkbox" id="netBodies" /><span>Capturer les corps</span></label>
         </div>
         <ul id="netList" class="net-list"></ul>
       </details>
+    </section>
+
+    <!-- ===================== PROMPTS ===================== -->
+    <section id="viewPrompts" class="view" hidden>
+      <div class="toolbar">
+        <strong id="promptCount" class="toolbar__title">0 prompt</strong>
+        <button id="promptScanBtn" type="button" class="btn btn--line">Extraire la page</button>
+        <button id="promptDeepBtn" type="button" class="btn btn--line" title="Fait défiler toute la page pour charger le contenu différé, puis extrait">Scan profond</button>
+        <button id="promptPickBtn" type="button" class="btn btn--line" title="Désigne un bloc de la page pour n'extraire que lui (Échap pour annuler)">Choisir un bloc</button>
+        <button id="promptImportHarBtn" type="button" class="btn btn--line" title="Importer un fichier HAR, XHR ou JSON pour en extraire les prompts AI (endpoints connus + détection par contenu sur vos propres API)">HAR / XHR</button>
+        <input id="promptHarFile" type="file" accept=".har,.json,.txt" hidden />
+        <button id="promptClearBtn" type="button" class="btn btn--quiet">Vider</button>
+      </div>
+      <div class="option-row">
+        <label class="switch"><input type="checkbox" id="promptOnlyHigh" /><span>Prompts probables seulement</span></label>
+        <label class="switch"><input type="checkbox" id="promptLive" /><span>Live : re-scan auto (2 s)</span></label>
+        <label class="switch"><input type="checkbox" id="promptNetCapture" /><span>Capture réseau (fetch/XHR)</span></label>
+        <span id="promptVersion" class="net-sub"></span>
+        <button id="promptReloadBtn" type="button" class="btn btn--quiet">Recharger l'extension</button>
+      </div>
+      <p id="promptStatus" class="pane-status" hidden></p>
+      <ul id="promptList" class="model-list"></ul>
+      <div class="toolbar">
+        <button id="promptCopyAllBtn" type="button" class="btn btn--line" disabled>Copier tout</button>
+        <button id="promptExportTxt" type="button" class="btn btn--quiet" disabled>.txt</button>
+        <button id="promptExportMd" type="button" class="btn btn--quiet" disabled>.md</button>
+        <button id="promptExportJson" type="button" class="btn btn--quiet" disabled>.json</button>
+        <button id="promptExportCsv" type="button" class="btn btn--quiet" disabled>.csv</button>
+      </div>
     </section>
 
     <!-- ===================== DESIGN SYSTEM ===================== -->

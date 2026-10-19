@@ -8,6 +8,7 @@ import { mountModelViewer } from "./model-viewer.js";
 import { createBoardView } from "./insight.js";
 import { importFigFile, importFigmaClipboard } from "../lib/figma-offline.mjs";
 import { describeChange } from "../lib/responsive.mjs";
+import { parseHarPrompts, parseXhrPrompts } from "../lib/har-prompts.mjs";
 
 const $ = (id) => document.getElementById(id);
 
@@ -81,7 +82,7 @@ function download(url, filename) {
 
 export function initViews({ getNormalized, setNormalized, getSource, setSource }) {
   const tabs = Array.from(document.querySelectorAll(".view-tab"));
-  const views = { design: $("viewDesign"), site: $("viewSite"), assets: $("viewAssets"), models: $("viewModels"), board: $("viewBoard") };
+  const views = { design: $("viewDesign"), site: $("viewSite"), assets: $("viewAssets"), models: $("viewModels"), prompts: $("viewPrompts"), board: $("viewBoard") };
   let current = "design";
 
   const show = (name) => {
@@ -89,16 +90,29 @@ export function initViews({ getNormalized, setNormalized, getSource, setSource }
     for (const tab of tabs) tab.classList.toggle("is-active", tab.dataset.view === name);
     // Drives the view color and the sliding selector thumb in popup.css.
     document.body.dataset.view = name;
-    tabs[0]?.parentElement?.style.setProperty("--i", String(Math.max(0, tabs.findIndex((tab) => tab.dataset.view === name))));
+    placeThumb();
     for (const [key, node] of Object.entries(views)) node.hidden = key !== name;
     chrome.storage.local.set({ keysOsiView: name }).catch(() => {});
     if (name === "assets") assets.open();
     if (name === "site") site.open();
     if (name === "board") board.open();
+    if (name === "prompts") prompts.open();
     if (name === "models") models.open();
     else models.close();
   };
   for (const tab of tabs) tab.addEventListener("click", () => show(tab.dataset.view));
+  // The selector thumb follows the active tab's real box; the bar scrolls it
+  // into view sideways without moving the page.
+  function placeThumb() {
+    const bar = tabs[0]?.parentElement;
+    const active = tabs.find((tab) => tab.dataset.view === current);
+    if (!bar || !active) return;
+    bar.style.setProperty("--tab-x", `${active.offsetLeft}px`);
+    bar.style.setProperty("--tab-w", `${active.offsetWidth}px`);
+    if (bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, active.offsetLeft - (bar.clientWidth - active.offsetWidth) / 2);
+  }
+  if (tabs[0]) new ResizeObserver(placeThumb).observe(tabs[0].parentElement);
+  document.fonts?.ready.then(placeThumb);
 
   // Lens: on-page inspector; the side panel stays open beside the page.
   $("lensBtn")?.addEventListener("click", async () => {
@@ -126,6 +140,7 @@ export function initViews({ getNormalized, setNormalized, getSource, setSource }
   const board = createBoardView();
   const assets = createAssetsView({ getNormalized, setNormalized });
   const models = createModelsView();
+  const prompts = createPromptsView();
   models.refreshBadge();
 
   chrome.storage.local.get("keysOsiView").then(({ keysOsiView }) => {
@@ -899,6 +914,231 @@ const CONFIDENCE_LABEL = {
   verified: "vérifié"
 };
 
+/* ============================ PROMPTS VIEW ============================ */
+
+const PROMPTS_KEY = "keysOsiPrompts";
+
+// No prompts found on import: say what the file actually is, so a data catalog
+// (records without a prompt/messages field) is not mistaken for a tool failure.
+function emptyImportReason(text, stats) {
+  let data;
+  try { data = JSON.parse(text); } catch { return "Fichier illisible (JSON invalide)."; }
+  // Prefer a captured response body (.xhr.json bundle) over its wrapper.
+  const records = Array.isArray(data?.[0]?.responseBody) ? data[0].responseBody
+    : Array.isArray(data?.responseBody) ? data.responseBody
+    : Array.isArray(data) ? data
+    : null;
+  if (records && records.length && typeof records[0] === "object") {
+    const fields = Object.keys(records[0]).slice(0, 8).join(", ");
+    return `${records.length} enregistrement(s) de données, pas de texte de prompt (champs : ${fields}). Cette réponse est un catalogue — capture la requête qui renvoie le corps d'un prompt (ouvre un prompt précis sur le site), pas la liste.`;
+  }
+  return `${stats.entries} entrée(s) scannée(s), ${stats.matched} avec du trafic IA — aucun prompt extrait.`;
+}
+
+function createPromptsView() {
+  const list = $("promptList");
+  const status = $("promptStatus");
+  const badge = $("promptBadge");
+  const onlyHigh = $("promptOnlyHigh");
+  const exportButtons = { txt: $("promptExportTxt"), md: $("promptExportMd"), json: $("promptExportJson"), csv: $("promptExportCsv") };
+  let items = [];
+  let host = "";
+  let tabId = null;
+  let loaded = false;
+
+  const fail = (error) => setPaneStatus(status, error instanceof Error ? error.message : String(error), true);
+  const key = (text) => text.toLowerCase().replace(/\s+/g, " ").slice(0, 400);
+  const persist = () => chrome.storage.local.set({ [PROMPTS_KEY]: { host, items } }).catch(() => {});
+
+  const addItems = (found) => {
+    const seen = new Set(items.map((it) => key(it.text)));
+    let added = 0;
+    for (const it of found || []) {
+      const k = key(it.text);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      items.push(it);
+      added++;
+    }
+    return added;
+  };
+
+  const visible = () => (onlyHigh.checked ? items.filter((it) => it.confidence === "high") : items);
+
+  const render = () => {
+    const shown = visible();
+    $("promptCount").textContent = `${items.length} prompt${items.length > 1 ? "s" : ""}${onlyHigh.checked && shown.length !== items.length ? ` · ${shown.length} probables` : ""}`;
+    badge.hidden = items.length === 0;
+    badge.textContent = String(items.length);
+    $("promptCopyAllBtn").disabled = shown.length === 0;
+    for (const button of Object.values(exportButtons)) button.disabled = shown.length === 0;
+    if (shown.length === 0) {
+      list.replaceChildren(el("li", { class: "empty-state", text: items.length ? "Aucun prompt probable : décoche le filtre pour tout voir." : "Aucun prompt pour l'instant. « Extraire la page » lit ce que la page a rendu ; « Scan profond » fait défiler d'abord." }));
+      return;
+    }
+    list.replaceChildren(
+      ...shown.map((it) =>
+        el("li", { class: "model-card" }, [
+          el("div", {}, [
+            el("span", { class: "tag is-accent", text: it.source }),
+            el("span", { class: `tag${it.confidence === "high" ? "" : " is-warn"}`, text: it.confidence === "high" ? "probable" : "heuristique" }),
+            el("span", { class: "net-sub", text: ` ${it.chars} car.` })
+          ]),
+          el("pre", { class: "prompt-text", text: it.text }),
+          el("div", { class: "toolbar" }, [
+            el("button", { type: "button", class: "btn btn--line", onclick: () => copyText(it.text, status, "Prompt").catch(fail) }, "Copier"),
+            el("button", { type: "button", class: "btn btn--quiet", onclick: () => { items = items.filter((x) => x !== it); persist(); render(); } }, "Retirer")
+          ])
+        ])
+      )
+    );
+  };
+
+  async function run(type, label) {
+    if (tabId == null) tabId = await activeTabId();
+    setPaneStatus(status, label);
+    const result = await send({ type, tabId });
+    host = result.host || host;
+    if (type === "PROMPT_PICK") {
+      const text = (result.text || "").trim();
+      if (!text) { setPaneStatus(status, "Sélection annulée."); return; }
+      const added = addItems([{ text, source: "sélection", chars: text.length, confidence: "high" }]);
+      setPaneStatus(status, added ? "Bloc ajouté." : "Ce bloc est déjà dans la liste.");
+    } else {
+      const added = addItems(result.items);
+      setPaneStatus(status, `${result.count} bloc(s) lu(s) sur ${host} · ${added} nouveau(x).${result.hint ? ` ${result.hint}` : ""}`);
+    }
+    persist();
+    render();
+  }
+
+  $("promptScanBtn").addEventListener("click", () => run("PROMPT_SCAN", "Lecture du DOM, des données inline et des cadres...").catch(fail));
+  $("promptDeepBtn").addEventListener("click", () => run("PROMPT_DEEP_SCAN", "Défilement de la page pour charger tout le contenu, puis lecture...").catch(fail));
+  $("promptPickBtn").addEventListener("click", () => run("PROMPT_PICK", "Désigne un bloc dans la page (Échap pour annuler).").catch(fail));
+  $("promptClearBtn").addEventListener("click", () => { items = []; persist(); render(); setPaneStatus(status, ""); });
+  onlyHigh.addEventListener("change", render);
+  $("promptVersion").textContent = `v${chrome.runtime.getManifest().version || "?"}`;
+  $("promptReloadBtn").addEventListener("click", () => chrome.runtime.reload());
+
+  // HAR/XHR file import
+  const harInput = $("promptHarFile");
+  $("promptImportHarBtn").addEventListener("click", () => { harInput.value = ""; harInput.click(); });
+  harInput.addEventListener("change", async () => {
+    const file = harInput.files[0];
+    if (!file) return;
+    setPaneStatus(status, `Lecture de ${file.name}…`);
+    try {
+      const text = await file.text();
+      const { items: found, stats } = file.name.endsWith(".har") ? parseHarPrompts(text) : parseXhrPrompts(text);
+      if (found.length === 0) {
+        setPaneStatus(status, emptyImportReason(text, stats));
+        return;
+      }
+      host = stats.hosts[0] || host;
+      const added = addItems(found);
+      const hi = found.filter((it) => it.confidence === "high").length;
+      const med = found.filter((it) => it.confidence === "medium").length;
+      persist();
+      render();
+      const conf = [hi && `${hi} certains`, med && `${med} probables`].filter(Boolean).join(", ");
+      setPaneStatus(status, `${file.name} : ${found.length} prompt(s) (${conf}), ${added} nouveau(x). Hôtes : ${stats.hosts.join(", ")}`);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  // Live: re-scan every 2 s; a scan never starts while the previous one runs.
+  let liveTimer = null;
+  let scanning = false;
+  $("promptLive").addEventListener("change", (event) => {
+    clearInterval(liveTimer);
+    liveTimer = null;
+    if (!event.target.checked) return;
+    liveTimer = setInterval(() => {
+      if (scanning) return;
+      scanning = true;
+      run("PROMPT_SCAN", "Re-scan live…")
+        .catch(fail)
+        .finally(() => (scanning = false));
+    }, 2000);
+  });
+  // Network capture: intercept live fetch/XHR on the page, poll new entries by id.
+  let netTimer = null;
+  let netReading = false;
+  let netSince = 0;
+  let netDoc = null;
+  const netCheckbox = $("promptNetCapture");
+  function stopNetPolling() {
+    clearInterval(netTimer);
+    netTimer = null;
+  }
+  netCheckbox.addEventListener("change", async (event) => {
+    stopNetPolling();
+    if (tabId == null) tabId = await activeTabId();
+    if (!event.target.checked) {
+      await send({ type: "PROMPT_NET_STOP", tabId }).catch(() => {});
+      setPaneStatus(status, "Capture réseau arrêtée.");
+      return;
+    }
+    const startResult = await send({ type: "PROMPT_NET_START", tabId }).catch((err) => { event.target.checked = false; fail(err); });
+    if (!startResult) return;
+    netSince = 0;
+    netDoc = null;
+    setPaneStatus(status, startResult.already ? `Capture déjà active (${startResult.pending} requête(s) en attente).` : "Capture réseau démarrée — recharge la page (F5) ou rejoue l'action, les corps fetch/XHR sont lus en direct.");
+    netTimer = setInterval(async () => {
+      if (netReading) return;
+      netReading = true;
+      try {
+        const result = await send({ type: "PROMPT_NET_READ", tabId, since: netSince, doc: netDoc });
+        if (result.active === false) {
+          stopNetPolling();
+          netCheckbox.checked = false;
+          setPaneStatus(status, "Capture réseau arrêtée depuis l'inspecteur.");
+          return;
+        }
+        netSince = result.last ?? netSince;
+        netDoc = result.doc ?? netDoc;
+        const entries = result.entries || [];
+        if (entries.length === 0) return;
+        const { items: found, stats } = parseXhrPrompts(JSON.stringify(entries));
+        if (found.length === 0) return;
+        host = stats.hosts[0] || host;
+        const added = addItems(found);
+        if (added > 0) { persist(); render(); }
+        setPaneStatus(status, `Capture : ${entries.length} requête(s) lue(s), ${added} nouveau(x) prompt(s).`);
+      } catch (err) {
+        fail(err);
+      } finally {
+        netReading = false;
+      }
+    }, 2500);
+  });
+
+  $("promptCopyAllBtn").addEventListener("click", () => copyText(visible().map((it) => it.text).join("\n\n---\n\n"), status, `${visible().length} prompt(s)`).catch(fail));
+  for (const [format, button] of Object.entries(exportButtons)) {
+    button.addEventListener("click", () =>
+      send({ type: "PROMPT_EXPORT", format, items: visible(), host })
+        .then((r) => setPaneStatus(status, `${r.count} prompt(s) exportés en .${format}.`))
+        .catch(fail)
+    );
+  }
+
+  return {
+    async open() {
+      if (loaded) return;
+      loaded = true;
+      const saved = (await chrome.storage.local.get(PROMPTS_KEY).catch(() => ({})))[PROMPTS_KEY];
+      if (saved?.items?.length) {
+        items = saved.items;
+        host = saved.host || "";
+      }
+      render();
+    }
+  };
+}
+
+/* ============================= MODELS VIEW ============================= */
+
 function createModelsView() {
   const list = $("modelList");
   const status = $("modelsStatus");
@@ -933,6 +1173,24 @@ function createModelsView() {
   );
   for (const id of ["netSearch", "netType", "netMinKb", "netFlagged"]) $(id).addEventListener("input", refresh);
   $("netPanel").addEventListener("toggle", refresh);
+
+  // Body capture lives in the page (xhr-capture.js); the checkbox mirrors it.
+  $("netBodies").addEventListener("change", async (event) => {
+    const on = event.target.checked;
+    if (tabId == null) tabId = await activeTabId();
+    try {
+      await send({ type: on ? "PROMPT_NET_START" : "PROMPT_NET_STOP", tabId });
+      setPaneStatus(status, on ? "Corps fetch/XHR capturés en direct : recharge la page (F5) ou rejoue l'action, puis « Télécharger » sur la requête." : "Capture des corps arrêtée.");
+    } catch (err) {
+      event.target.checked = !on;
+      fail(err);
+    }
+  });
+  async function syncBodyCapture() {
+    if (tabId == null) tabId = await activeTabId();
+    const state = await send({ type: "PROMPT_NET_STATUS", tabId });
+    $("netBodies").checked = Boolean(state.active || state.armed);
+  }
 
   let autoScanned = false;
   async function scan({ quiet = false } = {}) {
@@ -1065,10 +1323,18 @@ function createModelsView() {
       ...rows.map((r) =>
         el("li", { class: `net-row${r.flagged ? " is-flagged" : ""}` }, [
           el("div", { class: "net-url", text: r.url }),
-          el("div", { class: "net-sub", text: [r.type, r.status, r.contentType, formatBytes(r.size), r.origin === "timing" ? "resource timing" : ""].filter(Boolean).join(" · ") }),
+          el("div", { class: "net-sub", text: [r.method, r.type, r.status, r.contentType, formatBytes(r.size), r.origin === "timing" ? "resource timing" : ""].filter(Boolean).join(" · ") }),
           el("div", { class: "asset-actions" }, [
             el("button", { type: "button", text: r.flagged ? "✓ Modèle" : "Marquer comme modèle", onclick: () => send({ type: "MODEL_FLAG", tabId, url: r.url }).then(refresh).catch(fail) }),
-            el("button", { type: "button", text: "Télécharger", onclick: () => send({ type: "MODEL_DOWNLOAD", url: r.url, filename: decodeURIComponent(r.url.split(/[?#]/)[0].split("/").pop() || "fichier"), format: "unknown", keepName: true }).catch(fail) }),
+            el("button", {
+              type: "button",
+              text: "Télécharger",
+              onclick: () => send({ type: "NET_BODY", tabId, url: r.url, method: r.method, saveAs: $("optSaveAs").checked, filename: decodeURIComponent(r.url.split(/[?#]/)[0].split("/").pop() || "fichier") })
+                .then((res) => setPaneStatus(status, res.captured
+                  ? `Corps capturé enregistré (${formatBytes(res.bytes)}, .xhr.json) — réimportable via Prompts → HAR / XHR.`
+                  : `Téléchargement direct lancé (GET vérifié depuis la page : HTTP ${res.status}).`))
+                .catch(fail)
+            }),
             el("button", { type: "button", text: "Identifier", onclick: () => identify({ url: r.url }).catch(fail) })
           ])
         ])
@@ -1085,6 +1351,7 @@ function createModelsView() {
         scan({ quiet: true }).catch(fail);
       }
       refresh().catch(fail);
+      syncBodyCapture().catch(() => {});
       clearInterval(timer);
       timer = setInterval(() => refresh().catch(() => {}), 1500);
     },

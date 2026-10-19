@@ -17,6 +17,7 @@ import { handle3dMessage } from "./sw-3d.mjs";
 import { figmaNormalized, handleFigmaMessage } from "./sw-figma.mjs";
 import { handleTechMessage, techSeedUrls } from "./sw-tech.mjs";
 import { handleReaMessage } from "./sw-rea.mjs";
+import { handlePromptMessage } from "./sw-prompt.mjs";
 import { handleResponsiveMessage, responsiveFor, responsiveSectionFor } from "./sw-responsive.mjs";
 import { handleCloneMessage } from "./sw-clone.mjs";
 import { responsivePromptBlock } from "./lib/responsive.mjs";
@@ -108,6 +109,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   const sideJob =
     handleReaMessage(message) ||
+    handlePromptMessage(message) ||
     handleMemoryMessage(message) ||
     handleBrandBoardMessage(message, sender, {
       buildZip: buildZipViaOffscreen,

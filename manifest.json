@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Keys_Osi_Design.md-extractor",
   "description": "Keys_Osi: design system, site structure, tech stack, Figma, brand kit, assets and 3D from any site → DESIGN.md, PROMPT_PRO.md, ZIP.",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "homepage_url": "https://github.com/Keiisis/Keys_Osi_Design.md-extractor",
   "permissions": [
     "activeTab",

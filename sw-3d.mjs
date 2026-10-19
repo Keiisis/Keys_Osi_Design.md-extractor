@@ -196,7 +196,8 @@ async function scanTab(tabId) {
       const verdict = classifyRequest(resource.url, "", resource.size);
       state.requests.push({
         url: resource.url,
-        method: "GET",
+        // Resource Timing does not expose the method: unknown, not "GET".
+        method: null,
         type: resource.type || "other",
         status: resource.status,
         contentType: "",

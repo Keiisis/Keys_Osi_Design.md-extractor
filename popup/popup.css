@@ -50,6 +50,7 @@
   --hue-assets: oklch(76% 0.13 162);
   --hue-models: oklch(81% 0.15 78);
   --hue-board: oklch(73% 0.15 335);
+  --hue-prompts: oklch(74% 0.14 200);
   --view: var(--hue-design);
   --view-ink: oklch(16% 0.02 40);
 
@@ -115,6 +116,7 @@
     --hue-assets: oklch(55% 0.12 162);
     --hue-models: oklch(62% 0.14 70);
     --hue-board: oklch(55% 0.17 335);
+    --hue-prompts: oklch(54% 0.13 200);
     --view-ink: oklch(98.5% 0.005 80);
   }
 }
@@ -127,6 +129,9 @@ body[data-view="assets"] {
 }
 body[data-view="models"] {
   --view: var(--hue-models);
+}
+body[data-view="prompts"] {
+  --view: var(--hue-prompts);
 }
 body[data-view="board"] {
   --view: var(--hue-board);
@@ -516,8 +521,11 @@ code,
   position: sticky;
   top: 0;
   z-index: 10;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* Tabs size to their labels and share the row; when the panel is too
+     narrow for all of them, the bar scrolls sideways instead of cutting. */
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
   margin: 0 calc(-1 * var(--gutter));
   padding: 8px var(--gutter);
   background:
@@ -533,30 +541,32 @@ code,
   position: absolute;
   top: 8px;
   bottom: 8px;
-  left: var(--gutter);
-  width: calc((100% - 2 * var(--gutter)) / 5);
+  left: 0;
+  width: var(--tab-w, 0px);
   border: 1px solid color-mix(in oklch, var(--view) 55%, transparent);
   border-radius: var(--radius-md);
   background: color-mix(in oklch, var(--view) 14%, transparent);
   box-shadow: inset 0 1px 0 var(--color-highlight);
-  transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform var(--dur-thumb) var(--ease-out);
+  transform: translateX(var(--tab-x, 0px));
+  transition: transform var(--dur-thumb) var(--ease-out), width var(--dur-thumb) var(--ease-out);
   pointer-events: none;
+}
+
+.view-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .view-tab {
   position: relative;
   z-index: 1;
-  min-width: 0;
+  flex: 1 0 auto;
   min-height: 34px;
-  padding: 6px 4px;
+  padding: 6px 10px;
   border: 0;
   background: none;
   color: var(--color-muted);
   font: 500 var(--text-md) / 1 var(--font-body);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   cursor: pointer;
   transition: color var(--dur-short) var(--ease-out);
 }
@@ -2112,6 +2122,18 @@ select.field option {
 .net-sub {
   font: 400 var(--text-2xs) / 1.4 var(--font-mono);
   color: var(--color-muted);
+}
+
+.prompt-text {
+  max-height: 150px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-2);
+  font: 400 var(--text-2xs) / 1.5 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .net-row .asset-actions {

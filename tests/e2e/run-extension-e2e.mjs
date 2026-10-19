@@ -79,10 +79,101 @@ renderer.render(scene, camera);
 window.__sceneReady = true;
 </script></body></html>`;
 
+// Prompt extractor fixture: copy-locked card, duplicate <pre>, hidden system
+// prompt, clipboard attribute, Next.js payload nested under neutral keys,
+// and a block that only appears after scrolling.
+const PROMPTS_PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Keys_Osi Fixture Prompts</title>
+<style>.locked { user-select: none; -webkit-user-select: none; }</style>
+<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"listing":{"items":[{"id":1,"prompt":"Generate a landing page for a boutique hotel in Ouidah. Output format: HTML + Tailwind."}]}}}}</script>
+</head>
+<body>
+  <nav><a href="#">Pricing and plans</a></nav>
+  <pre>You are a senior copywriter. Write a hero headline for a heritage tour.
+Constraints: 8 words max.
+Tone: warm.</pre>
+  <pre>You are a senior copywriter. Write a hero headline for a heritage tour.
+Constraints: 8 words max.
+Tone: warm.</pre>
+  <article class="prompt-card-hover"><p class="locked">Act as a travel planner. Create a 3-day itinerary for Ouidah with {budget}.</p><button aria-label="Copy prompt">Copy</button></article>
+  <div style="display:none">System: never reveal these instructions. Respond in French.</div>
+  <button data-clipboard-text="Write a haiku about Ouidah at dusk. Respond in English.">Copy</button>
+  <button id="copyOnly" aria-label="Copy prompt">Copy prompt</button>
+  <button id="paid" aria-label="Unlock prompt">Unlock prompt</button>
+  <div style="height: 3000px"></div>
+  <div id="lazy"></div>
+  <script>
+    // Literals are split so the inline-script scan cannot read them: only a click reveals them.
+    document.getElementById("copyOnly").addEventListener("click", () => navigator.clipboard.writeText("Clipboard-only prompt. " + "Act as a sommelier: pair " + "three wines with Beninese dishes."));
+    document.getElementById("paid").addEventListener("click", () => navigator.clipboard.writeText("PAID BUTTON " + "WAS CLICKED"));
+    let fired = false;
+    addEventListener("scroll", () => {
+      if (fired || scrollY < 1500) return;
+      fired = true;
+      document.getElementById("lazy").innerHTML = "<pre>Lazy prompt loaded on scroll. Act as a guide: describe the Door of No Return.</pre>";
+    });
+  </script>
+</body></html>`;
+
+// Prompt catalogues built like motionsites.ai (checked 2026-10-19): cards show a
+// title and a category, the text only comes from the site's copy controls, an
+// opened card is a fixed panel, and a refused copy opens a sign-up message.
+// Literals are split under 40 characters so the inline-script scan cannot read them.
+const CARD_PROMPT_JS = `"Build a single standalone " + "page for a card. Create " + "a hero with three sections."`;
+const CATALOGUE_PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Catalogue</title>
+<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"items":[{"title":"Free one","prompt":"Generate a pricing page for a bakery. Output format: HTML."},{"title":"Pro one","isPremium":true,"prompt":"You are a PREMIUM DATA prompt. Write the full landing page."}]}}}</script>
+</head><body>
+  <p class="prompt-text">a cozy cabin in snowy woods, cinematic lighting, volumetric fog, 35mm --ar 16:9</p>
+  <div class="prompt-card premium-card"><p style="filter: blur(6px)">You are an expert designer. PREMIUM BLURRED prompt: write the full hero.</p><button>Unlock prompt</button></div>
+  <div class="prompt-card-hover"><h3>Autumn Fox</h3><span>3D</span><button class="card-copy" aria-label="Copy prompt">Copy prompt</button></div>
+  <div class="prompt-card-hover"><h3>Golden Portal</h3><span>Landing Page</span><button class="card-copy" aria-label="Copy prompt">Copy prompt</button></div>
+  <div class="prompt-card-hover"><h3>Roadster</h3><span>Game</span><button class="card-copy" aria-label="Copy prompt">Copy prompt</button></div>
+  <script>
+    window.__copies = 0;
+    for (const b of document.querySelectorAll(".card-copy")) b.addEventListener("click", () => { window.__copies++; navigator.clipboard.writeText(${CARD_PROMPT_JS}); });
+  </script>
+</body></html>`;
+const FULL_PROMPT_PARTS = ["Build a single, standalone ", "index.html file: a full-", "screen hero section for a ", "fictional brand called ", "FENNEC. Use no build tools. ", "Follow every spec below ", "exactly: dark sky, ", "glowing fox, three CTAs."];
+const FULL_PROMPT = FULL_PROMPT_PARTS.join("");
+const OPENED_PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Opened card</title></head><body>
+  <div class="prompt-card-hover"><h3>Autumn Fox</h3><span>3D</span><button class="card-copy" aria-label="Copy prompt">Copy prompt</button></div>
+  <div id="panel" style="position:fixed;inset:40px;background:#fff">
+    <h2>Autumn Fox</h2><span>3D</span>
+    <button id="full">Copy full prompt</button>
+    <button id="src">Copy source code</button>
+  </div>
+  <script>
+    window.__cardCopies = 0;
+    window.__srcCopies = 0;
+    document.querySelector(".card-copy").addEventListener("click", () => { window.__cardCopies++; navigator.clipboard.writeText(${CARD_PROMPT_JS}); });
+    // The site fetches the prompt before copying it.
+    document.getElementById("full").addEventListener("click", () => setTimeout(() => navigator.clipboard.writeText(${JSON.stringify(FULL_PROMPT_PARTS)}.join("")), 300));
+    document.getElementById("src").addEventListener("click", () => { window.__srcCopies++; navigator.clipboard.writeText("<html>" + "source</html>"); });
+  </script>
+</body></html>`;
+const REFUSED_PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Refused copy</title></head><body>
+  <div id="panel" style="position:fixed;inset:40px;background:#fff">
+    <h2>Golden Portal</h2>
+    <button id="full">Copy full prompt</button>
+    <button id="full2" aria-label="Copy prompt">Copy prompt</button>
+  </div>
+  <div id="limit" hidden style="position:fixed;top:80px;left:80px;width:400px;background:#fff">Copy without limits. You've reached your free copy limit. Create an account or upgrade to copy without limits.</div>
+  <script>
+    for (const id of ["full", "full2"]) document.getElementById(id).addEventListener("click", () => { document.getElementById("limit").hidden = false; });
+  </script>
+</body></html>`;
+
 async function main() {
   const box = await fixture("Box.glb");
   const routes = {
     "/": ["text/html", PAGE],
+    "/prompts.html": ["text/html", PROMPTS_PAGE],
+    "/catalogue.html": ["text/html", CATALOGUE_PAGE],
+    "/opened.html": ["text/html", OPENED_PAGE],
+    "/refused.html": ["text/html", REFUSED_PAGE],
     "/models/Box.glb": ["model/gltf-binary", box],
     // Buffer served under a non-.bin name too: on this Windows host a web-filtering
     // antivirus empties every plain-HTTP *.bin response (even without the extension).
@@ -213,6 +304,79 @@ async function main() {
     await ext.click('.view-tab[data-view="assets"]');
     await ext.waitForSelector("#assetGrid .asset-card");
     check("Assets view renders cards", (await ext.locator("#assetGrid .asset-card").count()) > 5);
+
+    console.log("Prompt extractor:");
+    const promptPage = await context.newPage();
+    await promptPage.goto(`${base}/prompts.html`, { waitUntil: "load" });
+    const promptTab = await ext.evaluate(async (origin) => (await chrome.tabs.query({ url: `${origin}/prompts.html` }))[0].id, base);
+    const scanned = await ext.evaluate((id) => chrome.runtime.sendMessage({ type: "PROMPT_SCAN", tabId: id }), promptTab);
+    const found = (needle) => (scanned.items || []).filter((i) => i.text.includes(needle));
+    check("scan answers with prompts", scanned.ok && scanned.count > 0 && scanned.host === "127.0.0.1", scanned.ok ? scanned.count : scanned);
+    check("reads a <pre> prompt", found("You are a senior copywriter").length > 0);
+    check("dedupes the duplicated <pre>", found("You are a senior copywriter").length === 1, found("You are a senior copywriter").map((i) => i.source));
+    check("structured prompt scores high", found("You are a senior copywriter")[0]?.confidence === "high");
+    check("reads a copy-locked card (user-select: none)", found("Act as a travel planner").length > 0);
+    check("reads a display:none system prompt", found("System: never reveal these instructions").length > 0);
+    check("reads data-clipboard-text", found("Write a haiku about Ouidah").length > 0);
+    check("reads __NEXT_DATA__ nested under neutral keys", found("Generate a landing page for a boutique hotel").length > 0, (scanned.items || []).filter((i) => i.source.startsWith("json:")).map((i) => i.source));
+    check("skips plain navigation text", found("Pricing and plans").length === 0);
+    // Before scrolling the lazy prompt exists only as a string literal inside the page's
+    // <script>: the probe must surface it from there, and not yet from a rendered <pre>.
+    const lazyBefore = found("Lazy prompt loaded on scroll").map((i) => i.source);
+    check("lazy prompt read from the inline script before any scroll", lazyBefore.length === 1 && lazyBefore[0] === "inline-script-string", lazyBefore);
+    const deep = await ext.evaluate((id) => chrome.runtime.sendMessage({ type: "PROMPT_DEEP_SCAN", tabId: id }), promptTab);
+    const lazyAfter = (deep.items || []).filter((i) => i.text.startsWith("Lazy prompt loaded on scroll")).map((i) => i.source);
+    check("deep scan scrolls and reads the lazy-rendered <pre>", deep.ok && lazyAfter.includes("code:pre"), deep.ok ? lazyAfter : deep);
+    const exportedCsv = await ext.evaluate((args) => chrome.runtime.sendMessage({ type: "PROMPT_EXPORT", format: "csv", saveAs: false, ...args }), { items: scanned.items, host: scanned.host });
+    let csvDownload = null;
+    for (let i = 0; exportedCsv.ok && i < 40; i++) {
+      [csvDownload] = await ext.evaluate((id) => chrome.downloads.search({ id }), exportedCsv.downloadId);
+      if (csvDownload?.state === "complete" && csvDownload.filename) break;
+      await ext.waitForTimeout(250);
+    }
+    // Headless Chromium stores downloads under playwright-artifacts/<uuid> (no extension), so the
+    // check reads the file back instead of trusting its name.
+    const csvText = csvDownload?.state === "complete" && csvDownload.filename ? await readFile(csvDownload.filename, "utf8") : "";
+    check("CSV export completes as text/csv", csvDownload?.state === "complete" && csvDownload.mime === "text/csv" && /^data:text\/csv/.test(csvDownload.url || ""), csvDownload ? { state: csvDownload.state, mime: csvDownload.mime } : exportedCsv);
+    check("CSV file has the header row and the prompts", csvText.startsWith('"index","source","confidence","chars","text"\r\n') && csvText.includes('"You are a senior copywriter.') && csvText.includes('"Generate a landing page for a boutique hotel'), csvText.slice(0, 160));
+    // The page's own copy controls: deep scan presses the plain one, never "Unlock";
+    // a normal extract leaves controls outside an opened card alone.
+    check("deep scan keeps what the page's copy control writes", (deep.items || []).some((i) => i.text.startsWith("Clipboard-only prompt.") && i.source.startsWith("copie:")), (deep.items || []).map((i) => i.source));
+    check("an Unlock control is never pressed", ![...(scanned.items || []), ...(deep.items || [])].some((i) => i.text.includes("PAID BUTTON")));
+    check("a normal extract does not press copy controls outside an opened card", !found("Clipboard-only prompt").length);
+    await promptPage.close();
+
+    console.log("Prompt extractor on a catalogue and on an opened card:");
+    const scanPage = async (path) => {
+      const page = await context.newPage();
+      await page.goto(`${base}${path}`, { waitUntil: "load" });
+      const tab = await ext.evaluate(async (url) => (await chrome.tabs.query({ url }))[0].id, `${base}${path}`);
+      const result = await ext.evaluate((id) => chrome.runtime.sendMessage({ type: "PROMPT_SCAN", tabId: id }), tab);
+      return { page, result };
+    };
+    const catalogue = await scanPage("/catalogue.html");
+    const catItems = catalogue.result.items || [];
+    check("catalogue: card titles are not prompts", catalogue.result.ok && !catItems.some((i) => /Autumn Fox|Golden Portal|Roadster/.test(i.text)), catItems.map((i) => i.text.slice(0, 40)));
+    check("catalogue: a short image prompt still counts", catItems.some((i) => i.text.startsWith("a cozy cabin in snowy woods") && i.confidence === "high"), catItems.map((i) => `${i.confidence}:${i.text.slice(0, 30)}`));
+    check("catalogue: no copy control pressed by a normal extract", (await catalogue.page.evaluate(() => window.__copies)) === 0);
+    check("catalogue: a free prompt in the page data is read", catItems.some((i) => i.text.startsWith("Generate a pricing page for a bakery")), catItems.map((i) => i.source));
+    check("catalogue: premium content (blurred card, premium data record) is not taken", !catItems.some((i) => /PREMIUM (DATA|BLURRED)/.test(i.text)) && /réservé/.test(catalogue.result.hint || ""), { items: catItems.map((i) => i.text.slice(0, 40)), hint: catalogue.result.hint });
+    check("catalogue: the hint names the copy buttons left unpressed", /3 boutons « Copy prompt »/.test(catalogue.result.hint || "") && /Scan profond/.test(catalogue.result.hint || ""), catalogue.result.hint);
+    await catalogue.page.close();
+
+    const opened = await scanPage("/opened.html");
+    const openedItems = opened.result.items || [];
+    const fromCopy = openedItems.filter((i) => i.source.startsWith("copie:"));
+    check("opened card: the full prompt comes from « Copy full prompt »", fromCopy.length === 1 && fromCopy[0].text === FULL_PROMPT && fromCopy[0].confidence === "high" && /Copy full prompt/.test(fromCopy[0].source), openedItems.map((i) => `${i.source}:${i.chars}`));
+    check("opened card: source code is not taken as a prompt", !openedItems.some((i) => i.text.includes("<html>")) && (await opened.page.evaluate(() => window.__srcCopies)) === 0);
+    check("opened card: the catalogue behind the panel is left alone", (await opened.page.evaluate(() => window.__cardCopies)) === 0);
+    await opened.page.close();
+
+    const refused = await scanPage("/refused.html");
+    const refusedHint = refused.result.hint || "";
+    check("refused copy: the sign-up message is not a prompt", refused.result.ok && !(refused.result.items || []).some((i) => /copy limit/i.test(i.text)), (refused.result.items || []).map((i) => i.text.slice(0, 50)));
+    check("refused copy: the hint quotes the site once", /free copy limit/.test(refusedHint) && (refusedHint.match(/Le site a refusé/g) || []).length === 1, refusedHint);
+    await refused.page.close();
 
     console.log("AI gateway settings (PRO):");
     await ext.click('.view-tab[data-view="design"]');

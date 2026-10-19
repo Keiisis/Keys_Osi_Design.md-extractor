@@ -12,7 +12,7 @@ import { chromium } from "playwright-core";
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const SHOTS = process.argv[2] || "";
 const WIDTHS = [320, 375, 414, 560, 768];
-const VIEWS = ["design", "site", "assets", "models", "board"];
+const VIEWS = ["design", "site", "assets", "models", "board", "prompts"];
 let failures = 0;
 const check = (label, ok, detail) => {
   console.log(`${ok ? "ok  " : "FAIL"} ${label}${ok || detail === undefined ? "" : ` → ${JSON.stringify(detail).slice(0, 600)}`}`);
@@ -114,6 +114,16 @@ try {
         return { scroll: document.documentElement.scrollWidth - vw, overflow: overflow.slice(0, 8), wrapped: wrapped.slice(0, 8) };
       });
       check(`${width}px ${view}: no horizontal scroll`, report.scroll <= 0, report.scroll);
+      // The selector thumb sits on the active tab, whatever the number of tabs.
+      await panel.waitForTimeout(400);
+      const thumb = await panel.evaluate(() => {
+        const box = (el) => el.getBoundingClientRect();
+        const t = box(document.querySelector(".view-tabs__thumb"));
+        const a = box(document.querySelector(".view-tab.is-active"));
+        const bar = box(document.querySelector(".view-tabs"));
+        return { dx: Math.abs(t.left - a.left), dw: Math.abs(t.width - a.width), inside: a.left >= bar.left - 1 && a.right <= bar.right + 1 };
+      });
+      check(`${width}px ${view}: thumb on the active tab, tab in view`, thumb.dx <= 1 && thumb.dw <= 1 && thumb.inside, thumb);
       check(`${width}px ${view}: nothing past the edge`, report.overflow.length === 0, report.overflow);
       check(`${width}px ${view}: no wrapped button`, report.wrapped.length === 0, report.wrapped);
       if (SHOTS) await panel.screenshot({ path: join(SHOTS, `${width}-${view}.png`), fullPage: true });
@@ -135,7 +145,8 @@ try {
   };
   await reloadsAfter("panel follows a tab switch", () => site.bringToFront());
   await reloadsAfter("panel follows a navigation of the active tab", () => site.goto(`${base}/b`));
-  await follow.waitForSelector("#siteHost");
+  // The header fills in asynchronously after the reload: wait for it to change.
+  await follow.waitForFunction(() => (document.getElementById("siteHost")?.textContent || "—") !== "—", null, { timeout: 8000, polling: 200 }).catch(() => {});
   const host = await follow.evaluate(() => document.getElementById("siteHost").textContent);
   check("panel header names the followed tab", host === "127.0.0.1", host);
 } finally {
